@@ -1,19 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { Inter } from "next/font/google";
 import Providers from "@/providers";
-
-import "@rainbow-me/rainbowkit/styles.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import "@rainbow-me/rainbowkit/styles.css";
+import "./globals.css";
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -28,12 +23,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} antialiased`}>
         <Providers>
           <div className="flex min-h-[100dvh] w-full flex-col items-center">
             <Header />
-            <main className="w-full max-w-screen-xl flex-grow p-4">{children}</main>
+            <main className="flex w-full max-w-screen-xl flex-grow flex-col gap-8 px-4 py-10">{children}</main>
             <Footer />
           </div>
         </Providers>

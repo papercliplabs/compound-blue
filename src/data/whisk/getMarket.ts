@@ -2,6 +2,7 @@ import { graphql } from "@/generated/gql/whisk";
 import { whiskClient } from "./client";
 import { Hex } from "viem";
 import { CHAIN_ID } from "@/config";
+import { cache } from "react";
 
 const query = graphql(`
   query getMarket($chainId: Number!, $marketId: String!) {
@@ -54,8 +55,8 @@ const query = graphql(`
   }
 `);
 
-export async function getMarket(marketId: Hex) {
+export const getMarket = cache(async (marketId: Hex) => {
   console.debug("getMarket", marketId);
   const market = await whiskClient.request(query, { chainId: CHAIN_ID, marketId });
   return market.morphoMarket ?? null;
-}
+});

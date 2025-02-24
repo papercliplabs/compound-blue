@@ -1,62 +1,87 @@
 import type { Config } from "tailwindcss";
 
 export default {
-    darkMode: ["class"],
-    content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
+  darkMode: ["class"],
+  content: ["./src/app/**/*.{js,ts,jsx,tsx,mdx}", "./src/components/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
-  	extend: {
-  		colors: {
-  			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
-  			card: {
-  				DEFAULT: 'hsl(var(--card))',
-  				foreground: 'hsl(var(--card-foreground))'
-  			},
-  			popover: {
-  				DEFAULT: 'hsl(var(--popover))',
-  				foreground: 'hsl(var(--popover-foreground))'
-  			},
-  			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
-  			},
-  			secondary: {
-  				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
-  			},
-  			muted: {
-  				DEFAULT: 'hsl(var(--muted))',
-  				foreground: 'hsl(var(--muted-foreground))'
-  			},
-  			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
-  			},
-  			destructive: {
-  				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
-  			},
-  			border: 'hsl(var(--border))',
-  			input: 'hsl(var(--input))',
-  			ring: 'hsl(var(--ring))',
-  			chart: {
-  				'1': 'hsl(var(--chart-1))',
-  				'2': 'hsl(var(--chart-2))',
-  				'3': 'hsl(var(--chart-3))',
-  				'4': 'hsl(var(--chart-4))',
-  				'5': 'hsl(var(--chart-5))'
-  			}
-  		},
-  		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		}
-  	}
+    extend: {
+      fontFamily: {
+        inter: ["var(--font-inter)"],
+      },
+      colors: {
+        background: {
+          primary: "rgb(var(--background-primary))",
+          secondary: "rgb(var(--background-secondary))",
+          inverse: "rgb(var(--background-inverse))",
+        },
+        border: {
+          primary: "rgb(var(--border-primary))",
+        },
+        content: {
+          primary: "rgb(var(--content-primary))",
+          secondary: "rgb(var(--content-secondary))",
+          ternary: "rgb(var(--content-ternary))",
+          disabled: "rgb(var(--content-disabled))",
+        },
+        semantic: {
+          warning: "rgb(var(--semantic-warning))",
+          negative: "rgb(var(--semantic-negative))",
+          positive: "rgb(var(--semantic-positive))",
+        },
+        accent: {
+          primary: "rgb(var(--accent-primary))",
+          secondary: "rgb(var(--accent-secondary))",
+          ternary: "rgb(var(--accent-ternary))",
+        },
+        button: {
+          supply: {
+            DEFAULT: "rgb(var(--button-supply))",
+            muted: "rgb(var(--button-supply-muted))",
+          },
+          borrow: "rgb(var(--button-borrow))",
+          neutral: "rgb(var(--button-neutral))",
+          disabled: "rgb(var(--button-disabled))",
+        },
+      },
+    },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function ({ addUtilities }: { addUtilities: any }) {
+      addUtilities({
+        ".title-1": {
+          "@apply font-inter text-[40px] font-bold leading-[48px] tracking-[-0.03em]": {},
+        },
+        ".title-2": {
+          "@apply font-inter text-[32px] font-bold leading-[36px] tracking-[-0.03em]": {},
+        },
+        ".title-3": {
+          "@apply font-inter text-[24px] font-medium leading-[32px] tracking-[-0.03em]": {},
+        },
+        ".title-4": {
+          "@apply font-inter text-[20px] font-medium leading-[24px] tracking-[-0.03em]": {},
+        },
+        ".title-5": {
+          "@apply font-inter text-[18px] font-bold leading-[22px] tracking-[-0.03em]": {},
+        },
+        ".paragraph-lg": {
+          "@apply font-inter text-[16px] leading-[24px] tracking-[-0.03em]": {},
+        },
+        ".paragraph-md": {
+          "@apply font-inter text-[14px] leading-[20px] tracking-[-0.035em]": {},
+        },
+        ".paragraph-sm": {
+          "@apply font-inter text-[12px] leading-[16px] tracking-[-0.03em]": {},
+        },
+        ".shadow-top-only": {
+          "@apply shadow-[0px_-2px_6px_rgba(0,0,0,0.05),0px_4px_36px_rgba(0,0,0,0.04)]": {},
+          "clip-path": "inset(-36px 0 0 0)",
+        },
+        ".shadow-bottom-only": {
+          "@apply shadow-[0px_2px_6px_rgba(0,0,0,0.05),0px_-4px_36px_rgba(0,0,0,0.04)]": {},
+          "clip-path": "inset(0 0 -36px 0)",
+        },
+      });
+    },
+  ],
 } satisfies Config;

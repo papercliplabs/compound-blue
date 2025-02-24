@@ -1,7 +1,9 @@
+import "server-only";
 import { graphql } from "@/generated/gql/whisk";
 import { whiskClient } from "./client";
 import { Address } from "viem";
 import { CHAIN_ID } from "@/config";
+import { cache } from "react";
 
 const query = graphql(`
   query getVault($chainId: Number!, $address: String!) {
@@ -18,6 +20,11 @@ const query = graphql(`
       supplyAssetsUsd
       liquidityAssetsUsd
 
+      asset {
+        symbol
+        icon
+      }
+
       supplyApy {
         base
         total
@@ -28,6 +35,7 @@ const query = graphql(`
           }
           apr
         }
+        performanceFee
       }
 
       marketAllocations {
@@ -51,8 +59,8 @@ const query = graphql(`
   }
 `);
 
-export async function getVault(address: Address) {
+export const getVault = cache(async (address: Address) => {
   console.debug("getVault", address);
   const vault = await whiskClient.request(query, { chainId: CHAIN_ID, address });
   return vault.morphoVault ?? null;
-}
+});

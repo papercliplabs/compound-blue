@@ -6,7 +6,7 @@ import { ComponentProps, HTMLAttributes, HTMLProps } from "react";
 import { flexRender } from "@tanstack/react-table";
 import { ScrollSync, ScrollSyncPane } from "react-scroll-sync";
 import clsx from "clsx";
-import SortIcon from "../SortIcon";
+import SortIcon from "./icons/Sort";
 
 export function TableRow({ className, ...props }: HTMLProps<HTMLDivElement>) {
   return <div className={cn("flex w-full min-w-fit items-center", className)} {...props} />;
@@ -43,16 +43,16 @@ export function Table<T>({ table, rowLink }: { table: ReactTable<T>; rowLink: (r
       <div className="h-fit min-w-0 grow">
         <div className="sticky top-[64px] z-20 min-w-full">
           <ScrollSyncPane>
-            <div className="scrollbar-none overflow-auto overscroll-x-none rounded-t-[16px] border-x border-t">
+            <div className="scrollbar-none overflow-auto overscroll-x-none rounded-t-[12px] bg-background-secondary">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="h-12">
+                <TableRow key={headerGroup.id} className="h-12 font-semibold text-content-secondary">
                   {headerGroup.headers.map((header) => {
                     return (
                       <TableCell
                         minWidth={header.column.columnDef.minSize}
                         key={header.id}
                         onClick={header.column.getToggleSortingHandler()}
-                        className="h-12 select-none items-center border-b hover:cursor-pointer"
+                        className="h-12 select-none items-center hover:cursor-pointer"
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         <SortIcon state={header.column.getIsSorted()} />
@@ -65,19 +65,19 @@ export function Table<T>({ table, rowLink }: { table: ReactTable<T>; rowLink: (r
           </ScrollSyncPane>
         </div>
         <ScrollSyncPane>
-          <div className="scrollbar-none flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[16px] border-x border-b">
+          <div className="scrollbar-none flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[12px] bg-background-inverse font-semibold paragraph-lg">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRowLink
                   href={rowLink(row.original)}
-                  className="relative h-16 gap-0 last:rounded-b-[16px]"
+                  className="hover:bg-background-secondary/60 relative h-16 gap-0 last:rounded-b-[12px]"
                   key={row.id}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       minWidth={cell.column.columnDef.minSize}
                       key={cell.id}
-                      className={clsx(cell.column.getIsSorted() && "")}
+                      className={clsx(cell.column.getIsSorted() && "bg-background-secondary/60")}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>

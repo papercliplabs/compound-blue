@@ -1,3 +1,6 @@
+import { formatUnits } from "viem";
+import { BigIntString } from "./types";
+
 export function formatNumber(
   input: number,
   options: Intl.NumberFormatOptions & {
@@ -23,4 +26,8 @@ export function formatNumber(
   const prefix = currency === "USD" ? "$" : currency === "ETH" ? "Ξ" : "";
 
   return `${prefix}${formatted}`;
+}
+
+export function descaleBigIntToNumber(value: bigint | BigIntString, decimals: number): number {
+  return Number(formatUnits(BigInt(value), decimals));
 }

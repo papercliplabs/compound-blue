@@ -11,7 +11,11 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
 
   return (
     <div>
+      {market.borrowAssets}
       <h1>{market.name}</h1>
     </div>
   );
 }
+
+export const dynamic = "force-static";
+export const revalidate = 60;
