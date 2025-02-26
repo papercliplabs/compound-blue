@@ -1,7 +1,14 @@
 import { cn } from "@/utils/shadcn";
+import { ComponentProps } from "react";
 
 function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("animate-pulse rounded-xl bg-background-secondary", className)} {...props} />;
+  return <div className={cn("animate-pulse rounded-xl bg-content-secondary/15", className)} {...props} />;
 }
 
-export { Skeleton };
+function Skeletons({ count, ...props }: { count: number } & ComponentProps<typeof Skeleton>) {
+  return Array(count)
+    .fill(0)
+    .map((_, i) => <Skeleton key={i} {...props} />);
+}
+
+export { Skeleton, Skeletons };

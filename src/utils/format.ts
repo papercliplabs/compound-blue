@@ -1,4 +1,4 @@
-import { formatUnits } from "viem";
+import { Address, formatUnits } from "viem";
 import { BigIntString } from "./types";
 
 export function formatNumber(
@@ -30,4 +30,8 @@ export function formatNumber(
 
 export function descaleBigIntToNumber(value: bigint | BigIntString, decimals: number): number {
   return Number(formatUnits(BigInt(value), decimals));
+}
+
+export function formatAddress(address: Address) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }

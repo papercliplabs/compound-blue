@@ -15,8 +15,13 @@ const query = graphql(`
         forumLink
         image
       }
+      feeRecipientAddress
+      ownerAddress
+      curatorAddress
       guardianAddress
+
       performanceFee
+
       supplyAssetsUsd
       liquidityAssetsUsd
 
@@ -40,11 +45,16 @@ const query = graphql(`
 
       marketAllocations {
         market {
+          marketId
           name
           lltv
-          collateralAsset {
-            name
+          loanAsset {
             symbol
+            icon
+          }
+          collateralAsset {
+            symbol
+            icon
           }
           supplyApy {
             total
@@ -54,6 +64,7 @@ const query = graphql(`
           supplyAssetsUsd
         }
         vaultSupplyShare
+        supplyCapUsd
       }
     }
   }
@@ -64,3 +75,5 @@ export const getVault = cache(async (address: Address) => {
   const vault = await whiskClient.request(query, { chainId: CHAIN_ID, address });
   return vault.morphoVault ?? null;
 });
+
+export type Vault = NonNullable<Awaited<ReturnType<typeof getVault>>>;

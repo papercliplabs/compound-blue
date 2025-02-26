@@ -1,12 +1,12 @@
 "use client";
 import { cn } from "@/utils/shadcn";
-import { Table as ReactTable } from "@tanstack/react-table";
+import { ColumnDef, getCoreRowModel, getSortedRowModel, SortingState, useReactTable } from "@tanstack/react-table";
 import Link from "next/link";
-import { ComponentProps, HTMLAttributes, HTMLProps } from "react";
+import { ComponentProps, HTMLAttributes, HTMLProps, useEffect, useRef, useState } from "react";
 import { flexRender } from "@tanstack/react-table";
 import { ScrollSync, ScrollSyncPane } from "react-scroll-sync";
-import clsx from "clsx";
-import SortIcon from "./icons/Sort";
+import SortIcon from "../ui/icons/Sort";
+import { HEADER_HEIGHT } from "../Header";
 
 export function TableRow({ className, ...props }: HTMLProps<HTMLDivElement>) {
   return <div className={cn("flex w-full min-w-fit items-center", className)} {...props} />;
@@ -25,7 +25,7 @@ export function TableCell({ minWidth, className, style, ...props }: TableCellPro
   return (
     <div
       className={cn(
-        "flex h-full w-[0px] flex-1 shrink-0 grow items-center overflow-hidden text-ellipsis text-nowrap px-4 first:pl-6 last:pr-6 sm:max-md:first:!min-w-[200px]",
+        "flex h-full w-[0px] flex-1 shrink-0 grow items-center overflow-hidden text-ellipsis text-nowrap px-4",
         className
       )}
       style={{
@@ -37,13 +37,51 @@ export function TableCell({ minWidth, className, style, ...props }: TableCellPro
   );
 }
 
-export function Table<T>({ table, rowLink }: { table: ReactTable<T>; rowLink: (row: T) => string }) {
+interface TableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  initialSortKey?: string;
+  rowLink: (row: TData) => string;
+}
+
+export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }: TableProps<TData, TValue>) {
+  const tableRef = useRef<HTMLDivElement>(null);
+  const [sorting, setSorting] = useState<SortingState>([
+    ...(initialSortKey
+      ? [
+          {
+            id: initialSortKey,
+            desc: true,
+          },
+        ]
+      : []),
+  ]);
+
+  // Scroll to top of the table on sort change if its above the header
+  useEffect(() => {
+    const tableTop = (tableRef.current?.getBoundingClientRect().top ?? 0) + 18; // Accounts for top padding and small overlap
+    if (tableTop < HEADER_HEIGHT) {
+      window.scrollTo({ top: window.scrollY + (tableTop - HEADER_HEIGHT), behavior: "smooth" });
+    }
+  }, [sorting]);
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+      sorting,
+    },
+  });
+
   return (
     <ScrollSync>
-      <div className="h-fit min-w-0 grow">
-        <div className="sticky top-[64px] z-20 min-w-full">
+      <div className="relative h-fit min-w-0 grow py-4" ref={tableRef}>
+        <div className="sticky z-[5] min-w-full" style={{ top: HEADER_HEIGHT - 2 }}>
           <ScrollSyncPane>
-            <div className="scrollbar-none overflow-auto overscroll-x-none rounded-t-[12px] bg-background-secondary">
+            <div className="scrollbar-none overflow-auto overscroll-x-none bg-background-secondary px-4">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="h-12 font-semibold text-content-secondary">
                   {headerGroup.headers.map((header) => {
@@ -65,19 +103,19 @@ export function Table<T>({ table, rowLink }: { table: ReactTable<T>; rowLink: (r
           </ScrollSyncPane>
         </div>
         <ScrollSyncPane>
-          <div className="scrollbar-none flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[12px] bg-background-inverse font-semibold paragraph-lg">
+          <div className="scrollbar-none flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[12px] px-4 font-semibold paragraph-lg">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRowLink
                   href={rowLink(row.original)}
-                  className="hover:bg-background-secondary/60 relative h-16 gap-0 last:rounded-b-[12px]"
+                  className="group h-16 gap-0 transition-colors last:rounded-b-[12px] hover:bg-background-inverse"
                   key={row.id}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       minWidth={cell.column.columnDef.minSize}
                       key={cell.id}
-                      className={clsx(cell.column.getIsSorted() && "bg-background-secondary/60")}
+                      // className={clsx(cell.column.getIsSorted() && "bg-background-inverse")}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>

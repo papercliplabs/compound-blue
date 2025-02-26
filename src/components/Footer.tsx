@@ -13,10 +13,7 @@ export default function Footer() {
             Terms
           </Link>
         </div>
-        <div className="flex items-center gap-2">
-          <div>A Compound x Morpho x Polygon Collab.</div>
-          <ModeToggle />
-        </div>
+        <ModeToggle />
       </div>
     </footer>
   );

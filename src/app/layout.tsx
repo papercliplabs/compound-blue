@@ -28,7 +28,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex min-h-[100dvh] w-full flex-col items-center">
             <Header />
-            <main className="flex w-full max-w-screen-xl flex-grow flex-col gap-8 px-4 py-10">{children}</main>
+            <main className="flex w-full max-w-screen-xl flex-grow flex-col gap-8 p-4 pb-20">{children}</main>
             <Footer />
           </div>
         </Providers>

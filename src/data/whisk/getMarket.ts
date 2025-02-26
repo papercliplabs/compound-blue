@@ -14,21 +14,31 @@ const query = graphql(`
         address
         decimals
         symbol
+        icon
       }
       lltv
+      liquidationPenalty
       loanAsset {
         address
         decimals
         priceUsd
         symbol
+        icon
       }
       oracleAddress
       irm {
         address
         targetUtilization
+        curve {
+          utilization
+          supplyApy
+          borrowApy
+        }
       }
       supplyAssets
       supplyAssetsUsd
+      liquidityAssets
+      liquidityAssetsUsd
       borrowAssets
       borrowAssetsUsd
       utilization
@@ -51,6 +61,26 @@ const query = graphql(`
         }
         total
       }
+
+      vaultAllocations {
+        vault {
+          vaultAddress
+          curatorAddress
+          name
+          metadata {
+            image
+          }
+          asset {
+            symbol
+            icon
+          }
+        }
+        position {
+          supplyAssetsUsd
+        }
+        marketSupplyShare
+        supplyCapUsd
+      }
     }
   }
 `);
@@ -60,3 +90,5 @@ export const getMarket = cache(async (marketId: Hex) => {
   const market = await whiskClient.request(query, { chainId: CHAIN_ID, marketId });
   return market.morphoMarket ?? null;
 });
+
+export type Market = NonNullable<Awaited<ReturnType<typeof getMarket>>>;

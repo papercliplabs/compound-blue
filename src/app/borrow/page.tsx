@@ -1,16 +1,41 @@
-import BorrowTable from "@/components/BorrowTable";
+import BorrowTable from "@/components/tables/BorrowTable";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import UserMarketSummary from "@/components/userPosition/UserMarketSummary";
+import { getMarketSummaries } from "@/data/whisk/getMarketSummaries";
+import Image from "next/image";
+import { Suspense } from "react";
 
 export default function BorrowPage() {
   return (
     <>
-      <section className="flex flex-col gap-2">
-        <h1 className="title-2">
-          Borrow <span className="text-content-secondary">• Polygon</span>
-        </h1>
-        <p className="font-medium text-content-secondary">Borrow assets against your collateral.</p>
+      <section className="flex flex-col justify-between gap-8 pt-8 md:flex-row md:gap-2">
+        <div className="flex items-center gap-4">
+          <Image src="/polygon.png" width={56} height={56} alt="Polygon" className="rounded-[12px]" />
+          <div className="flex h-full flex-col justify-between">
+            <h1 className="title-2">
+              Borrow <span className="text-content-secondary">• Polygon</span>
+            </h1>
+            <p className="text-content-secondary">Provide collateral to borrow any asset.</p>
+          </div>
+        </div>
+
+        <UserMarketSummary />
       </section>
-      {/* <div>TODO: sumary</div> */}
-      <BorrowTable />
+
+      <Card>
+        <CardHeader>Markets</CardHeader>
+        <CardContent className="p-0">
+          <Suspense fallback={<Skeleton className="m-4 h-[400px] rounded-[16px]" />}>
+            <BorrowTableWrapper />
+          </Suspense>
+        </CardContent>
+      </Card>
     </>
   );
+}
+
+async function BorrowTableWrapper() {
+  const marketSummaries = await getMarketSummaries();
+  return <BorrowTable marketSummaries={marketSummaries} />;
 }

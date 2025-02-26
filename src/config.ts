@@ -15,6 +15,8 @@ import { polygon } from "viem/chains";
 
 export const CHAIN_ID = polygon.id;
 
+export const BLOCK_EXPLORER_BASE_URL = "https://polygonscan.com";
+
 export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
   getAddress("0x781fb7f6d845e3be129289833b04d43aa8558c42"), // USDC
   getAddress("0x3f33f9f7e2d7cfbcbdf8ea8b870a6e3d449664c2"), // POL

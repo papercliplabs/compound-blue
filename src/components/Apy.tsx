@@ -1,21 +1,61 @@
 import { formatNumber } from "@/utils/format";
 import Image from "next/image";
 import { ReactNode } from "react";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
+import Sparkle from "./ui/icons/Sparkle";
 
-interface ApyBreakdownProps {
-  base: number;
-  rewards: {
-    asset: {
-      symbol: string;
-      icon?: string | null;
-    };
-    apr: number;
-  }[];
-  performanceFee?: number;
-  total: number;
+interface ApyProps {
+  type: "supply" | "borrow";
+  apy: {
+    base: number;
+    rewards: {
+      asset: {
+        symbol: string;
+        icon?: string | null;
+      };
+      apr: number;
+    }[];
+    performanceFee?: number;
+    total: number;
+  };
 }
 
-export default function ApyBreakdown({ base, rewards, performanceFee, total }: ApyBreakdownProps) {
+const APY_TOOLTIP_CONTENT: Record<ApyProps["type"], { title: string; description: string }> = {
+  supply: {
+    title: "Supply APY",
+    description: "The annual percent yield (APY) earned by depositing into this vault.",
+  },
+  borrow: {
+    title: "Borrow APY",
+    description: "The annual percent yield (APY) paid by borrowing from this market.",
+  },
+};
+
+export default function Apy({ type, apy }: ApyProps) {
+  if (apy.rewards.length == 0) {
+    return formatNumber(apy.total, { style: "percent" });
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger className="flex items-center gap-2">
+          {formatNumber(apy.total, { style: "percent" })}
+          <Sparkle className="h-5 w-5" />
+        </TooltipTrigger>
+        <TooltipContent className="flex max-w-[320px] flex-col gap-4">
+          <div className="font-semibold">{APY_TOOLTIP_CONTENT[type].title}</div>
+          <div className="font-medium text-content-primary/50 paragraph-sm">
+            {APY_TOOLTIP_CONTENT[type].description}
+          </div>
+          <ApyBreakdown {...apy} />
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function ApyBreakdown({ base, rewards, performanceFee, total }: ApyProps["apy"]) {
   const items: { yieldSource: ReactNode; apy: number }[] = [
     { yieldSource: "Native APY", apy: base },
     ...rewards.map((reward) => ({
