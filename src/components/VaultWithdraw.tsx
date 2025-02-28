@@ -11,9 +11,9 @@ import { Button } from "./ui/button";
 import { Address } from "@morpho-org/blue-sdk";
 import { useAccount, usePublicClient } from "wagmi";
 import { SignatureRequest, TransactionRequest } from "./ActionFlowDialog/ActionFlowProvider";
-import { prepareVaultSupplyBundle } from "@/actions/prepareVaultSupplyAction";
+import { prepareVaultWithdrawBundle } from "@/actions/prepareVaultWithdrawAction";
 
-interface VaultSupplyProps {
+interface VaultWithdrawProps {
   vaultAddress: Address;
   // asset: {
   //   address: Address | string;
@@ -24,7 +24,7 @@ interface VaultSupplyProps {
   // };
 }
 
-export default function VaultSupply({ vaultAddress }: VaultSupplyProps) {
+export default function VaultWithdraw({ vaultAddress }: VaultWithdrawProps) {
   const [open, setOpen] = useState(false);
   const [signatureRequests, setSignatureRequests] = useState<SignatureRequest[]>([]);
   const [transactionRequests, setTransactionRequests] = useState<TransactionRequest[]>([]);
@@ -35,11 +35,11 @@ export default function VaultSupply({ vaultAddress }: VaultSupplyProps) {
   const handleSubmit = useCallback(async () => {
     if (!address || !publicClient) return;
 
-    const { signatureRequests, transactionRequests } = await prepareVaultSupplyBundle({
+    const { signatureRequests, transactionRequests } = await prepareVaultWithdrawBundle({
       publicClient,
       accountAddress: address,
       vaultAddress,
-      supplyAmount: BigInt(0.1e6), // TODO: get from form
+      withdrawAmount: BigInt(0.1e6), // TODO: get from form
     });
 
     setSignatureRequests(signatureRequests);
@@ -53,7 +53,7 @@ export default function VaultSupply({ vaultAddress }: VaultSupplyProps) {
   // On submit: sim bundle, store the output in state, and pass this into the action flow
   return (
     <div>
-      <Button onClick={handleSubmit}>Supply</Button>
+      <Button onClick={handleSubmit}>Withdraw</Button>
       <ActionFlowDialog
         open={open}
         onOpenChange={setOpen}
@@ -63,7 +63,7 @@ export default function VaultSupply({ vaultAddress }: VaultSupplyProps) {
         <ActionFlowSummary>SUMMARY</ActionFlowSummary>
         <ActionFlowReview>REVIEW</ActionFlowReview>
         <div className="flex w-full flex-col gap-2">
-          <ActionFlowButton>Supply</ActionFlowButton>
+          <ActionFlowButton>Withdraw</ActionFlowButton>
           <ActionFlowError />
         </div>
       </ActionFlowDialog>

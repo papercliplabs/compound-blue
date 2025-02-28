@@ -8,13 +8,14 @@ import {
 } from "@/components/ActionFlowDialog";
 import { useCallback, useState } from "react";
 import { Button } from "./ui/button";
-import { Address } from "@morpho-org/blue-sdk";
+import { MarketId } from "@morpho-org/blue-sdk";
 import { useAccount, usePublicClient } from "wagmi";
 import { SignatureRequest, TransactionRequest } from "./ActionFlowDialog/ActionFlowProvider";
-import { prepareVaultSupplyBundle } from "@/actions/prepareVaultSupplyAction";
+import { Hex } from "viem";
+import { prepareMarketRepayWithdrawAction } from "@/actions/prepareMarketRepayWithdrawAction";
 
-interface VaultSupplyProps {
-  vaultAddress: Address;
+interface MarketRepayWithdrawProps {
+  marketId: Hex;
   // asset: {
   //   address: Address | string;
   //   symbol: string;
@@ -24,7 +25,7 @@ interface VaultSupplyProps {
   // };
 }
 
-export default function VaultSupply({ vaultAddress }: VaultSupplyProps) {
+export default function MarketRepayWithdraw({ marketId }: MarketRepayWithdrawProps) {
   const [open, setOpen] = useState(false);
   const [signatureRequests, setSignatureRequests] = useState<SignatureRequest[]>([]);
   const [transactionRequests, setTransactionRequests] = useState<TransactionRequest[]>([]);
@@ -35,11 +36,12 @@ export default function VaultSupply({ vaultAddress }: VaultSupplyProps) {
   const handleSubmit = useCallback(async () => {
     if (!address || !publicClient) return;
 
-    const { signatureRequests, transactionRequests } = await prepareVaultSupplyBundle({
+    const { signatureRequests, transactionRequests } = await prepareMarketRepayWithdrawAction({
       publicClient,
       accountAddress: address,
-      vaultAddress,
-      supplyAmount: BigInt(0.1e6), // TODO: get from form
+      marketId: marketId as MarketId,
+      repayAmount: BigInt(0), // TODO: get from form
+      withdrawCollateralAmount: BigInt(0.001e18), // TODO: get from form
     });
 
     setSignatureRequests(signatureRequests);
@@ -47,13 +49,13 @@ export default function VaultSupply({ vaultAddress }: VaultSupplyProps) {
 
     setOpen(true);
     // TODO: sim bundle, store the output in state, and pass this into the action flow
-  }, [publicClient, address, vaultAddress]);
+  }, [publicClient, address, marketId]);
 
   // TODO: form input + validation
   // On submit: sim bundle, store the output in state, and pass this into the action flow
   return (
     <div>
-      <Button onClick={handleSubmit}>Supply</Button>
+      <Button onClick={handleSubmit}>Repay & Withdraw</Button>
       <ActionFlowDialog
         open={open}
         onOpenChange={setOpen}
@@ -63,7 +65,7 @@ export default function VaultSupply({ vaultAddress }: VaultSupplyProps) {
         <ActionFlowSummary>SUMMARY</ActionFlowSummary>
         <ActionFlowReview>REVIEW</ActionFlowReview>
         <div className="flex w-full flex-col gap-2">
-          <ActionFlowButton>Supply</ActionFlowButton>
+          <ActionFlowButton>Repay & Withdraw</ActionFlowButton>
           <ActionFlowError />
         </div>
       </ActionFlowDialog>

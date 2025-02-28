@@ -14,6 +14,8 @@ import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
 import Image from "next/image";
 import IrmChart from "@/components/IrmChart";
 import { UserMarketPosition, UserMarketPositionHighlight } from "@/components/UserMarketPosition";
+import MarketSupplyBorrow from "@/components/MarketSupplyBorrow";
+import MarketRepayWithdraw from "@/components/MarketRepayWithdraw";
 
 export default async function MarketPage({ params }: { params: Promise<{ marketId: string }> }) {
   const marketId = (await params).marketId as Hex;
@@ -102,7 +104,10 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
 
         <div className="flex min-w-[min(364px,100%)] flex-col gap-5">
           <Card>
-            <CardContent>TODO</CardContent>
+            <CardContent>
+              <MarketSupplyBorrow marketId={marketId} />
+              <MarketRepayWithdraw marketId={marketId} />
+            </CardContent>
           </Card>
           <Card>
             <CardContent className="flex flex-col gap-7">

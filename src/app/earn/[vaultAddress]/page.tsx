@@ -13,6 +13,7 @@ import { ReactNode, Suspense } from "react";
 import { Address, getAddress } from "viem";
 import VaultSupply from "@/components/VaultSupply";
 import { UserVaultPosition, UserVaultPositionHighlight } from "@/components/UserVaultPosition";
+import VaultWithdraw from "@/components/VaultWithdraw";
 
 export default async function VaultPage({ params }: { params: Promise<{ vaultAddress: string }> }) {
   let vaultAddress: Address;
@@ -95,6 +96,7 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
             <CardContent>
               <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
                 <SupplyWrapper vaultAddress={vaultAddress} />
+                <WithdrawWrapper vaultAddress={vaultAddress} />
               </Suspense>
             </CardContent>
           </Card>
@@ -244,7 +246,17 @@ async function SupplyWrapper({ vaultAddress }: { vaultAddress: Address }) {
     return null;
   }
 
-  return <VaultSupply vaultAddress={vaultAddress} asset={vault.asset} />;
+  return <VaultSupply vaultAddress={vaultAddress} />;
+}
+
+async function WithdrawWrapper({ vaultAddress }: { vaultAddress: Address }) {
+  const vault = await getVault(vaultAddress);
+
+  if (!vault) {
+    return null;
+  }
+
+  return <VaultWithdraw vaultAddress={vaultAddress} />;
 }
 
 export const dynamic = "force-static";
