@@ -26,8 +26,11 @@ const query = graphql(`
       liquidityAssetsUsd
 
       asset {
+        address
         symbol
         icon
+        decimals
+        priceUsd
       }
 
       supplyApy {

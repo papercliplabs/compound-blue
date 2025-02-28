@@ -13,7 +13,7 @@ import VaultAllocationTable from "@/components/tables/VaultAllocationTable";
 import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
 import Image from "next/image";
 import IrmChart from "@/components/IrmChart";
-import UserMarketPosition from "@/components/userPosition/UserMarketPosition";
+import { UserMarketPosition, UserMarketPositionHighlight } from "@/components/UserMarketPosition";
 
 export default async function MarketPage({ params }: { params: Promise<{ marketId: string }> }) {
   const marketId = (await params).marketId as Hex;
@@ -39,7 +39,6 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
                   </div>
                   <Skeleton className="w-[200px]" />
                 </div>
-                <Skeleton className="h-8 w-full max-w-[600px]" />
               </div>
             }
           >
@@ -47,7 +46,7 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
           </Suspense>
         </div>
 
-        <UserMarketPosition marketId={marketId} className="md:items-end md:text-end" />
+        <UserMarketPositionHighlight marketId={marketId} />
       </section>
 
       <div className="flex w-full flex-col gap-5 lg:flex-row">
@@ -106,7 +105,10 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
             <CardContent>TODO</CardContent>
           </Card>
           <Card>
-            <CardContent>TODO</CardContent>
+            <CardContent className="flex flex-col gap-7">
+              <span className="font-semibold text-content-secondary paragraph-sm">Position Summary</span>
+              <UserMarketPosition marketId={marketId} />
+            </CardContent>
           </Card>
         </div>
       </div>
@@ -215,7 +217,7 @@ async function MarketIrm({ marketId }: { marketId: Hex }) {
           </Metric>
         ))}
       </div>
-      <IrmChart data={market.irm.curve} currentUtilization={market.utilization} />
+      {market.irm.curve && <IrmChart data={market.irm.curve} currentUtilization={market.utilization} />}
     </div>
   );
 }

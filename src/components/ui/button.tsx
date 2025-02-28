@@ -7,7 +7,7 @@ import clsx from "clsx";
 
 const buttonVariants = cva(
   clsx(
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-colors",
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-all",
     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
@@ -15,10 +15,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-button-supply hover:bg-button-supply-muted",
-        secondary: "bg-button-neutral hover:bg-button-neutral/90",
-        negative: "bg-semantic-negative hover:bg-semantic-negative/90",
+        primary: "bg-button-supply hover:brightness-90",
+        secondary: "bg-button-neutral hover:brightness-90",
+        negative: "bg-button-neutral text-semantic-negative hover:brightness-90",
         ghost: "hover:bg-button-neutral",
+        none: "hover:brightness-90",
       },
       size: {
         lg: "h-12 px-8 paragraph-md",

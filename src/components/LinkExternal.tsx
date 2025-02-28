@@ -8,7 +8,7 @@ import { Address } from "viem";
 interface LinkExternalProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   keepReferrer?: boolean; // Allow sending our site as referrer
   noFollow?: boolean; // Prevent SEO endorsement
-  showArrow?: boolean;
+  hideArrow?: boolean;
 }
 
 export default function LinkExternal({
@@ -16,6 +16,7 @@ export default function LinkExternal({
   keepReferrer,
   noFollow,
   children,
+  hideArrow,
   className,
   ...props
 }: LinkExternalProps) {
@@ -28,15 +29,29 @@ export default function LinkExternal({
       {...props}
     >
       {children}
-      <ArrowUpRight className="aspect-square w-[1.1em] stroke-content-secondary" />
+      {!hideArrow && <ArrowUpRight className="aspect-square w-[1.1em] stroke-content-secondary" />}
     </a>
   );
 }
 
-export function LinkExternalBlockExplorer({ address, children, ...props }: { address: Address } & LinkExternalProps) {
+export function LinkExternalBlockExplorer({
+  address,
+  txHash,
+  children,
+  ...props
+}: { address?: Address; txHash?: Address } & LinkExternalProps) {
+  let path;
+  if (address && !txHash) {
+    path = `/address/${address}`;
+  } else if (txHash && !address) {
+    path = `/tx/${txHash}`;
+  } else {
+    throw new Error("Only one of address or txHash must be provided");
+  }
+
   return (
-    <LinkExternal href={`${BLOCK_EXPLORER_BASE_URL}/address/${address}`} {...props}>
-      {children ?? formatAddress(address)}
+    <LinkExternal href={`${BLOCK_EXPLORER_BASE_URL}${path}`} {...props}>
+      {children ?? formatAddress((address ?? txHash)!)}
     </LinkExternal>
   );
 }

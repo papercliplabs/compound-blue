@@ -5,13 +5,10 @@ import { polygon } from "viem/chains";
 
 // export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
 //   getAddress("0x7BfA7C4f149E7415b73bdeDfe609237e29CBF34A"),
-//   getAddress("0xa0E430870c4604CcfC7B38Ca7845B1FF653D0ff1"),
+//   // getAddress("0xa0E430870c4604CcfC7B38Ca7845B1FF653D0ff1"),
 // ];
 
-// export const WHITELISTED_MARKET_IDS: Hex[] = [
-//   "0x9103c3b4e834476c9a62ea009ba2c884ee42e94e6e314a26f04d312434191836",
-//   "0x3a4048c64ba1b375330d376b1ce40e4047d03b47ab4d48af484edec9fec801ba",
-// ];
+// export const WHITELISTED_MARKET_IDS: Hex[] = ["0x9103c3b4e834476c9a62ea009ba2c884ee42e94e6e314a26f04d312434191836"];
 
 export const CHAIN_ID = polygon.id;
 
@@ -22,6 +19,7 @@ export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
   getAddress("0x3f33f9f7e2d7cfbcbdf8ea8b870a6e3d449664c2"), // POL
   getAddress("0xf5c81d25ee174d83f1fd202ca94ae6070d073ccf"), // WETH
   getAddress("0xfd06859a671c21497a2eb8c5e3fea48de924d6c8"), // USDT
+  getAddress("0x27d6a7f9078104135b19d3b196d38316399a71a1"), // Morpho TEST
 ];
 
 export const WHITELISTED_MARKET_IDS: Hex[] = [
@@ -37,4 +35,5 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
   "0xa5b7ae7654d5041c28cb621ee93397394c7aee6c6e16c7e0fd030128d87ee1a3",
   "0xb8ae474af3b91c8143303723618b31683b52e9c86566aa54c06f0bc27906bcae",
   "0xe558a51e10f1fdf7156c9470d2f68b93b3fd1ad5e775c020ae4a7f805e8d5674",
+  // "0x372f25501f88e5e8b9373b8076985870b7c1cbd0903f26a1fef34790dbdb3607",
 ];

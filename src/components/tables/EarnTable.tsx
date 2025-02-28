@@ -6,12 +6,16 @@ import Image from "next/image";
 import { formatNumber } from "@/utils/format";
 import Apy from "../Apy";
 import RowIcons from "../RowIcons";
+import { useUserPositionContext } from "@/providers/UserPositionProvider";
+import { useMemo } from "react";
+import { getAddress } from "viem";
+import NumberFlow from "../ui/NumberFlow";
 
 interface TableProps {
   vaultSummaries: VaultSummary[];
 }
 
-export const columns: ColumnDef<VaultSummary>[] = [
+export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = [
   {
     accessorKey: "name",
     header: "Vault Name",
@@ -20,16 +24,6 @@ export const columns: ColumnDef<VaultSummary>[] = [
 
       return (
         <div className="flex min-w-0 items-center gap-3">
-          {/* <div className="absolute left-0 bg-background-secondary pl-4 pr-3 group-hover:bg-background-inverse">
-            <Image
-              src={vault.metadata?.image ?? vault.asset.icon ?? ""}
-              width={36}
-              height={36}
-              className="shrink-0 rounded-full border"
-              alt={vault.name}
-            />
-          </div>
-          <div className="h-1 w-[48px]" />  */}
           <Image
             src={vault.metadata?.image ?? vault.asset.icon ?? ""}
             width={36}
@@ -46,12 +40,14 @@ export const columns: ColumnDef<VaultSummary>[] = [
     },
     minSize: 240,
   },
-  // TODO: add connected wallet position
-  // {
-  //   accessorKey: "",
-  //   header: "Your Deposits",
-  //   accessorFn: (row) => formatNumber(row.supplyAssetsUsd, { currency: "USD" }),
-  // },
+  {
+    accessorKey: "userDepositsUsd",
+    header: "Your Deposits",
+    cell: ({ row }) => {
+      return <NumberFlow value={row.original.userDepositsUsd} format={{ currency: "USD" }} />;
+    },
+    minSize: 160,
+  },
   {
     accessorKey: "supplyAssetsUsd",
     header: "Total Deposits",
@@ -95,10 +91,22 @@ export const columns: ColumnDef<VaultSummary>[] = [
 ];
 
 export default function EarnTable({ vaultSummaries }: TableProps) {
+  // Inject user position
+  const {
+    userVaultPositionsQuery: { data: userVaultPositions },
+  } = useUserPositionContext();
+
+  const vaultSummariesWithUserPositions = useMemo(() => {
+    return vaultSummaries.map((vault) => {
+      const userDepositsUsd = userVaultPositions?.[getAddress(vault.vaultAddress)]?.supplyAssetsUsd ?? 0;
+      return { ...vault, userDepositsUsd };
+    });
+  }, [vaultSummaries, userVaultPositions]);
+
   return (
     <Table
       columns={columns}
-      data={vaultSummaries}
+      data={vaultSummariesWithUserPositions}
       initialSortKey="supplyAssetsUsd"
       rowLink={(row) => `/earn/${row.vaultAddress}`}
     />

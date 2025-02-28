@@ -1,10 +1,11 @@
 import { formatNumber } from "@/utils/format";
 import Image from "next/image";
-import { ReactNode } from "react";
+import { HTMLAttributes, ReactNode } from "react";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import Sparkle from "./ui/icons/Sparkle";
+import { cn } from "@/utils/shadcn";
 
-interface ApyProps {
+interface ApyProps extends HTMLAttributes<HTMLDivElement> {
   type: "supply" | "borrow";
   apy: {
     base: number;
@@ -31,7 +32,7 @@ const APY_TOOLTIP_CONTENT: Record<ApyProps["type"], { title: string; description
   },
 };
 
-export default function Apy({ type, apy }: ApyProps) {
+export default function Apy({ type, apy, className }: ApyProps) {
   if (apy.rewards.length == 0) {
     return formatNumber(apy.total, { style: "percent" });
   }
@@ -39,7 +40,7 @@ export default function Apy({ type, apy }: ApyProps) {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger className="flex items-center gap-2">
+        <TooltipTrigger className={cn("flex items-center gap-2", className)}>
           {formatNumber(apy.total, { style: "percent" })}
           <Sparkle className="h-5 w-5" />
         </TooltipTrigger>

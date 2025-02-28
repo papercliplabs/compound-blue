@@ -1,7 +1,7 @@
 import BorrowTable from "@/components/tables/BorrowTable";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import UserMarketSummary from "@/components/userPosition/UserMarketSummary";
+import { UserMarketPositionAggregate } from "@/components/UserMarketPosition";
 import { getMarketSummaries } from "@/data/whisk/getMarketSummaries";
 import Image from "next/image";
 import { Suspense } from "react";
@@ -10,7 +10,7 @@ export default function BorrowPage() {
   return (
     <>
       <section className="flex flex-col justify-between gap-8 pt-8 md:flex-row md:gap-2">
-        <div className="flex items-center gap-4">
+        <div className="flex h-[60px] items-center gap-4">
           <Image src="/polygon.png" width={56} height={56} alt="Polygon" className="rounded-[12px]" />
           <div className="flex h-full flex-col justify-between">
             <h1 className="title-2">
@@ -20,7 +20,7 @@ export default function BorrowPage() {
           </div>
         </div>
 
-        <UserMarketSummary />
+        <UserMarketPositionAggregate />
       </section>
 
       <Card>

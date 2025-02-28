@@ -11,7 +11,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ReactNode, Suspense } from "react";
 import { Address, getAddress } from "viem";
-import UserVaultPosition from "@/components/userPosition/UserVaultPosition";
+import VaultSupply from "@/components/VaultSupply";
+import { UserVaultPosition, UserVaultPositionHighlight } from "@/components/UserVaultPosition";
 
 export default async function VaultPage({ params }: { params: Promise<{ vaultAddress: string }> }) {
   let vaultAddress: Address;
@@ -44,7 +45,7 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
           </Suspense>
         </div>
 
-        <UserVaultPosition vaultAddress={vaultAddress} className="md:items-end md:text-end" />
+        <UserVaultPositionHighlight vaultAddress={vaultAddress} />
       </section>
 
       <div className="flex w-full flex-col gap-5 lg:flex-row">
@@ -91,10 +92,17 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
 
         <div className="flex min-w-[min(364px,100%)] flex-col gap-5">
           <Card>
-            <CardContent>TODO</CardContent>
+            <CardContent>
+              <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
+                <SupplyWrapper vaultAddress={vaultAddress} />
+              </Suspense>
+            </CardContent>
           </Card>
           <Card>
-            <CardContent>TODO</CardContent>
+            <CardContent className="flex flex-col gap-7">
+              <span className="font-semibold text-content-secondary paragraph-sm">Position Summary</span>
+              <UserVaultPosition vaultAddress={vaultAddress} />
+            </CardContent>
           </Card>
         </div>
       </div>
@@ -227,6 +235,16 @@ async function VaultInfo({ vaultAddress }: { vaultAddress: Address }) {
       ))}
     </div>
   );
+}
+
+async function SupplyWrapper({ vaultAddress }: { vaultAddress: Address }) {
+  const vault = await getVault(vaultAddress);
+
+  if (!vault) {
+    return null;
+  }
+
+  return <VaultSupply vaultAddress={vaultAddress} asset={vault.asset} />;
 }
 
 export const dynamic = "force-static";

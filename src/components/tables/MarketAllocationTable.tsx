@@ -44,7 +44,7 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
     header: "Total Supply",
     cell: ({ row }) => {
       const allocation = row.original;
-      const percentOfCap = allocation.position.supplyAssetsUsd / allocation.supplyCapUsd;
+      const percentOfCap = allocation.supplyCapUsd ? allocation.position.supplyAssetsUsd / allocation.supplyCapUsd : 0;
       return (
         <TooltipProvider>
           <Tooltip>

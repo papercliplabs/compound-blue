@@ -10,10 +10,14 @@
     "codegen": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
-    "@morpho-org/blue-sdk": "^2.3.1",
-    "@morpho-org/bundler-sdk-viem": "^2.2.0",
-    "@morpho-org/morpho-ts": "^2.1.0",
-    "@morpho-org/simulation-sdk-wagmi": "^2.0.5",
+    "@morpho-org/blue-sdk": "^3.0.0-next.4",
+    "@morpho-org/blue-sdk-viem": "^3.0.0-next.1",
+    "@morpho-org/blue-sdk-wagmi": "^3.0.0-next.0",
+    "@morpho-org/bundler-sdk-viem": "^3.0.0-next.1",
+    "@morpho-org/morpho-ts": "^2.0.2-next.0",
+    "@morpho-org/simulation-sdk": "^3.0.0-next.1",
+    "@morpho-org/simulation-sdk-wagmi": "^3.0.0-next.0",
+    "@number-flow/react": "^0.5.5",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-popover": "^1.1.6",
     "@radix-ui/react-slot": "^1.1.2",

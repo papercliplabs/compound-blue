@@ -1,16 +1,16 @@
 import EarnTable from "@/components/tables/EarnTable";
 import Image from "next/image";
-import UserVaultSummary from "@/components/userPosition/UserVaultSummary";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserVaultPositionAggregate } from "@/components/UserVaultPosition";
 
 export default async function EarnPage() {
   return (
     <>
       <section className="flex flex-col justify-between gap-8 pt-8 md:flex-row md:gap-2">
-        <div className="flex items-center gap-4">
+        <div className="flex h-[60px] items-center gap-4">
           <Image src="/polygon.png" width={56} height={56} alt="Polygon" className="rounded-[12px]" />
           <div className="flex h-full flex-col justify-between">
             <h1 className="title-2">
@@ -20,7 +20,7 @@ export default async function EarnPage() {
           </div>
         </div>
 
-        <UserVaultSummary />
+        <UserVaultPositionAggregate />
       </section>
 
       <Card>
