@@ -10,6 +10,7 @@
     "codegen": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^4.1.2",
     "@morpho-org/blue-sdk": "^3.0.0-next.4",
     "@morpho-org/blue-sdk-viem": "^3.0.0-next.1",
     "@morpho-org/blue-sdk-wagmi": "^3.0.0-next.0",
@@ -19,6 +20,7 @@
     "@morpho-org/simulation-sdk-wagmi": "^3.0.0-next.0",
     "@number-flow/react": "^0.5.5",
     "@radix-ui/react-dialog": "^1.1.6",
+    "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-popover": "^1.1.6",
     "@radix-ui/react-slot": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
@@ -36,13 +38,15 @@
     "next-themes": "^0.4.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.54.2",
     "react-scroll-sync": "^0.11.2",
     "recharts": "^2.15.1",
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
     "viem": "^2.23.1",
-    "wagmi": "^2.14.11"
+    "wagmi": "^2.14.11",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@0no-co/graphqlsp": "^1.12.16",

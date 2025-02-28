@@ -50,10 +50,16 @@ export interface TransactionRequest extends ActionMetadata {
 interface ActionFlowProviderProps {
   signatureRequests: SignatureRequest[];
   transactionRequests: TransactionRequest[];
+  flowCompletionCb?: () => void;
   children: ReactNode;
 }
 
-export function ActionFlowProvider({ children, signatureRequests, transactionRequests }: ActionFlowProviderProps) {
+export function ActionFlowProvider({
+  children,
+  flowCompletionCb,
+  signatureRequests,
+  transactionRequests,
+}: ActionFlowProviderProps) {
   const [flowState, setFlowState] = useState<ActionFlowState>("review");
   const [activeStep, setActiveStep] = useState<number>(0);
   const [actionState, setActionState] = useState<ActionState>("pending-wallet");
@@ -118,6 +124,7 @@ export function ActionFlowProvider({ children, signatureRequests, transactionReq
         return;
       }
 
+      flowCompletionCb?.();
       setFlowState("success");
     }
   }, [
@@ -133,15 +140,16 @@ export function ActionFlowProvider({ children, signatureRequests, transactionReq
     transactionRequests,
     openChainModal,
     openConnectModal,
+    flowCompletionCb,
   ]);
 
   // Trigger polling of user position once the flow is successful
-  const { triggerPolling } = useUserPositionContext();
+  const { triggerFastPolling } = useUserPositionContext();
   useEffect(() => {
     if (flowState == "success") {
-      triggerPolling();
+      triggerFastPolling();
     }
-  }, [flowState, triggerPolling]);
+  }, [flowState, triggerFastPolling]);
 
   return (
     <ActionFlowContext.Provider

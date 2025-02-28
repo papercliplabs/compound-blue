@@ -1,8 +1,8 @@
-import { getUserMarketPositions } from "@/data/whisk/getUserMarketPosition";
+import { getUserVaultPositions } from "@/data/whisk/getUserVaultPositions";
 import { getAddress } from "viem";
 
 export async function GET(request: Request, { params }: { params: Promise<{ accountAddress: string }> }) {
   const accountAddress = getAddress((await params).accountAddress);
-  const marketPositions = await getUserMarketPositions(accountAddress);
-  return Response.json(marketPositions);
+  const vaultPosition = await getUserVaultPositions(accountAddress);
+  return Response.json(vaultPosition);
 }

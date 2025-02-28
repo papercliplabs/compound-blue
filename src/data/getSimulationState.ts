@@ -49,6 +49,8 @@ export type GetSimulationStateParameters =
   | GetSimulationStateMarketRepayWithdrawParameters
   | GetSimuationStateMarketSupplyBorrowParameters;
 
+// Derive simulation state from real time on-chain data
+// Only use this for preparing actions as it is an expensive operation
 export async function getSimulationState({ publicClient, accountAddress, ...params }: GetSimulationStateParameters) {
   let vaultAddresses: Address[] = [];
   let marketIds: MarketId[] = [];

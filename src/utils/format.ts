@@ -7,11 +7,11 @@ export function formatNumber(
     currency?: "USD" | "ETH";
   } = {}
 ) {
+  const currency = options.currency;
   const {
     notation = "compact",
     minimumFractionDigits = 2,
-    maximumFractionDigits = 2,
-    currency,
+    maximumFractionDigits = input < 1 && currency !== "USD" ? 4 : 2,
     ...restOptions
   } = options;
 

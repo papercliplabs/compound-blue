@@ -13,7 +13,6 @@ import { ReactNode, Suspense } from "react";
 import { Address, getAddress } from "viem";
 import VaultSupply from "@/components/VaultSupply";
 import { UserVaultPosition, UserVaultPositionHighlight } from "@/components/UserVaultPosition";
-import VaultWithdraw from "@/components/VaultWithdraw";
 
 export default async function VaultPage({ params }: { params: Promise<{ vaultAddress: string }> }) {
   let vaultAddress: Address;
@@ -91,12 +90,12 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
           </Card>
         </div>
 
-        <div className="flex min-w-[min(364px,100%)] flex-col gap-5">
+        <div className="flex min-w-[min(364px,100%)] flex-col gap-5 md:max-w-[364px]">
           <Card>
             <CardContent>
               <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
                 <SupplyWrapper vaultAddress={vaultAddress} />
-                <WithdrawWrapper vaultAddress={vaultAddress} />
+                {/* <WithdrawWrapper vaultAddress={vaultAddress} /> */}
               </Suspense>
             </CardContent>
           </Card>
@@ -246,18 +245,18 @@ async function SupplyWrapper({ vaultAddress }: { vaultAddress: Address }) {
     return null;
   }
 
-  return <VaultSupply vaultAddress={vaultAddress} />;
+  return <VaultSupply vault={vault} />;
 }
 
-async function WithdrawWrapper({ vaultAddress }: { vaultAddress: Address }) {
-  const vault = await getVault(vaultAddress);
+// async function WithdrawWrapper({ vaultAddress }: { vaultAddress: Address }) {
+//   const vault = await getVault(vaultAddress);
 
-  if (!vault) {
-    return null;
-  }
+//   if (!vault) {
+//     return null;
+//   }
 
-  return <VaultWithdraw vaultAddress={vaultAddress} />;
-}
+//   return <VaultWithdraw vaultAddress={vaultAddress} />;
+// }
 
 export const dynamic = "force-static";
 export const revalidate = 60;

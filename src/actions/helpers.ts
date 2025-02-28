@@ -13,6 +13,7 @@ import { Address } from "viem";
 export interface PrepareActionReturnType {
   signatureRequests: SignatureRequest[];
   transactionRequests: TransactionRequest[];
+  error?: string;
 }
 
 function getSignatureRequirementDescription(
@@ -58,26 +59,32 @@ export function prepareBundle(
   simulationState: SimulationState,
   executeBundleName: string
 ): PrepareActionReturnType {
-  let { operations } = populateBundle(inputOps, simulationState, {});
-  operations = finalizeBundle(operations, simulationState, accountAddress);
+  try {
+    let { operations } = populateBundle(inputOps, simulationState, {});
+    operations = finalizeBundle(operations, simulationState, accountAddress);
 
-  console.log("operations", operations);
-  const bundle = encodeBundle(operations, simulationState);
+    console.log("operations", operations);
+    const bundle = encodeBundle(operations, simulationState);
 
-  const signatureRequests = bundle.requirements.signatures.map((sig) => ({
-    sign: sig.sign,
-    name: getSignatureRequirementDescription(sig, simulationState),
-  }));
-  const transactionRequests = bundle.requirements.txs
-    .map((tx) => ({ tx: () => tx.tx, name: getTransactionRequirementDescription(tx, simulationState) }))
-    .concat([
-      {
-        tx: bundle.tx,
-        name: executeBundleName,
-      },
-    ]);
+    const signatureRequests = bundle.requirements.signatures.map((sig) => ({
+      sign: sig.sign,
+      name: getSignatureRequirementDescription(sig, simulationState),
+    }));
+    const transactionRequests = bundle.requirements.txs
+      .map((tx) => ({ tx: () => tx.tx, name: getTransactionRequirementDescription(tx, simulationState) }))
+      .concat([
+        {
+          tx: bundle.tx,
+          name: executeBundleName,
+        },
+      ]);
 
-  console.log("DEBUG - bundle", simulationState, bundle, bundle.tx());
-
-  return { signatureRequests, transactionRequests };
+    return { signatureRequests, transactionRequests };
+  } catch (e) {
+    return {
+      signatureRequests: [],
+      transactionRequests: [],
+      error: `Simulation Error: ${e instanceof Error ? e.message : JSON.stringify(e)}`,
+    };
+  }
 }

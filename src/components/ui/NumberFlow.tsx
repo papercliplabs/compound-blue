@@ -1,16 +1,18 @@
 import NumberFlowReact from "@number-flow/react";
 import { ComponentProps } from "react";
 
+const MAX_USD_VALUE = 1e12;
+
 export default function NumberFlow({
   value,
   format,
   ...props
 }: { value: number } & ComponentProps<typeof NumberFlowReact>) {
+  const currency = format?.currency;
   const {
     notation = "compact",
     minimumFractionDigits = 2,
-    maximumFractionDigits = 2,
-    currency,
+    maximumFractionDigits = value < 1 && currency !== "USD" ? 4 : 2,
     ...restOptions
   } = format ?? {};
 
@@ -20,7 +22,13 @@ export default function NumberFlow({
     maximumFractionDigits,
     ...restOptions,
   };
-  const prefix = currency === "USD" ? "$" : currency === "ETH" ? "Ξ" : "";
+  let prefix = currency === "USD" ? "$" : currency === "ETH" ? "Ξ" : "";
+
+  // Clamp to max USD value
+  if (currency === "USD" && value > MAX_USD_VALUE) {
+    value = MAX_USD_VALUE;
+    prefix = ">" + prefix;
+  }
 
   return (
     <span>

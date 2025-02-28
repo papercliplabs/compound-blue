@@ -115,14 +115,18 @@ export function ActionFlowSummary({ className, ...props }: HTMLAttributes<HTMLDi
   const { flowState } = useActionFlowContext();
   const hidden = useMemo(() => flowState == "success" || flowState == "failed", [flowState]);
 
-  return <div className={cn(hidden && "hidden", className)} {...props} />;
+  return <div className={cn("border-b pb-6", hidden && "hidden", className)} {...props} />;
 }
 
-export function ActionFlowReview({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+export function ActionFlowReview({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
   const { flowState } = useActionFlowContext();
   const hidden = useMemo(() => flowState != "review", [flowState]);
 
-  return <div className={cn(hidden && "hidden", className)} {...props} />;
+  return (
+    <div className={cn(hidden && "hidden", className)} {...props}>
+      {children}
+    </div>
+  );
 }
 
 // Hide when in txn state
