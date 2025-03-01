@@ -113,24 +113,6 @@ function ActionFlowDialogContent({
   );
 }
 
-export function ActionFlowSummary({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  const { flowState } = useActionFlowContext();
-  const hidden = useMemo(() => flowState == "success" || flowState == "failed", [flowState]);
-
-  return <div className={cn("border-b pb-6", hidden && "!hidden", className)} {...props} />;
-}
-
-export function ActionFlowReview({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
-  const { flowState } = useActionFlowContext();
-  const hidden = useMemo(() => flowState != "review", [flowState]);
-
-  return (
-    <div className={cn(hidden && "!hidden", className)} {...props}>
-      {children}
-    </div>
-  );
-}
-
 // Hide when in txn state
 export function ActionFlowButton({ className, ...props }: ComponentProps<typeof Button>) {
   const { flowState, startFlow } = useActionFlowContext();
@@ -269,3 +251,6 @@ function ActionFlowComplete({ closeDialog }: { closeDialog: () => void }) {
     </div>
   );
 }
+
+export * from "./ActionFlowSummary";
+export * from "./ActionFlowReview";

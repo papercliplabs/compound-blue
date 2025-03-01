@@ -31,11 +31,13 @@ const query = graphql(`
           }
         }
       }
+      collateralAssets
       collateralAssetsUsd
       supplyAssetsUsd
       borrowAssets
       borrowAssetsUsd
       maxBorrowAssetsUsd
+      maxBorrowAssets
       ltv
     }
   }

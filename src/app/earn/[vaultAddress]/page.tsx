@@ -11,8 +11,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ReactNode, Suspense } from "react";
 import { Address, getAddress } from "viem";
-import VaultSupply from "@/components/VaultSupply";
 import { UserVaultPosition, UserVaultPositionHighlight } from "@/components/UserVaultPosition";
+import VaultActions from "@/components/VaultActions";
 
 export default async function VaultPage({ params }: { params: Promise<{ vaultAddress: string }> }) {
   let vaultAddress: Address;
@@ -91,14 +91,17 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
         </div>
 
         <div className="flex min-w-[min(364px,100%)] flex-col gap-5 md:max-w-[364px]">
-          <Card>
-            <CardContent>
-              <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
-                <SupplyWrapper vaultAddress={vaultAddress} />
-                {/* <WithdrawWrapper vaultAddress={vaultAddress} /> */}
-              </Suspense>
-            </CardContent>
-          </Card>
+          <Suspense
+            fallback={
+              <Card>
+                <CardContent>
+                  <Skeleton className="h-[170px] w-full" />
+                </CardContent>
+              </Card>
+            }
+          >
+            <VaultActionsWrapper vaultAddress={vaultAddress} />
+          </Suspense>
           <Card>
             <CardContent className="flex flex-col gap-7">
               <span className="font-semibold text-content-secondary paragraph-sm">Position Summary</span>
@@ -238,25 +241,15 @@ async function VaultInfo({ vaultAddress }: { vaultAddress: Address }) {
   );
 }
 
-async function SupplyWrapper({ vaultAddress }: { vaultAddress: Address }) {
+async function VaultActionsWrapper({ vaultAddress }: { vaultAddress: Address }) {
   const vault = await getVault(vaultAddress);
 
   if (!vault) {
     return null;
   }
 
-  return <VaultSupply vault={vault} />;
+  return <VaultActions vault={vault} />;
 }
-
-// async function WithdrawWrapper({ vaultAddress }: { vaultAddress: Address }) {
-//   const vault = await getVault(vaultAddress);
-
-//   if (!vault) {
-//     return null;
-//   }
-
-//   return <VaultWithdraw vaultAddress={vaultAddress} />;
-// }
 
 export const dynamic = "force-static";
 export const revalidate = 60;

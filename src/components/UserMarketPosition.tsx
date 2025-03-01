@@ -1,7 +1,7 @@
 "use client";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 import { Hex } from "viem";
-import { useUserPositionContext } from "@/providers/UserPositionProvider";
+import { useUserMarketPosition, useUserPositionContext } from "@/providers/UserPositionProvider";
 import { useMemo } from "react";
 import { Skeleton } from "./ui/skeleton";
 import Metric from "./Metric";
@@ -15,13 +15,7 @@ interface MarketPositionProps {
 }
 
 export function UserMarketPosition({ marketId }: MarketPositionProps) {
-  const {
-    userMarketPositionsQuery: { data: userMarketPositions, isLoading },
-  } = useUserPositionContext();
-
-  const marketPosition = useMemo(() => {
-    return userMarketPositions?.[marketId];
-  }, [userMarketPositions, marketId]);
+  const { data: marketPosition, isLoading } = useUserMarketPosition(marketId);
 
   return (
     <>
@@ -93,13 +87,7 @@ export function UserMarketPosition({ marketId }: MarketPositionProps) {
 
 export function UserMarketPositionHighlight({ marketId }: MarketPositionProps) {
   const { address } = useAccount();
-  const {
-    userMarketPositionsQuery: { data: userMarketPositions },
-  } = useUserPositionContext();
-
-  const marketPosition = useMemo(() => {
-    return userMarketPositions?.[marketId];
-  }, [userMarketPositions, marketId]);
+  const { data: marketPosition } = useUserMarketPosition(marketId);
 
   // Hide if not connected
   if (!address || !marketPosition || !marketPosition.market) {

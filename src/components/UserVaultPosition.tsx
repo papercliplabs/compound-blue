@@ -1,7 +1,7 @@
 "use client";
 import { descaleBigIntToNumber } from "@/utils/format";
 import { Address } from "viem";
-import { useUserPositionContext } from "@/providers/UserPositionProvider";
+import { useUserPositionContext, useUserVaultPosition } from "@/providers/UserPositionProvider";
 import { useMemo } from "react";
 import { Skeleton } from "./ui/skeleton";
 import Metric from "./Metric";
@@ -15,13 +15,7 @@ interface VaultPositionProps {
 }
 
 export function UserVaultPosition({ vaultAddress }: VaultPositionProps) {
-  const {
-    userVaultPositionsQuery: { data: userVaultPositions, isLoading },
-  } = useUserPositionContext();
-
-  const vaultPosition = useMemo(() => {
-    return userVaultPositions?.[vaultAddress];
-  }, [userVaultPositions, vaultAddress]);
+  const { data: vaultPosition, isLoading } = useUserVaultPosition(vaultAddress);
 
   return (
     <>
@@ -53,13 +47,7 @@ export function UserVaultPosition({ vaultAddress }: VaultPositionProps) {
 
 export function UserVaultPositionHighlight({ vaultAddress }: VaultPositionProps) {
   const { address } = useAccount();
-  const {
-    userVaultPositionsQuery: { data: userVaultPositions },
-  } = useUserPositionContext();
-
-  const vaultPosition = useMemo(() => {
-    return userVaultPositions?.[vaultAddress];
-  }, [userVaultPositions, vaultAddress]);
+  const { data: vaultPosition } = useUserVaultPosition(vaultAddress);
 
   // Hide if not connected
   if (!address || !vaultPosition) {

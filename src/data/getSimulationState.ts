@@ -131,8 +131,6 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
     ),
   ]);
 
-  console.log("DEBUG RAW", holdings);
-
   // Accrue interest on all markets
   const accruedMarkets = markets.map((market) => market.accrueInterest(block.timestamp));
 

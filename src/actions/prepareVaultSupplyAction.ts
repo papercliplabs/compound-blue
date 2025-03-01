@@ -1,6 +1,6 @@
 import { getSimulationState, GetSimulationStateVaultSupplyParameters } from "@/data/getSimulationState";
 import { DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
-import { PrepareActionReturnType, prepareBundle } from "./helpers";
+import { PrepareActionReturnType, prepareBundle, SimulatedValueChange } from "./helpers";
 
 type PrepareVaultSupplyActionParameters = Omit<GetSimulationStateVaultSupplyParameters, "actionType"> & {
   supplyAmount: bigint;
@@ -11,8 +11,7 @@ export type PrepareVaultSupplyActionReturnType =
       Extract<PrepareActionReturnType, { status: "success" }>,
       "initialSimulationState" | "finalSimulationState"
     > & {
-      positionBalanceBefore: bigint;
-      positionBalanceAfter: bigint;
+      positionBalanceChange: SimulatedValueChange<bigint>;
     })
   | Extract<PrepareActionReturnType, { status: "error" }>;
 
@@ -48,14 +47,17 @@ export async function prepareVaultSupplyBundle({
   );
 
   if (preparedAction.status == "success") {
-    const positionBalanceBefore = simulationState.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
+    const positionBalanceBefore =
+      preparedAction.initialSimulationState.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
     const positionBalanceAfter =
       preparedAction.finalSimulationState.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
 
     return {
       ...preparedAction,
-      positionBalanceBefore,
-      positionBalanceAfter,
+      positionBalanceChange: {
+        before: positionBalanceBefore,
+        after: positionBalanceAfter,
+      },
     };
   } else {
     return preparedAction;

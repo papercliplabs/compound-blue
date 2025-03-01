@@ -60,7 +60,7 @@
 
 @layer base {
   * {
-    @apply border-border-primary;
+    @apply break-all border-border-primary;
   }
   body {
     @apply bg-background-primary text-content-primary paragraph-md;

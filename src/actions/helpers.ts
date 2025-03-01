@@ -23,6 +23,11 @@ export type PrepareActionReturnType =
       message: string;
     };
 
+export interface SimulatedValueChange<T> {
+  before: T;
+  after: T;
+}
+
 function getSignatureRequirementDescription(
   requirement: Omit<SignatureRequirement, "sign">,
   simulationState: SimulationState

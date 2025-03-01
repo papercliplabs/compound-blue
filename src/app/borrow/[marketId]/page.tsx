@@ -14,6 +14,7 @@ import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
 import Image from "next/image";
 import IrmChart from "@/components/IrmChart";
 import { UserMarketPosition, UserMarketPositionHighlight } from "@/components/UserMarketPosition";
+import MarketActions from "@/components/MarketActions";
 
 export default async function MarketPage({ params }: { params: Promise<{ marketId: string }> }) {
   const marketId = (await params).marketId as Hex;
@@ -100,14 +101,18 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
           </Card>
         </div>
 
-        <div className="flex min-w-[min(364px,100%)] flex-col gap-5">
-          <Card>
-            <CardContent>
-              {/* <MarketSupplyBorrow marketId={marketId} />
-              <MarketRepayWithdraw marketId={marketId} /> */}
-              TODO
-            </CardContent>
-          </Card>
+        <div className="flex min-w-[min(364px,100%)] flex-col gap-5 md:max-w-[364px]">
+          <Suspense
+            fallback={
+              <Card>
+                <CardContent>
+                  <Skeleton className="h-[170px] w-full" />
+                </CardContent>
+              </Card>
+            }
+          >
+            <MarketActionsWrapper marketId={marketId} />
+          </Suspense>
           <Card>
             <CardContent className="flex flex-col gap-7">
               <span className="font-semibold text-content-secondary paragraph-sm">Position Summary</span>
@@ -303,6 +308,16 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
       ))}
     </div>
   );
+}
+
+async function MarketActionsWrapper({ marketId }: { marketId: Hex }) {
+  const market = await getMarket(marketId);
+
+  if (!market) {
+    return null;
+  }
+
+  return <MarketActions market={market} />;
 }
 
 export const dynamic = "force-static";

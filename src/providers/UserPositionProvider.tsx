@@ -1,11 +1,11 @@
 "use client";
-import { ReactNode, createContext, useCallback, useContext, useState } from "react";
+import { ReactNode, createContext, useCallback, useContext, useMemo, useState } from "react";
 import { UserVaultPositions } from "@/data/whisk/getUserVaultPositions";
 import { safeFetch } from "@/utils/fetch";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { UserMarketPositions } from "@/data/whisk/getUserMarketPositions";
-import { Address } from "viem";
+import { Address, Hex } from "viem";
 import { UserTokenHolding } from "@/data/whisk/getUserTokenHolding";
 
 const DEFAULT_POLLING_INTERVAL_MS = 60 * 1000;
@@ -81,4 +81,28 @@ export function useUserTokenHolding(tokenAddress: Address) {
   });
 
   return query;
+}
+
+export function useUserVaultPosition(vaultAddress: Address) {
+  const {
+    userVaultPositionsQuery: { data: userVaultPositions, isLoading },
+  } = useUserPositionContext();
+
+  const vaultPosition = useMemo(() => {
+    return userVaultPositions?.[vaultAddress];
+  }, [userVaultPositions, vaultAddress]);
+
+  return { data: vaultPosition, isLoading };
+}
+
+export function useUserMarketPosition(marketId: Hex) {
+  const {
+    userMarketPositionsQuery: { data: userMarketPositions, isLoading },
+  } = useUserPositionContext();
+
+  const marketPosition = useMemo(() => {
+    return userMarketPositions?.[marketId];
+  }, [userMarketPositions, marketId]);
+
+  return { data: marketPosition, isLoading };
 }
