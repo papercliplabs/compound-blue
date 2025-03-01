@@ -10,6 +10,7 @@ const query = graphql(`
     morphoVault(chainId: $chainId, address: $address) {
       vaultAddress
       name
+      decimals
       metadata {
         description
         forumLink

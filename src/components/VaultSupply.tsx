@@ -9,8 +9,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { Button } from "./ui/button";
 import { useAccount, usePublicClient } from "wagmi";
-import { SignatureRequest, TransactionRequest } from "./ActionFlowDialog/ActionFlowProvider";
-import { prepareVaultSupplyBundle } from "@/actions/prepareVaultSupplyAction";
+import { PrepareVaultSupplyActionReturnType, prepareVaultSupplyBundle } from "@/actions/prepareVaultSupplyAction";
 import { useUserTokenHolding } from "@/providers/UserPositionProvider";
 import { Vault } from "@/data/whisk/getVault";
 import { getAddress, parseUnits } from "viem";
@@ -23,6 +22,7 @@ import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 import NumberFlow from "./ui/NumberFlow";
 import Image from "next/image";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { ArrowRight } from "lucide-react";
 
 interface VaultSupplyProps {
   vault: Vault;
@@ -30,10 +30,8 @@ interface VaultSupplyProps {
 
 export default function VaultSupply({ vault }: VaultSupplyProps) {
   const [open, setOpen] = useState(false);
-  const [signatureRequests, setSignatureRequests] = useState<SignatureRequest[]>([]);
-  const [transactionRequests, setTransactionRequests] = useState<TransactionRequest[]>([]);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
-  const [simulationError, setSimulationError] = useState<string | undefined>(undefined);
+  const [preparedAction, setPreparedAction] = useState<PrepareVaultSupplyActionReturnType | undefined>(undefined);
 
   const { openConnectModal } = useConnectModal();
   const { address } = useAccount();
@@ -83,40 +81,23 @@ export default function VaultSupply({ vault }: VaultSupplyProps) {
       const { supplyAmount } = values;
       const supplyAmountBigInt = parseUnits(supplyAmount.toString(), vault.asset.decimals);
 
-      const { error, signatureRequests, transactionRequests } = await prepareVaultSupplyBundle({
+      const preparedAction = await prepareVaultSupplyBundle({
         publicClient,
         accountAddress: address,
         vaultAddress: getAddress(vault.vaultAddress),
         supplyAmount: supplyAmountBigInt,
       });
 
-      if (error) {
-        setSimulationError(error);
-      } else {
-        setSignatureRequests(signatureRequests);
-        setTransactionRequests(transactionRequests);
+      setPreparedAction(preparedAction);
 
+      if (preparedAction.status === "success") {
         setOpen(true);
       }
 
       setSimulatingBundle(false);
     },
-    [
-      publicClient,
-      address,
-      vault.vaultAddress,
-      vault.asset.decimals,
-      setSimulationError,
-      setTransactionRequests,
-      setSignatureRequests,
-      openConnectModal,
-    ]
+    [publicClient, address, vault.vaultAddress, vault.asset.decimals, openConnectModal]
   );
-
-  // Clear simulation error if the form changes
-  form.watch(() => {
-    setSimulationError(undefined);
-  });
 
   // Clear the form on flow completion
   const onFlowCompletion = useCallback(() => {
@@ -200,9 +181,9 @@ export default function VaultSupply({ vault }: VaultSupplyProps) {
               <Button type="submit" className="w-full" disabled={simulatingBundle}>
                 {simulatingBundle ? "Simulating..." : "Review Supply"}
               </Button>
-              {simulationError && (
+              {preparedAction?.status == "error" && (
                 <p className="max-h-[50px] overflow-y-auto font-medium text-semantic-negative paragraph-sm">
-                  {simulationError}
+                  {preparedAction.message}
                 </p>
               )}
             </div>
@@ -210,33 +191,54 @@ export default function VaultSupply({ vault }: VaultSupplyProps) {
         </form>
       </Form>
 
-      <ActionFlowDialog
-        open={open}
-        onOpenChange={setOpen}
-        signatureRequests={signatureRequests}
-        transactionRequests={transactionRequests}
-        flowCompletionCb={onFlowCompletion}
-      >
-        <ActionFlowSummary>
-          <div className="flex w-full items-center justify-between gap-3 rounded-[10px] bg-background-secondary px-4 py-3 font-semibold">
-            <div className="flex items-center gap-2">
-              {vault.asset.icon && <Image src={vault.asset.icon} width={32} height={32} alt={vault.asset.symbol} />}
-              <span>Supply {vault.asset.symbol}</span>
+      {preparedAction?.status == "success" && (
+        <ActionFlowDialog
+          open={open}
+          onOpenChange={setOpen}
+          signatureRequests={preparedAction?.status == "success" ? preparedAction?.signatureRequests : []}
+          transactionRequests={preparedAction?.status == "success" ? preparedAction?.transactionRequests : []}
+          flowCompletionCb={onFlowCompletion}
+        >
+          <ActionFlowSummary>
+            <div className="flex w-full items-center justify-between gap-3 rounded-[10px] bg-background-secondary px-4 py-3 font-semibold">
+              <div className="flex items-center gap-2">
+                {vault.asset.icon && <Image src={vault.asset.icon} width={32} height={32} alt={vault.asset.symbol} />}
+                <span>Supply {vault.asset.symbol}</span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span>{formatNumber(supplyAmount)}</span>
+                <span className="text-content-secondary paragraph-sm">
+                  {formatNumber(supplyAmount * vault.asset.priceUsd, { currency: "USD" })}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col items-end">
-              <span>{formatNumber(supplyAmount)}</span>
-              <span className="text-content-secondary paragraph-sm">
-                {formatNumber(supplyAmount * vault.asset.priceUsd, { currency: "USD" })}
-              </span>
+          </ActionFlowSummary>
+          <ActionFlowReview className="flex flex-col gap-4 font-semibold">
+            <div className="flex items-center justify-between">
+              <span>Supplied ({vault.asset.symbol})</span>
+              <div className="flex items-center gap-1">
+                <span className="text-content-secondary">
+                  {formatNumber(
+                    descaleBigIntToNumber(preparedAction.positionBalanceBefore, vault.decimals) * vault.asset.priceUsd,
+                    { currency: "USD" }
+                  )}
+                </span>
+
+                <ArrowRight size={14} className="stroke-content-secondary" />
+
+                {formatNumber(
+                  descaleBigIntToNumber(preparedAction.positionBalanceAfter, vault.decimals) * vault.asset.priceUsd,
+                  { currency: "USD" }
+                )}
+              </div>
             </div>
+          </ActionFlowReview>
+          <div className="flex w-full flex-col gap-2">
+            <ActionFlowButton>Supply</ActionFlowButton>
+            <ActionFlowError />
           </div>
-        </ActionFlowSummary>
-        <ActionFlowReview>REVIEW: TODO</ActionFlowReview>
-        <div className="flex w-full flex-col gap-2">
-          <ActionFlowButton>Supply</ActionFlowButton>
-          <ActionFlowError />
-        </div>
-      </ActionFlowDialog>
+        </ActionFlowDialog>
+      )}
     </>
   );
 }

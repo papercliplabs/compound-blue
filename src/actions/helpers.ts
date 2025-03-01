@@ -7,14 +7,21 @@ import {
   SignatureRequirement,
   TransactionRequirement,
 } from "@morpho-org/bundler-sdk-viem";
-import { SimulationState } from "@morpho-org/simulation-sdk";
+import { SimulationResult, SimulationState } from "@morpho-org/simulation-sdk";
 import { Address } from "viem";
 
-export interface PrepareActionReturnType {
-  signatureRequests: SignatureRequest[];
-  transactionRequests: TransactionRequest[];
-  error?: string;
-}
+export type PrepareActionReturnType =
+  | {
+      status: "success";
+      signatureRequests: SignatureRequest[];
+      transactionRequests: TransactionRequest[];
+      initialSimulationState: SimulationResult[number];
+      finalSimulationState: SimulationResult[number];
+    }
+  | {
+      status: "error";
+      message: string;
+    };
 
 function getSignatureRequirementDescription(
   requirement: Omit<SignatureRequirement, "sign">,
@@ -79,12 +86,17 @@ export function prepareBundle(
         },
       ]);
 
-    return { signatureRequests, transactionRequests };
+    return {
+      status: "success",
+      signatureRequests,
+      transactionRequests,
+      initialSimulationState: bundle.steps[0],
+      finalSimulationState: bundle.steps[bundle.steps.length - 1],
+    };
   } catch (e) {
     return {
-      signatureRequests: [],
-      transactionRequests: [],
-      error: `Simulation Error: ${e instanceof Error ? e.message : JSON.stringify(e)}`,
+      status: "error",
+      message: `Simulation Error: ${e instanceof Error ? e.message : JSON.stringify(e)}`,
     };
   }
 }

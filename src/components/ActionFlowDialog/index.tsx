@@ -1,6 +1,6 @@
 "use client";
 import { ComponentProps, HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import { ActionFlowProvider, ActionFlowState, useActionFlowContext } from "./ActionFlowProvider";
+import { ActionFlowProvider, ActionFlowState, ActionState, useActionFlowContext } from "./ActionFlowProvider";
 import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { cn } from "@/utils/shadcn";
 import { Button } from "../ui/button";
@@ -8,6 +8,7 @@ import clsx from "clsx";
 import { Check, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { LinkExternalBlockExplorer } from "../LinkExternal";
+import PercentRing from "../ui/icons/PercentRing";
 
 interface ActionFlowDialogProps extends ComponentProps<typeof ActionFlowProvider> {
   children: ReactNode;
@@ -68,6 +69,7 @@ function ActionFlowDialogContent({
     <DialogContent
       hideClose // We use custom close logic instead to prevent accidentally aborting the flow
       onInteractOutside={(event) => (preventClose ? event.preventDefault() : undefined)}
+      aria-describedby={undefined}
       {...dialogContentProps}
     >
       <DialogTitle>{TITLE_MAP[flowState]}</DialogTitle>
@@ -115,7 +117,7 @@ export function ActionFlowSummary({ className, ...props }: HTMLAttributes<HTMLDi
   const { flowState } = useActionFlowContext();
   const hidden = useMemo(() => flowState == "success" || flowState == "failed", [flowState]);
 
-  return <div className={cn("border-b pb-6", hidden && "hidden", className)} {...props} />;
+  return <div className={cn("border-b pb-6", hidden && "!hidden", className)} {...props} />;
 }
 
 export function ActionFlowReview({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -123,7 +125,7 @@ export function ActionFlowReview({ className, children, ...props }: HTMLAttribut
   const hidden = useMemo(() => flowState != "review", [flowState]);
 
   return (
-    <div className={cn(hidden && "hidden", className)} {...props}>
+    <div className={cn(hidden && "!hidden", className)} {...props}>
       {children}
     </div>
   );
@@ -134,7 +136,7 @@ export function ActionFlowButton({ className, ...props }: ComponentProps<typeof 
   const { flowState, startFlow } = useActionFlowContext();
   const hidden = useMemo(() => flowState != "review", [flowState]);
 
-  return <Button className={cn(hidden && "hidden", className)} {...props} onClick={startFlow} />;
+  return <Button className={cn(hidden && "!hidden", className)} {...props} onClick={startFlow} />;
 }
 
 export function ActionFlowError({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -149,6 +151,46 @@ export function ActionFlowError({ className, ...props }: HTMLAttributes<HTMLDivE
       {error}
     </div>
   );
+}
+
+function ActionFlowStepIcon({
+  stepNumber,
+  status,
+  actionState,
+}: {
+  stepNumber: number;
+  status: "complete" | "active" | "pending";
+  actionState: ActionState;
+}) {
+  switch (status) {
+    case "complete":
+      return (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-background-primary">
+          <Check size={16} className="stroke-semantic-positive" />
+        </div>
+      );
+    case "active":
+      return actionState == "pending-transaction" ? (
+        <div className="h-8 w-8 animate-spin p-1">
+          <PercentRing
+            percent={0.35}
+            size={24}
+            className="stroke-accent-primary"
+            innerClassName="stroke-accent-primary"
+          />
+        </div>
+      ) : (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-accent-primary bg-background-secondary font-semibold">
+          {stepNumber}
+        </div>
+      );
+    case "pending":
+      return (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-background-secondary font-semibold text-content-secondary">
+          {stepNumber}
+        </div>
+      );
+  }
 }
 
 function ActionFlowSteps() {
@@ -166,22 +208,21 @@ function ActionFlowSteps() {
   return (
     <div className={clsx("flex flex-col gap-2", hidden && "hidden")}>
       {metadatas.map((metadata, i) => {
-        const isActive = i == activeStep;
+        const status = i == activeStep ? "active" : i < activeStep ? "complete" : "pending";
         return (
           <div key={i} className="flex flex-col gap-2">
             {i != 0 && <div className="ml-[15px] h-[10px] w-[2px] bg-border-primary" />}
+
             <div className="flex items-center gap-4">
-              <div
+              <ActionFlowStepIcon stepNumber={i + 1} status={status} actionState={actionState} />
+              <span
                 className={clsx(
-                  "flex h-8 w-8 items-center justify-center rounded-full bg-background-secondary font-semibold paragraph-sm",
-                  isActive ? "border border-accent-primary text-content-primary" : "text-content-secondary"
+                  "font-semibold",
+                  status == "active" ? "text-content-primary" : "text-content-secondary"
                 )}
               >
-                {i + 1}
-              </div>
-              <span className="font-semibold">
                 {metadata.name}
-                {isActive && (actionState == "pending-wallet" ? " In wallet" : " Pending...")}
+                {status == "active" && (actionState == "pending-wallet" ? " In wallet" : " Pending...")}
               </span>
             </div>
           </div>

@@ -9,10 +9,11 @@ export default function NumberFlow({
   ...props
 }: { value: number } & ComponentProps<typeof NumberFlowReact>) {
   const currency = format?.currency;
+  const isPercent = format?.style === "percent";
   const {
     notation = "compact",
     minimumFractionDigits = 2,
-    maximumFractionDigits = value < 1 && currency !== "USD" ? 4 : 2,
+    maximumFractionDigits = value < 1 && currency !== "USD" && !isPercent ? 4 : 2,
     ...restOptions
   } = format ?? {};
 

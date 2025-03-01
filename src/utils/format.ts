@@ -8,10 +8,11 @@ export function formatNumber(
   } = {}
 ) {
   const currency = options.currency;
+  const isPercent = options.style === "percent";
   const {
     notation = "compact",
     minimumFractionDigits = 2,
-    maximumFractionDigits = input < 1 && currency !== "USD" ? 4 : 2,
+    maximumFractionDigits = input < 1 && currency !== "USD" && !isPercent ? 4 : 2,
     ...restOptions
   } = options;
 

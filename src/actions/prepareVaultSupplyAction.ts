@@ -6,13 +6,22 @@ type PrepareVaultSupplyActionParameters = Omit<GetSimulationStateVaultSupplyPara
   supplyAmount: bigint;
 };
 
-// TODO: parse and return error
+export type PrepareVaultSupplyActionReturnType =
+  | (Omit<
+      Extract<PrepareActionReturnType, { status: "success" }>,
+      "initialSimulationState" | "finalSimulationState"
+    > & {
+      positionBalanceBefore: bigint;
+      positionBalanceAfter: bigint;
+    })
+  | Extract<PrepareActionReturnType, { status: "error" }>;
+
 export async function prepareVaultSupplyBundle({
   supplyAmount,
   accountAddress,
   vaultAddress,
   ...params
-}: PrepareVaultSupplyActionParameters): Promise<PrepareActionReturnType> {
+}: PrepareVaultSupplyActionParameters): Promise<PrepareVaultSupplyActionReturnType> {
   const simulationState = await getSimulationState({
     actionType: "vault-supply",
     accountAddress,
@@ -20,7 +29,7 @@ export async function prepareVaultSupplyBundle({
     ...params,
   });
 
-  return prepareBundle(
+  const preparedAction = prepareBundle(
     [
       {
         type: "MetaMorpho_Deposit",
@@ -37,4 +46,18 @@ export async function prepareVaultSupplyBundle({
     simulationState,
     "Confirm Supply"
   );
+
+  if (preparedAction.status == "success") {
+    const positionBalanceBefore = simulationState.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
+    const positionBalanceAfter =
+      preparedAction.finalSimulationState.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
+
+    return {
+      ...preparedAction,
+      positionBalanceBefore,
+      positionBalanceAfter,
+    };
+  } else {
+    return preparedAction;
+  }
 }
