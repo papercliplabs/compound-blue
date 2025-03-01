@@ -19,7 +19,10 @@ export default function MarketActions({ market }: MarketActionsProps) {
 
   // Only if the user has a position to withdraw
   const shouldShowSelector = useMemo(() => {
-    return BigInt(userMarketPosition?.borrowAssets ?? 0) > BigInt(0);
+    return (
+      BigInt(userMarketPosition?.borrowAssets ?? 0) > BigInt(0) ||
+      BigInt(userMarketPosition?.collateralAssets ?? 0) > BigInt(0)
+    );
   }, [userMarketPosition]);
 
   // Default to supply-borrow

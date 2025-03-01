@@ -1,9 +1,10 @@
 import { getSimulationState, GetSimulationStateVaultSupplyParameters } from "@/data/getSimulationState";
 import { DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
 import { PrepareActionReturnType, prepareBundle, SimulatedValueChange } from "./helpers";
+import { maxUint256 } from "viem";
 
 type PrepareVaultWithdrawBundleParameters = Omit<GetSimulationStateVaultSupplyParameters, "actionType"> & {
-  withdrawAmount: bigint;
+  withdrawAmount: bigint; // Max uint256 for entire position balanace
 };
 
 export type PrepareVaultWithdrawActionReturnType =
@@ -28,6 +29,13 @@ export async function prepareVaultWithdrawBundle({
     ...params,
   });
 
+  const userShareBalance = simulationState.holdings?.[accountAddress]?.[vaultAddress]?.balance;
+  const isMaxWithdraw = withdrawAmount == maxUint256;
+  if (isMaxWithdraw && !userShareBalance) {
+    // Won't happen, we need this to have a correct simulation anyways
+    throw new Error("Pre simulation error: Missing user share balance for max withdraw.");
+  }
+
   const preparedAction = prepareBundle(
     [
       {
@@ -35,7 +43,8 @@ export async function prepareVaultWithdrawBundle({
         sender: accountAddress,
         address: vaultAddress,
         args: {
-          assets: withdrawAmount,
+          // Use shares if a max withdraw to prevent dust
+          ...(isMaxWithdraw ? { shares: userShareBalance! } : { assets: withdrawAmount }),
           owner: accountAddress,
           receiver: accountAddress,
           slippage: DEFAULT_SLIPPAGE_TOLERANCE,

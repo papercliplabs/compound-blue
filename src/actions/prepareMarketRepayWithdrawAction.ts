@@ -3,6 +3,7 @@ import { addresses, DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
 import { PrepareActionReturnType, prepareBundle, SimulatedValueChange } from "./helpers";
 import { CHAIN_ID } from "@/config";
 import { InputBundlerOperation } from "@morpho-org/bundler-sdk-viem";
+import { maxUint256 } from "viem";
 
 const { morpho } = addresses[CHAIN_ID];
 
@@ -10,8 +11,8 @@ type PrepareMarketRepayWithdrawActionParameters = Omit<
   GetSimulationStateMarketRepayWithdrawParameters,
   "actionType"
 > & {
-  repayAmount: bigint;
-  withdrawCollateralAmount: bigint;
+  repayAmount: bigint; // Max uint256 for entire position balance
+  withdrawCollateralAmount: bigint; // Max uint256 for entire position collateral balance
 };
 
 export type PrepareMarketRepayWithdrawActionReturnType =
@@ -25,7 +26,6 @@ export type PrepareMarketRepayWithdrawActionReturnType =
     })
   | Extract<PrepareActionReturnType, { status: "error" }>;
 
-// TODO: enable the public allocator here!!!
 export async function prepareMarketRepayWithdrawAction({
   repayAmount,
   withdrawCollateralAmount,
@@ -39,6 +39,18 @@ export async function prepareMarketRepayWithdrawAction({
     marketId,
     ...params,
   });
+
+  const isMaxRepay = repayAmount == maxUint256;
+  const isMaxWithdrawCollateral = withdrawCollateralAmount == maxUint256;
+
+  const userPosition = simulationState.positions?.[accountAddress]?.[marketId];
+  if ((isMaxRepay || isMaxWithdrawCollateral) && !userPosition) {
+    throw new Error("Pre simulation error: Missing user position.");
+  }
+
+  if (isMaxWithdrawCollateral) {
+    withdrawCollateralAmount = userPosition!.collateral;
+  }
 
   const isRepay = repayAmount > BigInt(0);
   const isWithdraw = withdrawCollateralAmount > BigInt(0);
@@ -56,7 +68,8 @@ export async function prepareMarketRepayWithdrawAction({
               args: {
                 id: marketId,
                 onBehalf: accountAddress,
-                assets: repayAmount,
+                // Use shares if a max repay to ensure fully closed position
+                ...(isMaxRepay ? { shares: userPosition!.borrowShares } : { assets: repayAmount }),
                 slippage: DEFAULT_SLIPPAGE_TOLERANCE,
               },
             } as InputBundlerOperation,

@@ -12,7 +12,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
 import { useUserMarketPosition, useUserTokenHolding } from "@/providers/UserPositionProvider";
-import { getAddress, parseUnits } from "viem";
+import { getAddress, maxUint256, parseUnits } from "viem";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -26,6 +26,8 @@ import {
   prepareMarketRepayWithdrawAction,
   PrepareMarketRepayWithdrawActionReturnType,
 } from "@/actions/prepareMarketRepayWithdrawAction";
+
+const MAX_BORROW_LTV_MARGIN = 0.05; // Only allow a max borrow origination of up to 5% below LLTV
 
 export default function MarketRepayWithdraw({ market }: MarketActionsProps) {
   const [open, setOpen] = useState(false);
@@ -86,21 +88,31 @@ export default function MarketRepayWithdraw({ market }: MarketActionsProps) {
   const repayAmount = form.watch("repayAmount") ?? 0;
   const withdrawCollateralAmount = form.watch("withdrawCollateralAmount") ?? 0;
 
-  const descaledCollateralWithdrawMax = useMemo(() => {
-    const newLoanAmount =
-      descaleBigIntToNumber(userPosition?.borrowAssets ?? BigInt(0), market.loanAsset.decimals) - repayAmount;
+  const { descaledCollateralWithdrawMax, descaledPositionCollateralAmount } = useMemo(() => {
+    const newLoanAmount = Math.max(
+      descaleBigIntToNumber(userPosition?.borrowAssets ?? BigInt(0), market.loanAsset.decimals) - repayAmount,
+      0
+    );
 
     if (market.lltv > 0 && market.collateralPriceInLoanAsset > 0) {
-      const requiredCollateralAmount = newLoanAmount / market.lltv / market.collateralPriceInLoanAsset;
+      const requiredCollateralAmount =
+        newLoanAmount / (market.lltv - MAX_BORROW_LTV_MARGIN) / market.collateralPriceInLoanAsset;
       const descaledCurrentCollateralAmount = descaleBigIntToNumber(
         userPosition?.collateralAssets ?? BigInt(0),
         market.collateralAsset?.decimals ?? 18
       );
 
-      return descaledCurrentCollateralAmount - requiredCollateralAmount;
+      return {
+        descaledCollateralWithdrawMax: descaledCurrentCollateralAmount - requiredCollateralAmount,
+        descaledPositionCollateralAmount: descaledCurrentCollateralAmount,
+      };
     } else {
-      // TOOD: something wrong...
-      return 0;
+      // Something wrong with the market config...
+      // Clamp to 0
+      return {
+        descaledCollateralWithdrawMax: 0,
+        descaledPositionCollateralAmount: 0,
+      };
     }
   }, [userPosition, repayAmount, market]);
 
@@ -133,11 +145,16 @@ export default function MarketRepayWithdraw({ market }: MarketActionsProps) {
 
       setSimulatingBundle(true);
 
-      const repayAmountBigInt = parseUnits(repayAmount.toString(), market.loanAsset.decimals ?? 18);
-      const withdrawCollateralAmountBigInt = parseUnits(
-        withdrawCollateralAmount.toString(),
-        market.collateralAsset?.decimals ?? 18
-      );
+      // Max is closing full position
+      const repayAmountBigInt =
+        repayAmount > 0 && repayAmount == descaledLoanAmount
+          ? maxUint256
+          : parseUnits(repayAmount.toString(), market.loanAsset.decimals ?? 18);
+
+      const withdrawCollateralAmountBigInt =
+        withdrawCollateralAmount > 0 && withdrawCollateralAmount == descaledPositionCollateralAmount
+          ? maxUint256
+          : parseUnits(withdrawCollateralAmount.toString(), market.collateralAsset?.decimals ?? 18);
 
       const preparedAction = await prepareMarketRepayWithdrawAction({
         publicClient,
@@ -155,7 +172,16 @@ export default function MarketRepayWithdraw({ market }: MarketActionsProps) {
 
       setSimulatingBundle(false);
     },
-    [publicClient, address, market, openConnectModal, descaledCollateralWithdrawMax, form]
+    [
+      publicClient,
+      address,
+      market,
+      openConnectModal,
+      descaledCollateralWithdrawMax,
+      descaledPositionCollateralAmount,
+      descaledLoanAmount,
+      form,
+    ]
   );
 
   if (!market.collateralAsset) {

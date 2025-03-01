@@ -1,9 +1,10 @@
 import { getSimulationState, GetSimulationStateVaultSupplyParameters } from "@/data/getSimulationState";
 import { DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
 import { PrepareActionReturnType, prepareBundle, SimulatedValueChange } from "./helpers";
+import { maxUint256 } from "viem";
 
 type PrepareVaultSupplyActionParameters = Omit<GetSimulationStateVaultSupplyParameters, "actionType"> & {
-  supplyAmount: bigint;
+  supplyAmount: bigint; // Max uint256 for entire account balanace
 };
 
 export type PrepareVaultSupplyActionReturnType =
@@ -27,6 +28,16 @@ export async function prepareVaultSupplyBundle({
     vaultAddress,
     ...params,
   });
+
+  const vault = simulationState.vaults?.[vaultAddress];
+  const userAssetBalance = simulationState.holdings?.[accountAddress]?.[vault?.asset ?? "0x"]?.balance;
+  if (supplyAmount == maxUint256) {
+    if (!userAssetBalance) {
+      // Won't happen, we need this to have a correct simulation anyways
+      throw new Error("Pre simulation error: Missing user asset balance for max supply.");
+    }
+    supplyAmount = userAssetBalance;
+  }
 
   const preparedAction = prepareBundle(
     [

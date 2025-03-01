@@ -12,7 +12,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
 import { useUserVaultPosition } from "@/providers/UserPositionProvider";
-import { getAddress, parseUnits } from "viem";
+import { getAddress, maxUint256, parseUnits } from "viem";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -70,8 +70,12 @@ export default function VaultWithdraw({ vault }: VaultActionsProps) {
 
       setSimulatingBundle(true);
 
+      // Uint256 max if the user wants to withdraw their entire balance
       const { withdrawAmount } = values;
-      const withdrawAmountBigInt = parseUnits(withdrawAmount.toString(), vault.asset.decimals);
+      const withdrawAmountBigInt =
+        withdrawAmount === decaledPositionBalance
+          ? maxUint256
+          : parseUnits(withdrawAmount.toString(), vault.asset.decimals);
 
       const preparedAction = await prepareVaultWithdrawBundle({
         publicClient,
@@ -88,7 +92,7 @@ export default function VaultWithdraw({ vault }: VaultActionsProps) {
 
       setSimulatingBundle(false);
     },
-    [publicClient, address, vault.vaultAddress, vault.asset.decimals, openConnectModal]
+    [publicClient, address, vault.vaultAddress, vault.asset.decimals, openConnectModal, decaledPositionBalance]
   );
 
   // Clear the form on flow completion
@@ -96,7 +100,7 @@ export default function VaultWithdraw({ vault }: VaultActionsProps) {
     form.reset();
   }, [form]);
 
-  const withdrawAmount = form.watch("withdrawAmount");
+  const withdrawAmount = Number(form.watch("withdrawAmount") ?? 0);
 
   return (
     <>

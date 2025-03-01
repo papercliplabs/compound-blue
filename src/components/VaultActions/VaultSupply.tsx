@@ -11,7 +11,7 @@ import { Button } from "../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
 import { PrepareVaultSupplyActionReturnType, prepareVaultSupplyBundle } from "@/actions/prepareVaultSupplyAction";
 import { useUserTokenHolding } from "@/providers/UserPositionProvider";
-import { getAddress, parseUnits } from "viem";
+import { getAddress, maxUint256, parseUnits } from "viem";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -69,8 +69,10 @@ export default function VaultSupply({ vault }: VaultActionsProps) {
 
       setSimulatingBundle(true);
 
+      // Uint256 max if the user wants to supply their entire balance
       const { supplyAmount } = values;
-      const supplyAmountBigInt = parseUnits(supplyAmount.toString(), vault.asset.decimals);
+      const supplyAmountBigInt =
+        supplyAmount === decaledWalletBalance ? maxUint256 : parseUnits(supplyAmount.toString(), vault.asset.decimals);
 
       const preparedAction = await prepareVaultSupplyBundle({
         publicClient,
@@ -87,7 +89,7 @@ export default function VaultSupply({ vault }: VaultActionsProps) {
 
       setSimulatingBundle(false);
     },
-    [publicClient, address, vault.vaultAddress, vault.asset.decimals, openConnectModal]
+    [publicClient, address, vault.vaultAddress, vault.asset.decimals, openConnectModal, decaledWalletBalance]
   );
 
   // Clear the form on flow completion
@@ -95,7 +97,7 @@ export default function VaultSupply({ vault }: VaultActionsProps) {
     form.reset();
   }, [form]);
 
-  const supplyAmount = form.watch("supplyAmount");
+  const supplyAmount = Number(form.watch("supplyAmount") ?? 0);
 
   return (
     <>

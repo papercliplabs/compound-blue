@@ -3,12 +3,13 @@ import { addresses, DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
 import { PrepareActionReturnType, prepareBundle, SimulatedValueChange } from "./helpers";
 import { CHAIN_ID } from "@/config";
 import { InputBundlerOperation } from "@morpho-org/bundler-sdk-viem";
+import { maxUint256 } from "viem";
 
 const { morpho } = addresses[CHAIN_ID];
 
 type PrepareMarketSupplyBorrowActionParameters = Omit<GetSimuationStateMarketSupplyBorrowParameters, "actionType"> & {
-  supplyCollateralAmount: bigint; // collateral
-  borrowAmount: bigint;
+  supplyCollateralAmount: bigint; // Max uint256 for entire account collateral balance
+  borrowAmount: bigint; // Don't support max here since we will only allow origination below a marging from LLTV
 };
 
 export type PrepareMarketSupplyBorrowActionReturnType =
@@ -36,6 +37,17 @@ export async function prepareMarketSupplyBorrowAction({
     marketId,
     ...params,
   });
+
+  const market = simulationState.markets?.[marketId];
+  const userCollateralBalance =
+    simulationState.holdings?.[accountAddress]?.[market?.params.collateralToken ?? "0x"]?.balance;
+  if (supplyCollateralAmount == maxUint256) {
+    if (!userCollateralBalance) {
+      // Won't happen, we need this to have a correct simulation anyways
+      throw new Error("Pre simulation error: Missing user asset balance for max collateral supply.");
+    }
+    supplyCollateralAmount = userCollateralBalance;
+  }
 
   const isSupply = supplyCollateralAmount > BigInt(0);
   const isBorrow = borrowAmount > BigInt(0);

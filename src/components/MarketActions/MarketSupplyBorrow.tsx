@@ -12,7 +12,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
 import { useUserMarketPosition, useUserTokenHolding } from "@/providers/UserPositionProvider";
-import { getAddress, parseUnits, zeroAddress } from "viem";
+import { getAddress, maxUint256, parseUnits, zeroAddress } from "viem";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -26,6 +26,8 @@ import {
   PrepareMarketSupplyBorrowActionReturnType,
 } from "@/actions/prepareMarketSupplyBorrowAction";
 import { MarketId } from "@morpho-org/blue-sdk";
+
+const MAX_BORROW_LTV_MARGIN = 0.05; // Only allow a max borrow origination of up to 5% below LLTV
 
 export default function MarketSupplyBorrow({ market }: MarketActionsProps) {
   const [open, setOpen] = useState(false);
@@ -75,22 +77,20 @@ export default function MarketSupplyBorrow({ market }: MarketActionsProps) {
     form.reset();
   }, [form]);
 
-  const supplyCollateralAmount = form.watch("supplyCollateralAmount") ?? 0;
-  const borrowAmount = form.watch("borrowAmount") ?? 0;
+  const supplyCollateralAmount = Number(form.watch("supplyCollateralAmount") ?? 0);
+  const borrowAmount = Number(form.watch("borrowAmount") ?? 0);
 
   const descaledBorrowMax = useMemo(() => {
-    const descaledCollateralAmountInLoanToken = supplyCollateralAmount * market.collateralPriceInLoanAsset;
-    const descaledCurrentBorrowCapacity = descaleBigIntToNumber(
-      BigInt(userPosition?.maxBorrowAssets ?? 0) - BigInt(userPosition?.borrowAssets ?? 0),
-      market.loanAsset.decimals
+    const currentCollateralDescaled = descaleBigIntToNumber(
+      userPosition?.collateralAssets ?? BigInt(0),
+      market.collateralAsset?.decimals ?? 18
     );
+    const newTotalCollateralDescaled = currentCollateralDescaled + supplyCollateralAmount;
+    const maxTotalLoanDescaled =
+      newTotalCollateralDescaled * market.collateralPriceInLoanAsset * (market.lltv - MAX_BORROW_LTV_MARGIN);
 
-    const descaledBorrowCapacityAfterSupply =
-      descaledCurrentBorrowCapacity + descaledCollateralAmountInLoanToken * market.lltv;
-
-    return Math.min(
-      descaledBorrowCapacityAfterSupply,
-      descaleBigIntToNumber(BigInt(market.liquidityAssets), market.loanAsset.decimals)
+    return (
+      maxTotalLoanDescaled - descaleBigIntToNumber(userPosition?.borrowAssets ?? BigInt(0), market.loanAsset.decimals)
     );
   }, [userPosition, supplyCollateralAmount, market]);
 
@@ -123,10 +123,12 @@ export default function MarketSupplyBorrow({ market }: MarketActionsProps) {
 
       setSimulatingBundle(true);
 
-      const supplyCollateralAmountBigInt = parseUnits(
-        supplyCollateralAmount.toString(),
-        market.collateralAsset?.decimals ?? 18
-      );
+      // uint256 max for entire collateral balance
+      const supplyCollateralAmountBigInt =
+        supplyCollateralAmount > 0 && supplyCollateralAmount == descaledCollateralTokenBalance
+          ? maxUint256
+          : parseUnits(supplyCollateralAmount.toString(), market.collateralAsset?.decimals ?? 18);
+
       const borrowAmountBigInt = parseUnits(borrowAmount.toString(), market.loanAsset.decimals ?? 18);
 
       const preparedAction = await prepareMarketSupplyBorrowAction({
@@ -146,7 +148,7 @@ export default function MarketSupplyBorrow({ market }: MarketActionsProps) {
 
       setSimulatingBundle(false);
     },
-    [publicClient, address, market, openConnectModal, descaledBorrowMax, form]
+    [publicClient, address, market, openConnectModal, descaledCollateralTokenBalance, descaledBorrowMax, form]
   );
 
   if (!market.collateralAsset) {

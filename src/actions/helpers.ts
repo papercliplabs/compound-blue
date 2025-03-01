@@ -101,7 +101,7 @@ export function prepareBundle(
   } catch (e) {
     return {
       status: "error",
-      message: `Simulation Error: ${e instanceof Error ? e.message : JSON.stringify(e)}`,
+      message: `Simulation Error: ${(e instanceof Error ? e.message : JSON.stringify(e)).split("0x")[0]}`,
     };
   }
 }

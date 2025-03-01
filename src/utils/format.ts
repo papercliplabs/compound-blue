@@ -29,8 +29,10 @@ export function formatNumber(
   return `${prefix}${formatted}`;
 }
 
+// Rounds down to 8 decimal places to prevent lost precision from being a larger value
 export function descaleBigIntToNumber(value: bigint | BigIntString, decimals: number): number {
-  return Number(formatUnits(BigInt(value), decimals));
+  const formattedUnits = formatUnits(BigInt(value), decimals);
+  return Math.floor(Number(formattedUnits) * 1e8) / 1e8; // Round down to 8 decimal places for precision
 }
 
 export function formatAddress(address: Address) {
