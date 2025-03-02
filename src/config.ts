@@ -5,6 +5,8 @@ export const CHAIN_ID = polygon.id;
 
 export const BLOCK_EXPLORER_BASE_URL = "https://polygonscan.com";
 
+export const MERKLE_DISTRIBUTION_ADDRESS = getAddress("0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae");
+
 export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
   getAddress("0x781FB7F6d845E3bE129289833b04d43Aa8558c42"), // USDC
   getAddress("0xF5C81d25ee174d83f1FD202cA94AE6070d073cCF"), // WETH

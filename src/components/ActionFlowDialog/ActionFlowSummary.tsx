@@ -43,7 +43,7 @@ export function ActionFlowSummaryAssetItem({
   return (
     <div className={cn("flex w-full items-center justify-between gap-3 font-semibold", className)} {...props}>
       <div className="flex items-center gap-2">
-        {asset.icon && <Image src={asset.icon} width={32} height={32} alt={asset.symbol} />}
+        {asset.icon && <Image src={asset.icon} width={32} height={32} alt={asset.symbol} className="rounded-full" />}
         <span>
           {actionName} {asset.symbol}
         </span>

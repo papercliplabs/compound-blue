@@ -13,6 +13,11 @@ import { ReactNode, Suspense } from "react";
 import { Address, getAddress } from "viem";
 import { UserVaultPosition, UserVaultPositionHighlight } from "@/components/UserVaultPosition";
 import VaultActions from "@/components/VaultActions";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Compound Blue | Vault",
+};
 
 export default async function VaultPage({ params }: { params: Promise<{ vaultAddress: string }> }) {
   let vaultAddress: Address;

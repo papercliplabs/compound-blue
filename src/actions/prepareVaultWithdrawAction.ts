@@ -1,6 +1,6 @@
 import { getSimulationState, GetSimulationStateVaultSupplyParameters } from "@/data/getSimulationState";
 import { DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
-import { PrepareActionReturnType, prepareBundle, SimulatedValueChange } from "./helpers";
+import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } from "./helpers";
 import { maxUint256 } from "viem";
 
 type PrepareVaultWithdrawBundleParameters = Omit<GetSimulationStateVaultSupplyParameters, "actionType"> & {
@@ -9,12 +9,12 @@ type PrepareVaultWithdrawBundleParameters = Omit<GetSimulationStateVaultSupplyPa
 
 export type PrepareVaultWithdrawActionReturnType =
   | (Omit<
-      Extract<PrepareActionReturnType, { status: "success" }>,
+      Extract<PrepareMorphoActionReturnType, { status: "success" }>,
       "initialSimulationState" | "finalSimulationState"
     > & {
       positionBalanceChange: SimulatedValueChange<bigint>;
     })
-  | Extract<PrepareActionReturnType, { status: "error" }>;
+  | Extract<PrepareMorphoActionReturnType, { status: "error" }>;
 
 export async function prepareVaultWithdrawBundle({
   withdrawAmount,

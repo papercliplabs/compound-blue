@@ -15,6 +15,11 @@ import Image from "next/image";
 import IrmChart from "@/components/IrmChart";
 import { UserMarketPosition, UserMarketPositionHighlight } from "@/components/UserMarketPosition";
 import MarketActions from "@/components/MarketActions";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Compound Blue | Market",
+};
 
 export default async function MarketPage({ params }: { params: Promise<{ marketId: string }> }) {
   const marketId = (await params).marketId as Hex;

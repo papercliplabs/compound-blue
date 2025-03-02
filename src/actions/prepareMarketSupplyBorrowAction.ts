@@ -1,6 +1,6 @@
 import { GetSimuationStateMarketSupplyBorrowParameters, getSimulationState } from "@/data/getSimulationState";
 import { addresses, DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
-import { PrepareActionReturnType, prepareBundle, SimulatedValueChange } from "./helpers";
+import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } from "./helpers";
 import { CHAIN_ID } from "@/config";
 import { InputBundlerOperation } from "@morpho-org/bundler-sdk-viem";
 import { maxUint256 } from "viem";
@@ -14,14 +14,14 @@ type PrepareMarketSupplyBorrowActionParameters = Omit<GetSimuationStateMarketSup
 
 export type PrepareMarketSupplyBorrowActionReturnType =
   | (Omit<
-      Extract<PrepareActionReturnType, { status: "success" }>,
+      Extract<PrepareMorphoActionReturnType, { status: "success" }>,
       "initialSimulationState" | "finalSimulationState"
     > & {
       positionCollateralChange: SimulatedValueChange<bigint>;
       positionLoanChange: SimulatedValueChange<bigint>;
       positionLtvChange: SimulatedValueChange<bigint>;
     })
-  | Extract<PrepareActionReturnType, { status: "error" }>;
+  | Extract<PrepareMorphoActionReturnType, { status: "error" }>;
 
 // TODO: enable the public allocator here!!!
 export async function prepareMarketSupplyBorrowAction({

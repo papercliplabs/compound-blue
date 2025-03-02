@@ -5,6 +5,11 @@ import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserVaultPositionAggregate } from "@/components/UserVaultPosition";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Compound Blue | Earn",
+};
 
 export default async function EarnPage() {
   return (

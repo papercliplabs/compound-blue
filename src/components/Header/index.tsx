@@ -16,7 +16,7 @@ export default function Header() {
       <div className="flex w-full max-w-screen-xl items-center justify-between p-4">
         <div className="flex items-center gap-4 md:gap-6">
           <Link href="/" className="group flex items-center gap-1">
-            <Logo className="transition-transform duration-300 group-hover:rotate-6" />
+            <Logo className="transition-transform duration-300" />
             <LogoCopy className="hidden md:block" />
           </Link>
           <Nav />

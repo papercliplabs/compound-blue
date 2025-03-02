@@ -15,13 +15,19 @@ export type PrepareActionReturnType =
       status: "success";
       signatureRequests: SignatureRequest[];
       transactionRequests: TransactionRequest[];
-      initialSimulationState: SimulationResult[number];
-      finalSimulationState: SimulationResult[number];
     }
   | {
       status: "error";
       message: string;
     };
+
+export type PrepareMorphoActionReturnType =
+  | (Extract<PrepareActionReturnType, { status: "success" }> & {
+      status: "success";
+      initialSimulationState: SimulationResult[number];
+      finalSimulationState: SimulationResult[number];
+    })
+  | Extract<PrepareActionReturnType, { status: "error" }>;
 
 export interface SimulatedValueChange<T> {
   before: T;
@@ -70,7 +76,7 @@ export function prepareBundle(
   accountAddress: Address,
   simulationState: SimulationState,
   executeBundleName: string
-): PrepareActionReturnType {
+): PrepareMorphoActionReturnType {
   try {
     let { operations } = populateBundle(inputOps, simulationState, {});
     operations = finalizeBundle(operations, simulationState, accountAddress);

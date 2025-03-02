@@ -3,8 +3,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserMarketPositionAggregate } from "@/components/UserMarketPosition";
 import { getMarketSummaries } from "@/data/whisk/getMarketSummaries";
+import { Metadata } from "next";
 import Image from "next/image";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Compound Blue | Borrow",
+};
 
 export default function BorrowPage() {
   return (
