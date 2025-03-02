@@ -8,33 +8,51 @@ import { Market } from "@/data/whisk/getMarket";
 import { Hex } from "viem";
 import MarketSupplyBorrow from "./MarketSupplyBorrow";
 import MarketRepayWithdraw from "./MarketRepayWithdraw";
+import { useResponsiveContext } from "@/providers/ResponsiveProvider";
+import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export interface MarketActionsProps {
   market: Market;
 }
 
 export default function MarketActions({ market }: MarketActionsProps) {
-  const [selection, setSelection] = useState<"supply-borrow" | "repay-withdraw">("supply-borrow");
   const { data: userMarketPosition } = useUserMarketPosition(market.marketId as Hex);
+  const { isDesktop, hasMounted } = useResponsiveContext();
 
   // Only if the user has a position to withdraw
-  const shouldShowSelector = useMemo(() => {
+  const canRepayAndWithdraw = useMemo(() => {
     return (
       BigInt(userMarketPosition?.borrowAssets ?? 0) > BigInt(0) ||
       BigInt(userMarketPosition?.collateralAssets ?? 0) > BigInt(0)
     );
   }, [userMarketPosition]);
 
+  // Wait to render until we know to prevent layout glitches
+  if (!hasMounted) {
+    return null;
+  }
+
+  if (isDesktop) {
+    return <MarketActionsDesktop market={market} canRepayAndWithdraw={canRepayAndWithdraw} />;
+  } else {
+    return <MarketActionsMobile market={market} canRepayAndWithdraw={canRepayAndWithdraw} />;
+  }
+}
+
+function MarketActionsDesktop({ market, canRepayAndWithdraw }: MarketActionsProps & { canRepayAndWithdraw: boolean }) {
+  const [selection, setSelection] = useState<"supply-borrow" | "repay-withdraw">("supply-borrow");
+
   // Default to supply-borrow
   useEffect(() => {
-    if (!shouldShowSelector) {
+    if (!canRepayAndWithdraw) {
       setSelection("supply-borrow");
     }
-  }, [shouldShowSelector]);
+  }, [canRepayAndWithdraw]);
 
   return (
     <div className="relative">
-      {shouldShowSelector && (
+      {canRepayAndWithdraw && (
         <div className="absolute -top-[16px] flex -translate-y-full gap-2">
           <Button
             variant={selection == "supply-borrow" ? "secondary" : "ghost"}
@@ -60,5 +78,42 @@ export default function MarketActions({ market }: MarketActionsProps) {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function MarketActionsMobile({ market, canRepayAndWithdraw }: MarketActionsProps & { canRepayAndWithdraw: boolean }) {
+  const [borrowOpen, setBorrowOpen] = useState(false);
+  const [repayOpen, setRepayOpen] = useState(false);
+
+  return (
+    <>
+      <div className="fixed bottom-0 left-0 right-0 z-[20] flex items-center gap-[10px] bg-background-primary/15 px-4 py-3 backdrop-blur-lg">
+        <Drawer open={borrowOpen} onOpenChange={setBorrowOpen}>
+          <DrawerTrigger asChild>
+            <Button className="w-full bg-accent-ternary">Borrow</Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <VisuallyHidden>
+              <DrawerTitle>Add collateral and borrow from market</DrawerTitle>
+            </VisuallyHidden>
+            <MarketSupplyBorrow market={market} onCloseAfterSuccess={() => setBorrowOpen(false)} />
+          </DrawerContent>
+        </Drawer>
+
+        <Drawer open={repayOpen} onOpenChange={setRepayOpen}>
+          <DrawerTrigger asChild>
+            <Button className="w-full bg-accent-ternary" disabled={!canRepayAndWithdraw}>
+              Repay
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <VisuallyHidden>
+              <DrawerTitle>Repay loan and withdraw collateral from market</DrawerTitle>
+            </VisuallyHidden>
+            <MarketRepayWithdraw market={market} onCloseAfterSuccess={() => setRepayOpen(false)} />
+          </DrawerContent>
+        </Drawer>
+      </div>
+    </>
   );
 }

@@ -1,13 +1,9 @@
 "use client";
-import { UserRewards } from "@/data/whisk/getUserRewards";
-import { safeFetch } from "@/utils/fetch";
-import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { Button } from "./ui/button";
 import Sparkle from "./ui/icons/Sparkle";
 import { useMemo, useState } from "react";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
-import { ActionFlowError } from "./ActionFlowDialog";
 import { ActionFlowButton } from "./ActionFlowDialog";
 import { ActionFlowReview } from "./ActionFlowDialog/ActionFlowReview";
 import { ActionFlowSummaryAssetItem } from "./ActionFlowDialog/ActionFlowSummary";
@@ -15,16 +11,16 @@ import { ActionFlowSummary } from "./ActionFlowDialog/ActionFlowSummary";
 import { ActionFlowDialog } from "./ActionFlowDialog";
 import { Address, getAddress, Hex } from "viem";
 import { prepareMerklClaimAction } from "@/actions/prepareMerklClaimAction";
+import { useTheme } from "next-themes";
+import Image from "next/image";
+import { useUserRewards } from "@/providers/UserPositionProvider";
 
 export default function ClaimRewards() {
   const [open, setOpen] = useState(false);
   const { address } = useAccount();
-
-  const { data } = useQuery({
-    queryKey: ["user-rewards", address!],
-    queryFn: async () => safeFetch<UserRewards>(`/api/user-rewards/${address}`),
-    enabled: !!address,
-  });
+  const { theme } = useTheme();
+  const { data } = useUserRewards();
+  const [claimed, setClaimed] = useState<boolean>(false);
 
   const totalRewards = useMemo(
     () => (data ?? []).reduce((acc, curr) => acc + (curr.unclaimedAmountUsd ?? 0), 0),
@@ -51,16 +47,19 @@ export default function ClaimRewards() {
     return prepareMerklClaimAction({ accountAddress: address, tokens, amounts, proofs });
   }, [data, address]);
 
-  if (!data || data.length === 0 || totalRewards < 0.01) {
+  if (!data || data.length === 0) {
     return null;
   }
 
   return (
     <>
-      <Button variant="secondary" className="border pl-3 pr-4" onClick={() => setOpen(true)}>
-        <Sparkle />
-        <span>{formatNumber(totalRewards, { currency: "USD" })}</span>
-      </Button>
+      {/* Hide this button once claimed since Merkl API is quite slow to update */}
+      {!claimed && (
+        <Button variant="secondary" className="border pl-3 pr-4" onClick={() => setOpen(true)}>
+          <Sparkle />
+          <span>{formatNumber(totalRewards, { currency: "USD" })}</span>
+        </Button>
+      )}
 
       {preparedAction?.status === "success" && (
         <ActionFlowDialog
@@ -68,6 +67,15 @@ export default function ClaimRewards() {
           onOpenChange={setOpen}
           signatureRequests={preparedAction.signatureRequests}
           transactionRequests={preparedAction.transactionRequests}
+          footerImage={
+            <Image
+              src={theme === "dark" ? "/merkl-dark.svg" : "/merkl-light.svg"}
+              alt="Merkl"
+              width={235}
+              height={24}
+            />
+          }
+          flowCompletionCb={() => setClaimed(true)}
         >
           <ActionFlowSummary>
             {data.map((reward, i) => {
@@ -92,11 +100,7 @@ export default function ClaimRewards() {
               <span>{formatNumber(totalRewards, { currency: "USD" })}</span>
             </div>
           </ActionFlowReview>
-          <div className="flex w-full flex-col gap-2">
-            <ActionFlowButton>Claim</ActionFlowButton>
-            <ActionFlowError />
-          </div>
-          {/* <div>MERKLE LOGO</div> */}
+          <ActionFlowButton>Claim</ActionFlowButton>
         </ActionFlowDialog>
       )}
     </>

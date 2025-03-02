@@ -2,7 +2,6 @@
 import {
   ActionFlowButton,
   ActionFlowDialog,
-  ActionFlowError,
   ActionFlowReview,
   ActionFlowReviewItem,
 } from "@/components/ActionFlowDialog";
@@ -22,10 +21,14 @@ import AssetFormField from "../AssetFormField";
 import { VaultActionsProps } from ".";
 import { ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog/ActionFlowSummary";
 
-export default function VaultSupply({ vault }: VaultActionsProps) {
+export default function VaultSupply({
+  vault,
+  onCloseAfterSuccess,
+}: VaultActionsProps & { onCloseAfterSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [preparedAction, setPreparedAction] = useState<PrepareVaultSupplyActionReturnType | undefined>(undefined);
+  const [success, setSuccess] = useState(false);
 
   const { openConnectModal } = useConnectModal();
   const { address } = useAccount();
@@ -95,7 +98,8 @@ export default function VaultSupply({ vault }: VaultActionsProps) {
   // Clear the form on flow completion
   const onFlowCompletion = useCallback(() => {
     form.reset();
-  }, [form]);
+    setSuccess(true);
+  }, [form, setSuccess]);
 
   const supplyAmount = Number(form.watch("supplyAmount") ?? 0);
 
@@ -103,28 +107,26 @@ export default function VaultSupply({ vault }: VaultActionsProps) {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <fieldset
-            disabled={simulatingBundle || open}
-            style={{ all: "unset" }}
-            className="flex w-full flex-col space-y-8 overflow-hidden"
-          >
-            <AssetFormField
-              control={form.control}
-              name="supplyAmount"
-              actionName="Supply"
-              asset={vault.asset}
-              descaledAvailableBalance={decaledWalletBalance}
-            />
+          <fieldset disabled={simulatingBundle || open} style={{ all: "unset", width: "100%" }}>
+            <div className="flex w-full flex-col space-y-8 overflow-hidden">
+              <AssetFormField
+                control={form.control}
+                name="supplyAmount"
+                actionName="Supply"
+                asset={vault.asset}
+                descaledAvailableBalance={decaledWalletBalance}
+              />
 
-            <div className="flex min-w-0 flex-col gap-2">
-              <Button type="submit" className="w-full" disabled={simulatingBundle}>
-                {simulatingBundle ? "Simulating..." : "Review Supply"}
-              </Button>
-              {preparedAction?.status == "error" && (
-                <p className="max-h-[50px] overflow-y-auto font-medium text-semantic-negative paragraph-sm">
-                  {preparedAction.message}
-                </p>
-              )}
+              <div className="flex min-w-0 flex-col gap-2">
+                <Button type="submit" className="w-full" disabled={simulatingBundle}>
+                  {simulatingBundle ? "Simulating..." : "Review Supply"}
+                </Button>
+                {preparedAction?.status == "error" && (
+                  <p className="max-h-[50px] overflow-y-auto font-medium text-semantic-negative paragraph-sm">
+                    {preparedAction.message}
+                  </p>
+                )}
+              </div>
             </div>
           </fieldset>
         </form>
@@ -133,7 +135,12 @@ export default function VaultSupply({ vault }: VaultActionsProps) {
       {preparedAction?.status == "success" && (
         <ActionFlowDialog
           open={open}
-          onOpenChange={setOpen}
+          onOpenChange={(open) => {
+            setOpen(open);
+            if (!open && success) {
+              onCloseAfterSuccess?.();
+            }
+          }}
           signatureRequests={preparedAction?.status == "success" ? preparedAction?.signatureRequests : []}
           transactionRequests={preparedAction?.status == "success" ? preparedAction?.transactionRequests : []}
           flowCompletionCb={onFlowCompletion}
@@ -161,10 +168,7 @@ export default function VaultSupply({ vault }: VaultActionsProps) {
               )}
             />
           </ActionFlowReview>
-          <div className="flex w-full flex-col gap-2">
-            <ActionFlowButton>Supply</ActionFlowButton>
-            <ActionFlowError />
-          </div>
+          <ActionFlowButton>Supply</ActionFlowButton>
         </ActionFlowDialog>
       )}
     </>

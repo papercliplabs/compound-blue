@@ -1,9 +1,9 @@
 import { formatNumber } from "@/utils/format";
 import Image from "next/image";
 import { HTMLAttributes, ReactNode } from "react";
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import Sparkle from "./ui/icons/Sparkle";
 import { cn } from "@/utils/shadcn";
+import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "./ui/tooltipPopover";
 
 interface ApyProps extends HTMLAttributes<HTMLDivElement> {
   type: "supply" | "borrow";
@@ -38,21 +38,17 @@ export default function Apy({ type, apy, className }: ApyProps) {
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger className={cn("flex items-center gap-2", className)}>
-          {formatNumber(apy.total, { style: "percent" })}
-          <Sparkle className="h-5 w-5" />
-        </TooltipTrigger>
-        <TooltipContent className="flex max-w-[320px] flex-col gap-4">
-          <div className="font-semibold">{APY_TOOLTIP_CONTENT[type].title}</div>
-          <div className="font-medium text-content-primary/50 paragraph-sm">
-            {APY_TOOLTIP_CONTENT[type].description}
-          </div>
-          <ApyBreakdown {...apy} />
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <TooltipPopover>
+      <TooltipPopoverTrigger className={cn("flex items-center gap-2", className)}>
+        {formatNumber(apy.total, { style: "percent" })}
+        <Sparkle className="h-5 w-5" />
+      </TooltipPopoverTrigger>
+      <TooltipPopoverContent className="flex max-w-[320px] flex-col gap-4">
+        <div className="font-semibold">{APY_TOOLTIP_CONTENT[type].title}</div>
+        <div className="font-medium text-content-primary/50 paragraph-sm">{APY_TOOLTIP_CONTENT[type].description}</div>
+        <ApyBreakdown {...apy} />
+      </TooltipPopoverContent>
+    </TooltipPopover>
   );
 }
 

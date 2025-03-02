@@ -95,7 +95,7 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
           </Card>
         </div>
 
-        <div className="flex min-w-[min(364px,100%)] flex-col gap-5 md:max-w-[364px]">
+        <div className="flex min-w-[min(364px,100%)] flex-col gap-5 lg:max-w-[364px]">
           <Suspense
             fallback={
               <Card>

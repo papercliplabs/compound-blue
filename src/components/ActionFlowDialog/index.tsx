@@ -1,7 +1,6 @@
 "use client";
 import { ComponentProps, HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { ActionFlowProvider, ActionFlowState, ActionState, useActionFlowContext } from "./ActionFlowProvider";
-import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { cn } from "@/utils/shadcn";
 import { Button } from "../ui/button";
 import clsx from "clsx";
@@ -9,11 +8,13 @@ import { Check, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { LinkExternalBlockExplorer } from "../LinkExternal";
 import PercentRing from "../ui/icons/PercentRing";
+import { DialogDrawer, DialogDrawerContent, DialogDrawerTitle } from "../ui/dialogDrawer";
 
 interface ActionFlowDialogProps extends ComponentProps<typeof ActionFlowProvider> {
   children: ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  footerImage?: ReactNode;
 }
 
 const TITLE_MAP: Record<ActionFlowState, string> = {
@@ -23,7 +24,13 @@ const TITLE_MAP: Record<ActionFlowState, string> = {
   failed: "Failed",
 };
 
-export function ActionFlowDialog({ open, onOpenChange, children, ...providerProps }: ActionFlowDialogProps) {
+export function ActionFlowDialog({
+  open,
+  onOpenChange,
+  children,
+  footerImage,
+  ...providerProps
+}: ActionFlowDialogProps) {
   const [render, setRender] = useState<boolean>(open);
 
   const closeDialog = useCallback(() => {
@@ -48,9 +55,11 @@ export function ActionFlowDialog({ open, onOpenChange, children, ...providerProp
   return (
     render && (
       <ActionFlowProvider {...providerProps}>
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <ActionFlowDialogContent closeDialog={closeDialog}>{children}</ActionFlowDialogContent>
-        </Dialog>
+        <DialogDrawer open={open} onOpenChange={onOpenChange}>
+          <ActionFlowDialogContent closeDialog={closeDialog} footerImage={footerImage}>
+            {children}
+          </ActionFlowDialogContent>
+        </DialogDrawer>
       </ActionFlowProvider>
     )
   );
@@ -59,20 +68,20 @@ export function ActionFlowDialog({ open, onOpenChange, children, ...providerProp
 function ActionFlowDialogContent({
   children,
   closeDialog,
+  footerImage,
   ...dialogContentProps
-}: ComponentProps<typeof DialogContent> & { closeDialog: () => void }) {
+}: ComponentProps<typeof DialogDrawerContent> & { closeDialog: () => void; footerImage: ReactNode }) {
   const { flowState } = useActionFlowContext();
   const preventClose = useMemo(() => flowState == "active", [flowState]);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   return (
-    <DialogContent
-      hideClose // We use custom close logic instead to prevent accidentally aborting the flow
-      onInteractOutside={(event) => (preventClose ? event.preventDefault() : undefined)}
-      aria-describedby={undefined}
+    <DialogDrawerContent
+      overrideDismissible={preventClose}
+      hideCloseButton // We use custom close logic instead to prevent accidentally aborting the flow
       {...dialogContentProps}
     >
-      <DialogTitle>{TITLE_MAP[flowState]}</DialogTitle>
+      <DialogDrawerTitle>{TITLE_MAP[flowState]}</DialogDrawerTitle>
       <div className="absolute right-10 top-10">
         <Popover open={popoverOpen}>
           <PopoverTrigger />
@@ -109,7 +118,8 @@ function ActionFlowDialogContent({
       {children}
       <ActionFlowSteps />
       <ActionFlowComplete closeDialog={closeDialog} />
-    </DialogContent>
+      {footerImage && <div className="flex w-full items-center justify-center">{footerImage}</div>}
+    </DialogDrawerContent>
   );
 }
 
@@ -118,10 +128,15 @@ export function ActionFlowButton({ className, ...props }: ComponentProps<typeof 
   const { flowState, startFlow } = useActionFlowContext();
   const hidden = useMemo(() => flowState != "review", [flowState]);
 
-  return <Button className={cn(hidden && "!hidden", className)} {...props} onClick={startFlow} />;
+  return (
+    <div className={clsx("flex w-full flex-col gap-2", hidden && "!hidden")}>
+      <Button className={cn("", className)} {...props} onClick={startFlow} />
+      <ActionFlowError />
+    </div>
+  );
 }
 
-export function ActionFlowError({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+function ActionFlowError({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   const { flowState, error } = useActionFlowContext();
   const hidden = useMemo(() => flowState != "review" || !error, [flowState, error]);
 

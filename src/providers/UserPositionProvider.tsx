@@ -7,6 +7,7 @@ import { useAccount } from "wagmi";
 import { UserMarketPositions } from "@/data/whisk/getUserMarketPositions";
 import { Address, Hex } from "viem";
 import { UserTokenHolding } from "@/data/whisk/getUserTokenHolding";
+import { UserRewards } from "@/data/whisk/getUserRewards";
 
 const DEFAULT_POLLING_INTERVAL_MS = 60 * 1000;
 const FAST_POLLING_INTERVAL_MS = 3 * 1000;
@@ -78,6 +79,19 @@ export function useUserTokenHolding(tokenAddress: Address) {
     queryFn: async () => safeFetch<UserTokenHolding>(`/api/user/${address}/holding/${tokenAddress}`),
     enabled: !!address,
     refetchInterval: pollingInterval,
+  });
+
+  return query;
+}
+
+export function useUserRewards() {
+  const { address } = useAccount();
+
+  const query = useQuery({
+    queryKey: ["user-rewards", address!],
+    queryFn: async () => safeFetch<UserRewards>(`/api/user-rewards/${address}`),
+    enabled: !!address,
+    // refetchInterval: pollingInterval, // Don't need, Merkl API is very slow to update
   });
 
   return query;

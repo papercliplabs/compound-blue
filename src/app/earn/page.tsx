@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserVaultPositionAggregate } from "@/components/UserVaultPosition";
 import { Metadata } from "next";
 
+import { Drawer, DrawerClose, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+
 export const metadata: Metadata = {
   title: "Compound Blue | Earn",
 };
@@ -36,6 +38,15 @@ export default async function EarnPage() {
           </Suspense>
         </CardContent>
       </Card>
+
+      <Drawer>
+        <DrawerTrigger>Open</DrawerTrigger>
+        <DrawerContent>
+          <DrawerTitle>Are you absolutely sure?</DrawerTitle>
+          <DrawerClose>Cancel</DrawerClose>
+          <div className="h-[4000px] w-full bg-red-400"></div>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }
