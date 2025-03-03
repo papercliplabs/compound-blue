@@ -6,6 +6,7 @@ const MAX_USD_VALUE = 1e12;
 export default function NumberFlow({
   value,
   format,
+  className,
   ...props
 }: { value: number } & ComponentProps<typeof NumberFlowReact>) {
   const currency = format?.currency;
@@ -31,8 +32,12 @@ export default function NumberFlow({
     prefix = ">" + prefix;
   }
 
+  if (value !== 0 && value < 10 ** -maximumFractionDigits) {
+    prefix = "<" + prefix;
+  }
+
   return (
-    <span>
+    <span className={className}>
       {prefix}
       <NumberFlowReact value={value} format={formatOptions} {...props} className="inline" />
     </span>

@@ -14,7 +14,7 @@ export default function Nav() {
     <div className="flex items-center gap-2">
       {NAV_ITEMS.map((item) => (
         <Link key={item.href} href={item.href}>
-          <Button variant={pathname.includes(item.href) ? "secondary" : "ghost"} size="sm">
+          <Button variant={pathname.includes(item.href) ? "secondary" : "ghost"} size="md" className="h-7 px-4">
             {item.name}
           </Button>
         </Link>

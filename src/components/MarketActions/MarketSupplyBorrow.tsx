@@ -179,7 +179,7 @@ export default function MarketSupplyBorrow({
                   {simulatingBundle ? "Simulating..." : "Review"}
                 </Button>
                 {preparedAction?.status == "error" && (
-                  <p className="max-h-[50px] overflow-y-auto font-medium text-semantic-negative paragraph-sm">
+                  <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
                     {preparedAction.message}
                   </p>
                 )}
@@ -220,7 +220,7 @@ export default function MarketSupplyBorrow({
               />
             )}
           </ActionFlowSummary>
-          <ActionFlowReview className="flex flex-col gap-4 font-semibold">
+          <ActionFlowReview className="flex flex-col gap-4">
             {supplyCollateralAmount > 0 && (
               <ActionFlowReviewItem
                 name={`Collateral (${market.collateralAsset.symbol})`}

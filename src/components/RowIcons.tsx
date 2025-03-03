@@ -25,7 +25,7 @@ export default function RowIcons({ icons, size }: RowIconsProps) {
       {remainingCount > 0 && (
         <div className="rounded-full bg-background-secondary p-[2px]" style={{ marginLeft: `-${size / 4}px` }}>
           <div
-            className="flex items-center justify-center rounded-full bg-background-primary text-[10px] font-medium text-content-secondary"
+            className="flex items-center justify-center rounded-full bg-background-primary text-[10px] text-content-secondary"
             style={{
               width: size,
               height: size,

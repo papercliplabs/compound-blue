@@ -34,7 +34,10 @@ export async function prepareVaultSupplyBundle({
   if (supplyAmount == maxUint256) {
     if (!userAssetBalance) {
       // Won't happen, we need this to have a correct simulation anyways
-      throw new Error("Pre simulation error: Missing user asset balance for max supply.");
+      return {
+        status: "error",
+        message: "Pre simulation error: Missing user asset balance for max supply.",
+      };
     }
     supplyAmount = userAssetBalance;
   }

@@ -74,7 +74,7 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
                 Max
               </Button>
             </div>
-            <div className="flex items-center justify-between font-semibold text-content-secondary paragraph-sm">
+            <div className="label-sm flex items-center justify-between text-content-secondary">
               {asset.priceUsd && (
                 <NumberFlow value={(field.value ?? 0) * asset.priceUsd} format={{ currency: "USD" }} />
               )}

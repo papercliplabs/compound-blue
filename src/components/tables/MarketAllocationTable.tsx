@@ -23,8 +23,8 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
         <div className="flex items-center gap-3">
           <MarketIcon loanAssetInfo={market.loanAsset} collateralAssetInfo={market.collateralAsset ?? undefined} />
           <div className={clsx("flex items-center gap-2", !market.collateralAsset?.icon && "pl-[32px]")}>
-            <span>{market.name}</span>
-            <div className="rounded-[4px] bg-button-neutral px-1 text-content-secondary paragraph-sm">
+            <span className="label-lg">{market.name}</span>
+            <div className="label-sm rounded-[4px] bg-button-neutral px-1 text-content-secondary">
               {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 0 })}
             </div>
           </div>

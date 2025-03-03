@@ -29,7 +29,7 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
             className="shrink-0 rounded-full border"
             alt={market.loanAsset.symbol}
           />
-          <span>{market.loanAsset.symbol}</span>
+          <span className="label-lg">{market.loanAsset.symbol}</span>
         </div>
       );
     },
@@ -53,7 +53,7 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
             className="shrink-0 rounded-full border"
             alt={market.collateralAsset.symbol}
           />
-          <span>{market.collateralAsset.symbol}</span>
+          <span className="label-lg">{market.collateralAsset.symbol}</span>
         </div>
       ) : (
         "N/A"

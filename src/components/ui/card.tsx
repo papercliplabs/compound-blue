@@ -9,7 +9,7 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
   return (
     <div
       className={cn(
-        "flex h-[56px] items-center justify-between rounded-t-[12px] bg-background-inverse px-8 font-semibold text-content-secondary paragraph-sm",
+        "label-md flex h-[56px] items-center justify-between rounded-t-[12px] bg-background-inverse px-8 text-content-secondary",
         className
       )}
       {...props}

@@ -32,7 +32,7 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
     <>
       <section className="flex flex-col justify-between gap-6 md:flex-row">
         <div className="flex flex-col gap-3">
-          <Link href="/earn" className="flex items-center gap-2 font-semibold text-content-secondary">
+          <Link href="/earn" className="label-md flex items-center gap-2 text-content-secondary">
             <ArrowLeft size={16} className="stroke-content-secondary" /> Earn
           </Link>
 
@@ -110,7 +110,7 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
           </Suspense>
           <Card>
             <CardContent className="flex flex-col gap-7">
-              <span className="font-semibold text-content-secondary paragraph-sm">Position Summary</span>
+              <span className="label-sm text-content-secondary">Position Summary</span>
               <Suspense fallback={<Skeleton className="h-[80px] w-full" />}>
                 <UserVaultPositionWrapper vaultAddress={vaultAddress} />
               </Suspense>
@@ -142,7 +142,7 @@ async function VaultMetadata({ vaultAddress }: { vaultAddress: Address }) {
         <h1 className="title-2">{vault.name}</h1>
       </div>
       {vault.metadata?.description && (
-        <p className="w-full max-w-[600px] font-medium text-content-secondary">{vault.metadata?.description}</p>
+        <p className="w-full max-w-[600px] text-content-secondary">{vault.metadata?.description}</p>
       )}
     </div>
   );

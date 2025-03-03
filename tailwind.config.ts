@@ -63,22 +63,31 @@ export default {
           "@apply font-inter text-[32px] font-bold leading-[36px] tracking-[-0.03em]": {},
         },
         ".title-3": {
-          "@apply font-inter text-[24px] font-medium leading-[32px] tracking-[-0.03em]": {},
+          "@apply font-inter text-[24px] font-semibold leading-[32px] tracking-[-0.03em]": {},
         },
         ".title-4": {
-          "@apply font-inter text-[20px] font-medium leading-[24px] tracking-[-0.03em]": {},
+          "@apply font-inter text-[20px] font-semibold leading-[24px] tracking-[-0.03em]": {},
         },
         ".title-5": {
-          "@apply font-inter text-[18px] font-bold leading-[22px] tracking-[-0.03em]": {},
+          "@apply font-inter text-[18px] font-semibold leading-[22px] tracking-[-0.03em]": {},
         },
         ".paragraph-lg": {
-          "@apply font-inter text-[16px] leading-[24px] tracking-[-0.03em]": {},
+          "@apply font-inter text-[16px] font-medium leading-[24px] tracking-[-0.03em]": {},
         },
         ".paragraph-md": {
-          "@apply font-inter text-[14px] leading-[20px] tracking-[-0.035em]": {},
+          "@apply font-inter text-[14px] font-medium leading-[20px] tracking-[-0.035em]": {},
         },
         ".paragraph-sm": {
-          "@apply font-inter text-[12px] leading-[16px] tracking-[-0.03em]": {},
+          "@apply font-inter text-[12px] font-medium leading-[16px] tracking-[-0.03em]": {},
+        },
+        ".label-lg": {
+          "@apply font-inter text-[16px] font-semibold leading-[24px] tracking-[-0.03em]": {},
+        },
+        ".label-md": {
+          "@apply font-inter text-[14px] font-semibold leading-[20px] tracking-[-0.035em]": {},
+        },
+        ".label-sm": {
+          "@apply font-inter text-[12px] font-semibold leading-[16px] tracking-[-0.03em]": {},
         },
         ".shadow-top-only": {
           "@apply shadow-[0px_-2px_6px_rgba(0,0,0,0.05),0px_4px_36px_rgba(0,0,0,0.04)]": {},
@@ -89,6 +98,9 @@ export default {
           "clip-path": "inset(0 0 -36px 0)",
         },
       });
+    },
+    function ({ addVariant }: { addVariant: any }) {
+      addVariant("aria-invalid", '&[aria-invalid="true"]');
     },
   ],
 } satisfies Config;

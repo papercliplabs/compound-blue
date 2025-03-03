@@ -48,7 +48,7 @@ export default function VaultSupply({
         .pipe(
           z.coerce
             .number()
-            .nonnegative()
+            .positive({ message: "Amount must be greater than zero." })
             .max(decaledWalletBalance ?? Number.MAX_VALUE, { message: "Amount exceeds wallet balance." })
         ),
     });
@@ -124,7 +124,7 @@ export default function VaultSupply({
                   {simulatingBundle ? "Simulating..." : "Review Supply"}
                 </Button>
                 {preparedAction?.status == "error" && (
-                  <p className="max-h-[50px] overflow-y-auto font-medium text-semantic-negative paragraph-sm">
+                  <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
                     {preparedAction.message}
                   </p>
                 )}

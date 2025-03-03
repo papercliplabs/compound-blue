@@ -32,8 +32,8 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
             alt={vault.name}
           />
           <div className="flex flex-col justify-between">
-            <span>{vault.name}</span>
-            <span className="font-semibold text-content-secondary paragraph-sm">{vault.asset.symbol}</span>
+            <span className="label-lg">{vault.name}</span>
+            <span className="label-sm text-content-secondary">{vault.asset.symbol}</span>
           </div>
         </div>
       );

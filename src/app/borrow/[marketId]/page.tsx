@@ -32,7 +32,7 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
     <>
       <section className="flex flex-col justify-between gap-6 md:flex-row">
         <div className="flex flex-col gap-3">
-          <Link href="/borrow" className="flex items-center gap-2 font-semibold text-content-secondary">
+          <Link href="/borrow" className="label-md flex items-center gap-2 text-content-secondary">
             <ArrowLeft size={16} className="stroke-content-secondary" /> Borrow
           </Link>
 
@@ -121,7 +121,7 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
           </Suspense>
           <Card>
             <CardContent className="flex flex-col gap-7">
-              <span className="font-semibold text-content-secondary paragraph-sm">Position Summary</span>
+              <span className="label-sm text-content-secondary">Position Summary</span>
               <Suspense fallback={<Skeleton className="h-[240px] w-full" />}>
                 <UserMarketPositionWrapper marketId={marketId} />
               </Suspense>
@@ -145,7 +145,7 @@ async function MarketMetadata({ marketId }: { marketId: Hex }) {
       <MarketIcon loanAssetInfo={market.loanAsset} collateralAssetInfo={market.collateralAsset} />
       <div className="flex items-center gap-4">
         <h1 className="whitespace-nowrap title-2">{market.name}</h1>
-        <div className="rounded-[4px] bg-button-neutral px-1 font-semibold text-content-secondary paragraph-lg">
+        <div className="label-lg rounded-[4px] bg-button-neutral px-1 text-content-secondary">
           {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 0 })}
         </div>
       </div>

@@ -47,7 +47,7 @@ export default function IrmChart({ data, currentUtilization }: IrmChartProps) {
             return formatNumber(value, { style: "percent", minimumFractionDigits: 0, maximumFractionDigits: 0 });
           }}
           interval="preserveStartEnd"
-          className="font-semibold text-content-secondary paragraph-md"
+          className="label-md text-content-secondary"
         />
         <ChartTooltip content={<CustomTooltip />} position={{ y: 0 }} cursor={{ strokeWidth: 3 }} />
         <ReferenceLine x={currentUtilization} stroke="rgb(var(--border-primary))" strokeDasharray="4 4" strokeWidth={2}>
@@ -93,7 +93,7 @@ function CustomActiveDot({ cx, cy, color }: DotProps) {
 function CustomTooltip({ active, payload }: ComponentProps<typeof Tooltip>) {
   if (active && payload && payload.length) {
     return (
-      <div className="shadow-card flex flex-col gap-4 rounded-lg bg-background-secondary px-5 py-4 font-semibold paragraph-sm">
+      <div className="label-sm flex flex-col gap-4 rounded-lg bg-background-secondary px-5 py-4 shadow-card">
         <div className="flex items-center justify-between gap-6">
           <span>Utilization:</span>
           {formatNumber(payload[0]?.payload?.utilization ?? 0, { style: "percent" })}

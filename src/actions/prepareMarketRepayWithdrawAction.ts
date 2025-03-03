@@ -45,7 +45,10 @@ export async function prepareMarketRepayWithdrawAction({
 
   const userPosition = simulationState.positions?.[accountAddress]?.[marketId];
   if ((isMaxRepay || isMaxWithdrawCollateral) && !userPosition) {
-    throw new Error("Pre simulation error: Missing user position.");
+    return {
+      status: "error",
+      message: "Pre simulation error: Missing user position.",
+    };
   }
 
   if (isMaxWithdrawCollateral) {

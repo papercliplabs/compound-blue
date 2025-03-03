@@ -49,7 +49,7 @@ export default function VaultWithdraw({
         .pipe(
           z.coerce
             .number()
-            .nonnegative()
+            .positive({ message: "Amount must be greater than zero." })
             .max(decaledPositionBalance ?? Number.MAX_VALUE, { message: "Amount exceeds position balance." })
         ),
     });
@@ -125,7 +125,7 @@ export default function VaultWithdraw({
                   {simulatingBundle ? "Simulating..." : "Review Withdraw"}
                 </Button>
                 {preparedAction?.status == "error" && (
-                  <p className="max-h-[50px] overflow-y-auto font-medium text-semantic-negative paragraph-sm">
+                  <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
                     {preparedAction.message}
                   </p>
                 )}

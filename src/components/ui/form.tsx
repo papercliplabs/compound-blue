@@ -83,7 +83,7 @@ const FormLabel = React.forwardRef<
   return (
     <Label
       ref={ref}
-      className={cn("font-semibold paragraph-sm", error && "!text-semantic-negative", className)}
+      className={cn("label-sm", error && "!text-semantic-negative", className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -129,12 +129,7 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<
     }
 
     return (
-      <p
-        ref={ref}
-        id={formMessageId}
-        className={cn("font-semibold text-content-secondary paragraph-sm", className)}
-        {...props}
-      >
+      <p ref={ref} id={formMessageId} className={cn("label-sm text-content-secondary", className)} {...props}>
         {body}
       </p>
     );

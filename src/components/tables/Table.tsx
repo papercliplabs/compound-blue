@@ -28,7 +28,7 @@ declare module "@tanstack/react-table" {
 export function TableRow({ href, className, children }: HTMLAttributes<HTMLDivElement> & { href?: string }) {
   if (!href) {
     return (
-      <div className={cn("flex w-full min-w-fit items-center transition-colors last:rounded-b-[12px]", className)}>
+      <div className={cn("flex w-full min-w-fit items-center rounded-[8px] transition-colors", className)}>
         {children}
       </div>
     );
@@ -37,7 +37,7 @@ export function TableRow({ href, className, children }: HTMLAttributes<HTMLDivEl
     <Link
       href={href}
       className={cn(
-        "flex w-full min-w-fit items-center transition-colors last:rounded-b-[12px] hover:bg-background-inverse",
+        "flex w-full min-w-fit items-center rounded-[8px] transition-colors hover:bg-background-inverse",
         className
       )}
     >
@@ -117,7 +117,7 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
           <ScrollSyncPane>
             <div className="overflow-auto overscroll-x-none bg-background-secondary px-4 scrollbar-none">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="h-12 font-semibold text-content-secondary">
+                <TableRow key={headerGroup.id} className="label-sm h-12 text-content-secondary">
                   {headerGroup.headers.map((header) => {
                     const cellContent = (
                       <div className="flex h-12 select-none items-center hover:cursor-pointer">
@@ -152,10 +152,10 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
           </ScrollSyncPane>
         </div>
         <ScrollSyncPane>
-          <div className="flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[12px] px-4 font-semibold scrollbar-none paragraph-lg">
+          <div className="flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[12px] px-4 scrollbar-none paragraph-lg">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow href={rowLink(row.original) ?? undefined} className="group h-16 gap-0" key={row.id}>
+                <TableRow href={rowLink(row.original) ?? undefined} className="group h-[72px] gap-0" key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell minWidth={cell.column.columnDef.minSize} key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

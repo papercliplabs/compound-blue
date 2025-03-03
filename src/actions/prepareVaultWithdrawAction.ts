@@ -33,7 +33,10 @@ export async function prepareVaultWithdrawBundle({
   const isMaxWithdraw = withdrawAmount == maxUint256;
   if (isMaxWithdraw && !userShareBalance) {
     // Won't happen, we need this to have a correct simulation anyways
-    throw new Error("Pre simulation error: Missing user share balance for max withdraw.");
+    return {
+      status: "error",
+      message: "Pre simulation error: Missing user share balance for max withdraw.",
+    };
   }
 
   const preparedAction = prepareBundle(

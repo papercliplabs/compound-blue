@@ -4,7 +4,7 @@ import LinkExternal from "./LinkExternal";
 
 export default function Footer() {
   return (
-    <footer className="flex w-full items-center justify-center justify-self-end font-semibold text-content-secondary">
+    <footer className="label-sm flex w-full items-center justify-center justify-self-end text-content-secondary">
       <div className="mx-6 flex h-full w-full max-w-screen-xl justify-between border-t pb-20 pt-4 md:items-center md:pb-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
           <LinkExternal

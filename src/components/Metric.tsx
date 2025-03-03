@@ -12,7 +12,7 @@ export default function Metric({ label, description, children, className, ...pro
   return (
     <div className={cn("flex flex-col gap-1", className)} {...props}>
       <TooltipPopover>
-        <TooltipPopoverTrigger className="w-fit whitespace-nowrap font-semibold text-content-secondary">
+        <TooltipPopoverTrigger className="label-md w-fit whitespace-nowrap text-content-secondary">
           {label}
         </TooltipPopoverTrigger>
         <TooltipPopoverContent>{description}</TooltipPopoverContent>

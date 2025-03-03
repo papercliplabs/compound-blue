@@ -7,7 +7,7 @@ import clsx from "clsx";
 
 const buttonVariants = cva(
   clsx(
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-all",
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full transition-all",
     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
@@ -22,9 +22,9 @@ const buttonVariants = cva(
         none: "hover:brightness-90",
       },
       size: {
-        lg: "h-12 px-8 paragraph-md",
-        md: "h-11 px-6 paragraph-md",
-        sm: "h-7 px-4 paragraph-sm",
+        lg: "h-12 px-8 label-md",
+        md: "h-11 px-6 label-md",
+        sm: "h-7 px-4 label-sm",
         icon: "p-2",
       },
     },

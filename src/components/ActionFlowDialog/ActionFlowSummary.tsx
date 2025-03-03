@@ -12,10 +12,7 @@ export function ActionFlowSummary({ className, children, ...props }: HTMLAttribu
 
   return (
     <div className={clsx("border-b pb-6", hidden && "hidden")}>
-      <div
-        className={cn("flex flex-col gap-6 rounded-[10px] bg-background-secondary px-4 py-3 font-semibold", className)}
-        {...props}
-      >
+      <div className={cn("flex flex-col gap-6 rounded-[10px] bg-background-secondary px-4 py-3", className)} {...props}>
         {children}
       </div>
     </div>
@@ -41,7 +38,7 @@ export function ActionFlowSummaryAssetItem({
   ...props
 }: ActionFlowSummaryAssetItemProps) {
   return (
-    <div className={cn("flex w-full items-center justify-between gap-3 font-semibold", className)} {...props}>
+    <div className={cn("label-md flex w-full items-center justify-between gap-3", className)} {...props}>
       <div className="flex items-center gap-2">
         {asset.icon && <Image src={asset.icon} width={32} height={32} alt={asset.symbol} className="rounded-full" />}
         <span>
@@ -51,7 +48,7 @@ export function ActionFlowSummaryAssetItem({
       <div className="flex flex-col items-end">
         <span>{formatNumber(descaledAmount)}</span>
         {amountUsd && (
-          <span className="text-content-secondary paragraph-sm">{formatNumber(amountUsd, { currency: "USD" })}</span>
+          <span className="label-sm text-content-secondary">{formatNumber(amountUsd, { currency: "USD" })}</span>
         )}
       </div>
     </div>

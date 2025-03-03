@@ -9,7 +9,7 @@ export function ActionFlowReview({ className, children, ...props }: HTMLAttribut
   const hidden = useMemo(() => flowState != "review", [flowState]);
 
   return (
-    <div className={cn("flex flex-col gap-4 font-semibold", hidden && "!hidden", className)} {...props}>
+    <div className={cn("flex flex-col gap-4", hidden && "!hidden", className)} {...props}>
       {children}
     </div>
   );
@@ -31,7 +31,7 @@ export function ActionFlowReviewItem({
   return (
     <div className={cn("flex items-center justify-between", className)} {...props}>
       <span>{name}</span>
-      <div className="flex items-center gap-1">
+      <div className="label-md flex items-center gap-1">
         <span className="text-content-secondary">{valueBefore}</span>
         <ArrowRight size={14} className="stroke-content-secondary" />
         {valueAfter}

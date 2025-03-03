@@ -44,8 +44,8 @@ export default function Apy({ type, apy, className }: ApyProps) {
         <Sparkle className="h-5 w-5" />
       </TooltipPopoverTrigger>
       <TooltipPopoverContent className="flex max-w-[320px] flex-col gap-4">
-        <div className="font-semibold">{APY_TOOLTIP_CONTENT[type].title}</div>
-        <div className="font-medium text-content-primary/50 paragraph-sm">{APY_TOOLTIP_CONTENT[type].description}</div>
+        <div className="label-md">{APY_TOOLTIP_CONTENT[type].title}</div>
+        <div className="text-content-primary/50 paragraph-sm">{APY_TOOLTIP_CONTENT[type].description}</div>
         <ApyBreakdown {...apy} />
       </TooltipPopoverContent>
     </TooltipPopover>

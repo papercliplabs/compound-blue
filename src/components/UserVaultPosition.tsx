@@ -35,12 +35,12 @@ export function UserVaultPosition({ vault }: VaultPositionProps) {
   return (
     <>
       {items.map((item, i) => (
-        <div key={i} className="flex w-full justify-between font-semibold">
+        <div key={i} className="flex w-full justify-between">
           <TooltipPopover>
             <TooltipPopoverTrigger>{item.label}</TooltipPopoverTrigger>
             <TooltipPopoverContent>{item.description}</TooltipPopoverContent>
           </TooltipPopover>
-          <span>{isLoading ? <Skeleton className="h-5 w-12" /> : item.value}</span>
+          <span className="label-md">{isLoading ? <Skeleton className="h-5 w-12" /> : item.value}</span>
         </div>
       ))}
     </>
@@ -66,7 +66,7 @@ export function UserVaultPositionHighlight({ vaultAddress }: { vaultAddress: Add
           <NumberFlow value={vaultPosition.supplyAssetsUsd} format={{ currency: "USD" }} />
         </span>
       </Metric>
-      <div className="flex items-center gap-1 font-semibold text-content-secondary paragraph-sm">
+      <div className="label-sm flex items-center gap-1 text-content-secondary">
         {vaultPosition.asset.icon && (
           <Image
             src={vaultPosition.asset.icon}
@@ -76,7 +76,10 @@ export function UserVaultPositionHighlight({ vaultAddress }: { vaultAddress: Add
             className="rounded-full"
           />
         )}
-        <NumberFlow value={descaleBigIntToNumber(BigInt(vaultPosition.supplyAssets), vaultPosition.asset.decimals)} />
+        <NumberFlow
+          value={descaleBigIntToNumber(BigInt(vaultPosition.supplyAssets), vaultPosition.asset.decimals)}
+          className="label-sm"
+        />
       </div>
     </div>
   );

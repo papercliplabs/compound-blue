@@ -64,12 +64,12 @@ export function UserMarketPosition({ market }: MarketPositionProps) {
   return (
     <>
       {items.map((item, i) => (
-        <div key={i} className="flex w-full justify-between font-semibold">
+        <div key={i} className="flex w-full justify-between">
           <TooltipPopover>
             <TooltipPopoverTrigger>{item.label}</TooltipPopoverTrigger>
             <TooltipPopoverContent>{item.description}</TooltipPopoverContent>
           </TooltipPopover>
-          <span>{isLoading ? <Skeleton className="h-5 w-12" /> : item.value}</span>
+          <span className="label-md">{isLoading ? <Skeleton className="h-5 w-12" /> : item.value}</span>
         </div>
       ))}
     </>
@@ -95,7 +95,7 @@ export function UserMarketPositionHighlight({ marketId }: { marketId: Hex }) {
           <NumberFlow value={marketPosition.borrowAssetsUsd} format={{ currency: "USD" }} />
         </span>
       </Metric>
-      <div className="flex items-center gap-1 font-semibold text-content-secondary paragraph-sm">
+      <div className="label-sm flex items-center gap-1 text-content-secondary">
         {marketPosition.market.loanAsset.icon && (
           <Image
             src={marketPosition.market.loanAsset.icon}

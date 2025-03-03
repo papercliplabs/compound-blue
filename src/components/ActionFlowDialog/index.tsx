@@ -87,7 +87,7 @@ function ActionFlowDialogContent({
           <PopoverTrigger />
           <PopoverContent className="flex max-w-[256px] flex-col gap-4 text-center" side="top">
             <div className="w-full title-5">Cancel transaction</div>
-            <p className="font-medium text-content-secondary">
+            <p className="text-content-secondary">
               If you close this modal, your transaction will be canceled, and you&apos;ll need to start over.
             </p>
             <Button
@@ -177,13 +177,13 @@ function ActionFlowStepIcon({
           />
         </div>
       ) : (
-        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-accent-primary bg-background-secondary font-semibold">
+        <div className="label-sm flex h-8 w-8 items-center justify-center rounded-full border border-accent-primary bg-background-secondary">
           {stepNumber}
         </div>
       );
     case "pending":
       return (
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-background-secondary font-semibold text-content-secondary">
+        <div className="label-sm flex h-8 w-8 items-center justify-center rounded-full bg-background-secondary text-content-secondary">
           {stepNumber}
         </div>
       );
@@ -213,10 +213,7 @@ function ActionFlowSteps() {
             <div className="flex items-center gap-4">
               <ActionFlowStepIcon stepNumber={i + 1} status={status} actionState={actionState} />
               <span
-                className={clsx(
-                  "font-semibold",
-                  status == "active" ? "text-content-primary" : "text-content-secondary"
-                )}
+                className={clsx("label-md", status == "active" ? "text-content-primary" : "text-content-secondary")}
               >
                 {metadata.name}
                 {status == "active" && (actionState == "pending-wallet" ? " In wallet" : " Pending...")}
@@ -254,7 +251,7 @@ function ActionFlowComplete({ closeDialog }: { closeDialog: () => void }) {
       {lastTransactionHash && (
         <LinkExternalBlockExplorer
           txHash={lastTransactionHash}
-          className="block text-center font-medium text-accent-primary"
+          className="block text-center text-accent-primary"
           hideArrow
         >
           View on Explorer

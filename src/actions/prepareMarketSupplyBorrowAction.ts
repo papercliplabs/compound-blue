@@ -44,7 +44,10 @@ export async function prepareMarketSupplyBorrowAction({
   if (supplyCollateralAmount == maxUint256) {
     if (!userCollateralBalance) {
       // Won't happen, we need this to have a correct simulation anyways
-      throw new Error("Pre simulation error: Missing user asset balance for max collateral supply.");
+      return {
+        status: "error",
+        message: "Pre simulation error: Missing user asset balance for max collateral supply.",
+      };
     }
     supplyCollateralAmount = userCollateralBalance;
   }
