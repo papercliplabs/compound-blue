@@ -1,7 +1,6 @@
 "use client";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 import { Hex } from "viem";
-import { useUserMarketPosition, useUserPositionContext } from "@/providers/UserPositionProvider";
 import { ReactNode, useMemo } from "react";
 import { Skeleton } from "./ui/skeleton";
 import Metric from "./Metric";
@@ -13,13 +12,14 @@ import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import { MarketId } from "@morpho-org/blue-sdk";
+import { useAccountMarketPosition, useAccountMarketPositions } from "@/hooks/useAccountMarketPosition";
 
 interface MarketPositionProps {
   market: MarketNonIdle;
 }
 
-export function UserMarketPosition({ market }: MarketPositionProps) {
-  const { data: marketPosition, isLoading } = useUserMarketPosition(market.marketId as MarketId);
+export function AccountMarketPosition({ market }: MarketPositionProps) {
+  const { data: marketPosition, isLoading } = useAccountMarketPosition(market.marketId as MarketId);
 
   const items: { label: string; description: string; value: ReactNode }[] = [
     {
@@ -76,9 +76,9 @@ export function UserMarketPosition({ market }: MarketPositionProps) {
   );
 }
 
-export function UserMarketPositionHighlight({ marketId }: { marketId: Hex }) {
+export function AccountMarketPositionHighlight({ marketId }: { marketId: Hex }) {
   const { address } = useAccount();
-  const { data: marketPosition } = useUserMarketPosition(marketId);
+  const { data: marketPosition } = useAccountMarketPosition(marketId);
 
   // Hide if not connected
   if (!address || !marketPosition || !marketPosition.market) {
@@ -113,14 +113,12 @@ export function UserMarketPositionHighlight({ marketId }: { marketId: Hex }) {
   );
 }
 
-export function UserMarketPositionAggregate() {
+export function AccountMarketPositionAggregate() {
   const { address } = useAccount();
-  const {
-    userMarketPositionsQuery: { data: userMarketPositions },
-  } = useUserPositionContext();
+  const { data: accountMarketPositions } = useAccountMarketPositions();
 
   const { totalBorrowUsd, avgApy } = useMemo(() => {
-    const { totalBorrowUsd, avgApy } = Object.values(userMarketPositions ?? {}).reduce(
+    const { totalBorrowUsd, avgApy } = Object.values(accountMarketPositions ?? {}).reduce(
       (acc, marketPosition) => {
         return {
           totalBorrowUsd: acc.totalBorrowUsd + marketPosition.borrowAssetsUsd,
@@ -134,7 +132,7 @@ export function UserMarketPositionAggregate() {
       totalBorrowUsd,
       avgApy: totalBorrowUsd > 0 ? avgApy / totalBorrowUsd : 0,
     };
-  }, [userMarketPositions]);
+  }, [accountMarketPositions]);
 
   // Hide if not connected
   if (!address) {

@@ -13,16 +13,16 @@ import { Address, getAddress, Hex } from "viem";
 import { prepareMerklClaimAction } from "@/actions/prepareMerklClaimAction";
 import { useTheme } from "next-themes";
 import Image from "next/image";
-import { useUserRewards } from "@/providers/UserPositionProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import LinkExternal from "./LinkExternal";
+import { useAccountRewards } from "@/hooks/useAccountRewards";
 
 export default function ClaimRewards() {
   const [claimFlowOpen, setClaimFlowOpen] = useState(false);
   const [noRewardsPopoverOpen, setNoRewardsPopoverOpen] = useState(false);
   const { address } = useAccount();
   const { theme } = useTheme();
-  const { data } = useUserRewards();
+  const { data } = useAccountRewards();
   const [claimed, setClaimed] = useState<boolean>(false);
 
   const totalRewards = useMemo(() => {

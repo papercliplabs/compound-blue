@@ -10,7 +10,6 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
-import { useUserMarketPosition, useUserTokenHolding } from "@/providers/UserPositionProvider";
 import { getAddress, maxUint256, parseUnits } from "viem";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,8 +25,10 @@ import {
   PrepareMarketRepayWithdrawCollateralActionReturnType,
 } from "@/actions/prepareMarketRepayWithdrawCollateralAction";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
-import { UserMarketPositions } from "@/data/whisk/getUserMarketPositions";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
+import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
+import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
+import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
 
 export default function MarketRepayWithdrawCollateral({
   market,
@@ -43,8 +44,8 @@ export default function MarketRepayWithdrawCollateral({
   const { openConnectModal } = useConnectModal();
   const { address } = useAccount();
   const publicClient = usePublicClient();
-  const { data: userLoanTokenHolding } = useUserTokenHolding(getAddress(market.loanAsset.address));
-  const { data: userPosition } = useUserMarketPosition(market.marketId as MarketId);
+  const { data: userLoanTokenHolding } = useAccountTokenHolding(getAddress(market.loanAsset.address));
+  const { data: userPosition } = useAccountMarketPosition(market.marketId as MarketId);
 
   const { descaledLoanAmount, descaledLoanAssetBalance, availableRepayAmount } = useMemo(() => {
     const descaledLoanAmount = userPosition
@@ -303,7 +304,7 @@ export default function MarketRepayWithdrawCollateral({
   );
 }
 
-function computeCollateralWithdrawMax(repayAmount: number, position?: UserMarketPositions[number]): number {
+function computeCollateralWithdrawMax(repayAmount: number, position?: AccountMarketPositions[number]): number {
   if (!position?.market?.collateralAsset) {
     return 0;
   }

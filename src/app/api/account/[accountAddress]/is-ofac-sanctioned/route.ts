@@ -1,8 +1,8 @@
-import { getUserMarketPositions } from "@/data/whisk/getUserMarketPositions";
+import { getAccountIsOfacSanctioned } from "@/data/whisk/getAccountIsOfacSanctioned";
 import { getAddress } from "viem";
 
 export async function GET(request: Request, { params }: { params: Promise<{ accountAddress: string }> }) {
   const accountAddress = getAddress((await params).accountAddress);
-  const marketPositions = await getUserMarketPositions(accountAddress);
-  return Response.json(marketPositions);
+  const isOfacSanctioned = await getAccountIsOfacSanctioned(accountAddress);
+  return Response.json(isOfacSanctioned);
 }

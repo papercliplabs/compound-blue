@@ -11,12 +11,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { ReactNode, Suspense } from "react";
 import { Address, getAddress } from "viem";
-import { UserVaultPosition, UserVaultPositionHighlight } from "@/components/UserVaultPosition";
 import VaultActions from "@/components/VaultActions";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import BackButton from "@/components/BackButton";
+import { AccountVaultPosition, AccoutnVaultPositionHighlight } from "@/components/AccountVaultPosition";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Vault",
@@ -57,7 +57,7 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
           </Suspense>
         </div>
 
-        <UserVaultPositionHighlight vaultAddress={vaultAddress} />
+        <AccoutnVaultPositionHighlight vaultAddress={vaultAddress} />
       </section>
 
       <div className="flex w-full flex-col gap-5 lg:flex-row">
@@ -272,7 +272,7 @@ async function UserVaultPositionWrapper({ vaultAddress }: { vaultAddress: Addres
     return null;
   }
 
-  return <UserVaultPosition vault={vault} />;
+  return <AccountVaultPosition vault={vault} />;
 }
 
 function UnsupportedVault() {

@@ -1,7 +1,7 @@
+import { AccountMarketPositionAggregate } from "@/components/AccountMarketPosition";
 import BorrowTable from "@/components/tables/BorrowTable";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserMarketPositionAggregate } from "@/components/UserMarketPosition";
 import { getMarketSummaries } from "@/data/whisk/getMarketSummaries";
 import { Metadata } from "next";
 import Image from "next/image";
@@ -25,7 +25,7 @@ export default function BorrowPage() {
           </div>
         </div>
 
-        <UserMarketPositionAggregate />
+        <AccountMarketPositionAggregate />
       </section>
 
       <Card>

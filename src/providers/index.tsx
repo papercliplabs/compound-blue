@@ -1,16 +1,16 @@
 "use client";
 import { ResponsiveProvider } from "./ResponsiveProvider";
 import { ThemeProvider } from "./ThemeProvider";
-import { UserPositionProvider } from "./UserPositionProvider";
+import { AccountDataPollingProvider } from "./AccountDataPollingProvider";
 import WalletProvider from "./WalletProvider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <WalletProvider>
-        <UserPositionProvider>
+        <AccountDataPollingProvider>
           <ResponsiveProvider>{children}</ResponsiveProvider>
-        </UserPositionProvider>
+        </AccountDataPollingProvider>
       </WalletProvider>
     </ThemeProvider>
   );

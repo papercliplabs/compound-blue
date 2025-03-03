@@ -6,10 +6,10 @@ import Image from "next/image";
 import { formatNumber } from "@/utils/format";
 import Apy from "../Apy";
 import RowIcons from "../RowIcons";
-import { useUserPositionContext } from "@/providers/UserPositionProvider";
 import { useMemo } from "react";
 import { getAddress } from "viem";
 import NumberFlow from "../ui/NumberFlow";
+import { useAccountVaultPositions } from "@/hooks/useAccountVaultPosition";
 
 interface TableProps {
   vaultSummaries: VaultSummary[];
@@ -103,17 +103,14 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
 ];
 
 export default function EarnTable({ vaultSummaries }: TableProps) {
-  // Inject user position
-  const {
-    userVaultPositionsQuery: { data: userVaultPositions },
-  } = useUserPositionContext();
+  const { data: accountVaultPositions } = useAccountVaultPositions();
 
   const vaultSummariesWithUserPositions = useMemo(() => {
     return vaultSummaries.map((vault) => {
-      const userDepositsUsd = userVaultPositions?.[getAddress(vault.vaultAddress)]?.supplyAssetsUsd ?? 0;
+      const userDepositsUsd = accountVaultPositions?.[getAddress(vault.vaultAddress)]?.supplyAssetsUsd ?? 0;
       return { ...vault, userDepositsUsd };
     });
-  }, [vaultSummaries, userVaultPositions]);
+  }, [vaultSummaries, accountVaultPositions]);
 
   return (
     <Table

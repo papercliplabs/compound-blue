@@ -6,7 +6,7 @@ import { Address } from "viem";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
-  query getUserTokenHolding($chainId: Number!, $tokenAddress: String!, $accountAddress: String!) {
+  query getAccountTokenHolding($chainId: Number!, $tokenAddress: String!, $accountAddress: String!) {
     tokenHolding(chainId: $chainId, tokenAddress: $tokenAddress, accountAddress: $accountAddress) {
       token {
         symbol
@@ -20,9 +20,9 @@ const query = graphql(`
   }
 `);
 
-export const getUserTokenHolding = cacheAndCatch(async (tokenAddress: Address, accountAddress: Address) => {
+export const getAccountTokenHolding = cacheAndCatch(async (tokenAddress: Address, accountAddress: Address) => {
   const tokenHoldings = await whiskClient.request(query, { chainId: CHAIN_ID, tokenAddress, accountAddress });
   return tokenHoldings.tokenHolding;
-}, "getUserTokenHolding");
+}, "getAccountTokenHolding");
 
-export type UserTokenHolding = NonNullable<Awaited<ReturnType<typeof getUserTokenHolding>>>;
+export type AccountTokenHolding = NonNullable<Awaited<ReturnType<typeof getAccountTokenHolding>>>;

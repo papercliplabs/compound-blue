@@ -13,12 +13,12 @@ import VaultAllocationTable from "@/components/tables/VaultAllocationTable";
 import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
 import Image from "next/image";
 import IrmChart from "@/components/IrmChart";
-import { UserMarketPosition, UserMarketPositionHighlight } from "@/components/UserMarketPosition";
 import MarketActions from "@/components/MarketActions";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { WHITELISTED_MARKET_IDS } from "@/config";
 import BackButton from "@/components/BackButton";
+import { AccountMarketPosition, AccountMarketPositionHighlight } from "@/components/AccountMarketPosition";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Market",
@@ -59,7 +59,7 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
           </Suspense>
         </div>
 
-        <UserMarketPositionHighlight marketId={marketId} />
+        <AccountMarketPositionHighlight marketId={marketId} />
       </section>
 
       <div className="flex w-full flex-col gap-5 lg:flex-row">
@@ -346,7 +346,7 @@ async function UserMarketPositionWrapper({ marketId }: { marketId: Hex }) {
     return null;
   }
 
-  return <UserMarketPosition market={market} />;
+  return <AccountMarketPosition market={market} />;
 }
 
 function UnsupportedMarket() {

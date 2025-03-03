@@ -10,7 +10,6 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
-import { useUserVaultPosition } from "@/providers/UserPositionProvider";
 import { getAddress, maxUint256, parseUnits } from "viem";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +21,7 @@ import AssetFormField from "../AssetFormField";
 import { VaultActionsProps } from ".";
 import { PrepareVaultWithdrawActionReturnType, prepareVaultWithdrawBundle } from "@/actions/prepareVaultWithdrawAction";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
+import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
 
 export default function VaultWithdraw({
   vault,
@@ -35,7 +35,7 @@ export default function VaultWithdraw({
   const { openConnectModal } = useConnectModal();
   const { address } = useAccount();
   const publicClient = usePublicClient();
-  const { data: vaultPosition } = useUserVaultPosition(getAddress(vault.vaultAddress));
+  const { data: vaultPosition } = useAccountVaultPosition(getAddress(vault.vaultAddress));
 
   const decaledPositionBalance = useMemo(
     () => (vaultPosition ? descaleBigIntToNumber(vaultPosition.supplyAssets, vault.asset.decimals) : undefined),

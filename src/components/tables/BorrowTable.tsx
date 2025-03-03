@@ -5,9 +5,9 @@ import Image from "next/image";
 import { formatNumber } from "@/utils/format";
 import { Table } from "./Table";
 import Apy from "../Apy";
-import { useUserPositionContext } from "@/providers/UserPositionProvider";
 import { useMemo } from "react";
 import NumberFlow from "../ui/NumberFlow";
+import { useAccountMarketPositions } from "@/hooks/useAccountMarketPosition";
 
 interface TableProps {
   marketSummaries: MarketSummary[];
@@ -114,17 +114,15 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
 
 export default function BorrowTableClient({ marketSummaries }: TableProps) {
   // Inject user position
-  const {
-    userMarketPositionsQuery: { data: userMarketPositions },
-  } = useUserPositionContext();
+  const { data: accountMarketPositions } = useAccountMarketPositions();
 
   const marketSummariesWithUserPositions = useMemo(() => {
     return marketSummaries.map((market) => {
-      const userBorrowUsd = userMarketPositions?.[market.marketId]?.borrowAssetsUsd ?? 0;
-      const userLtv = userMarketPositions?.[market.marketId]?.ltv ?? 0;
+      const userBorrowUsd = accountMarketPositions?.[market.marketId]?.borrowAssetsUsd ?? 0;
+      const userLtv = accountMarketPositions?.[market.marketId]?.ltv ?? 0;
       return { ...market, userBorrowUsd, userLtv };
     });
-  }, [marketSummaries, userMarketPositions]);
+  }, [marketSummaries, accountMarketPositions]);
 
   return (
     <Table

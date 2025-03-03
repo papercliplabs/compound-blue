@@ -5,19 +5,19 @@ import { CardContent } from "../ui/card";
 import { Card } from "../ui/card";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
-import { useUserVaultPosition } from "@/providers/UserPositionProvider";
 import VaultWithdraw from "./VaultWithdraw";
 import { getAddress } from "viem";
 import { useResponsiveContext } from "@/providers/ResponsiveProvider";
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
 
 export interface VaultActionsProps {
   vault: Vault;
 }
 
 export default function VaultActions({ vault }: VaultActionsProps) {
-  const { data: userVaultPosition } = useUserVaultPosition(getAddress(vault.vaultAddress));
+  const { data: userVaultPosition } = useAccountVaultPosition(getAddress(vault.vaultAddress));
   const { isDesktop, hasMounted } = useResponsiveContext();
 
   // Only if the user has a position to withdraw

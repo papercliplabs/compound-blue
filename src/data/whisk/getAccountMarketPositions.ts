@@ -45,7 +45,7 @@ const query = graphql(`
   }
 `);
 
-export const getUserMarketPositions = cacheAndCatch(async (accountAddress: Address) => {
+export const getAccountMarketPositions = cacheAndCatch(async (accountAddress: Address) => {
   const marketPositions = await Promise.all(
     WHITELISTED_MARKET_IDS.map((marketId) =>
       whiskClient.request(query, { chainId: CHAIN_ID, marketId, accountAddress })
@@ -58,4 +58,4 @@ export const getUserMarketPositions = cacheAndCatch(async (accountAddress: Addre
   );
 }, "getUserMarketPositions");
 
-export type UserMarketPositions = NonNullable<Awaited<ReturnType<typeof getUserMarketPositions>>>;
+export type AccountMarketPositions = NonNullable<Awaited<ReturnType<typeof getAccountMarketPositions>>>;

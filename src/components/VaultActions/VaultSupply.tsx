@@ -9,7 +9,6 @@ import { useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
 import { PrepareVaultSupplyActionReturnType, prepareVaultSupplyBundle } from "@/actions/prepareVaultSupplyAction";
-import { useUserTokenHolding } from "@/providers/UserPositionProvider";
 import { getAddress, maxUint256, parseUnits } from "viem";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +20,7 @@ import AssetFormField from "../AssetFormField";
 import { VaultActionsProps } from ".";
 import { ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog/ActionFlowSummary";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
+import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 
 export default function VaultSupply({
   vault,
@@ -34,7 +34,7 @@ export default function VaultSupply({
   const { openConnectModal } = useConnectModal();
   const { address } = useAccount();
   const publicClient = usePublicClient();
-  const { data: userTokenHolding } = useUserTokenHolding(getAddress(vault.asset.address));
+  const { data: userTokenHolding } = useAccountTokenHolding(getAddress(vault.asset.address));
 
   const decaledWalletBalance = useMemo(
     () => (userTokenHolding ? descaleBigIntToNumber(userTokenHolding.balance, vault.asset.decimals) : undefined),

@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserVaultPositionAggregate } from "@/components/UserVaultPosition";
 import { Metadata } from "next";
+import { AccountVaultPositionAggregate } from "@/components/AccountVaultPosition";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Earn",
@@ -25,7 +25,7 @@ export default async function EarnPage() {
           </div>
         </div>
 
-        <UserVaultPositionAggregate />
+        <AccountVaultPositionAggregate />
       </section>
 
       <Card>

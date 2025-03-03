@@ -3,7 +3,6 @@ import { CardContent } from "../ui/card";
 import { Card } from "../ui/card";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
-import { useUserMarketPosition } from "@/providers/UserPositionProvider";
 import { Hex } from "viem";
 import MarketSupplyCollateralBorrow from "./MarketSupplyCollateralBorrow";
 import MarketRepayWithdrawCollateral from "./MarketRepayWithdrawCollateral";
@@ -11,22 +10,23 @@ import { useResponsiveContext } from "@/providers/ResponsiveProvider";
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
+import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 
 export interface MarketActionsProps {
   market: MarketNonIdle;
 }
 
 export default function MarketActions({ market }: MarketActionsProps) {
-  const { data: userMarketPosition } = useUserMarketPosition(market.marketId as Hex);
+  const { data: accountMarketPosition } = useAccountMarketPosition(market.marketId as Hex);
   const { isDesktop, hasMounted } = useResponsiveContext();
 
-  // Only if the user has a position to withdraw
+  // Only if the account has a position to withdraw
   const canRepayAndWithdraw = useMemo(() => {
     return (
-      BigInt(userMarketPosition?.borrowAssets ?? 0) > BigInt(0) ||
-      BigInt(userMarketPosition?.collateralAssets ?? 0) > BigInt(0)
+      BigInt(accountMarketPosition?.borrowAssets ?? 0) > BigInt(0) ||
+      BigInt(accountMarketPosition?.collateralAssets ?? 0) > BigInt(0)
     );
-  }, [userMarketPosition]);
+  }, [accountMarketPosition]);
 
   // Wait to render until we know to prevent layout glitches
   if (!hasMounted) {

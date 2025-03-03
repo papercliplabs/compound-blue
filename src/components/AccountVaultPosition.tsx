@@ -1,7 +1,6 @@
 "use client";
 import { descaleBigIntToNumber } from "@/utils/format";
 import { Address, getAddress } from "viem";
-import { useUserPositionContext, useUserVaultPosition } from "@/providers/UserPositionProvider";
 import { ReactNode, useMemo } from "react";
 import { Skeleton } from "./ui/skeleton";
 import Metric from "./Metric";
@@ -11,13 +10,14 @@ import NumberFlow from "./ui/NumberFlow";
 import Apy from "./Apy";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 import { Vault } from "@/data/whisk/getVault";
+import { useAccountVaultPosition, useAccountVaultPositions } from "@/hooks/useAccountVaultPosition";
 
 interface VaultPositionProps {
   vault: Vault;
 }
 
-export function UserVaultPosition({ vault }: VaultPositionProps) {
-  const { data: vaultPosition, isLoading } = useUserVaultPosition(getAddress(vault.vaultAddress));
+export function AccountVaultPosition({ vault }: VaultPositionProps) {
+  const { data: vaultPosition, isLoading } = useAccountVaultPosition(getAddress(vault.vaultAddress));
 
   const items: { label: string; description: string; value: ReactNode }[] = [
     {
@@ -47,9 +47,9 @@ export function UserVaultPosition({ vault }: VaultPositionProps) {
   );
 }
 
-export function UserVaultPositionHighlight({ vaultAddress }: { vaultAddress: Address }) {
+export function AccoutnVaultPositionHighlight({ vaultAddress }: { vaultAddress: Address }) {
   const { address } = useAccount();
-  const { data: vaultPosition } = useUserVaultPosition(vaultAddress);
+  const { data: vaultPosition } = useAccountVaultPosition(vaultAddress);
 
   // Hide if not connected
   if (!address || !vaultPosition) {
@@ -85,14 +85,12 @@ export function UserVaultPositionHighlight({ vaultAddress }: { vaultAddress: Add
   );
 }
 
-export function UserVaultPositionAggregate() {
+export function AccountVaultPositionAggregate() {
   const { address } = useAccount();
-  const {
-    userVaultPositionsQuery: { data: userVaultPositions },
-  } = useUserPositionContext();
+  const { data: accountVaultPositions } = useAccountVaultPositions();
 
   const { totalSupplyUsd, avgApy } = useMemo(() => {
-    const { totalSupplyUsd, avgApy } = Object.values(userVaultPositions ?? {}).reduce(
+    const { totalSupplyUsd, avgApy } = Object.values(accountVaultPositions ?? {}).reduce(
       (acc, vaultPosition) => {
         return {
           totalSupplyUsd: acc.totalSupplyUsd + vaultPosition.supplyAssetsUsd,
@@ -106,7 +104,7 @@ export function UserVaultPositionAggregate() {
       totalSupplyUsd,
       avgApy: totalSupplyUsd > 0 ? avgApy / totalSupplyUsd : 0,
     };
-  }, [userVaultPositions]);
+  }, [accountVaultPositions]);
 
   // Hide if not connected
   if (!address) {

@@ -6,8 +6,9 @@ import { useAccount, useConnectorClient, usePublicClient, useSwitchChain } from 
 import { CHAIN_ID } from "@/config";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
-import { useUserPositionContext } from "@/providers/UserPositionProvider";
 import { track } from "@vercel/analytics";
+import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
+import { useAccountIsOfacSanctioned } from "@/hooks/useAccountIsOfacSanctioned";
 
 export type ActionFlowState = "review" | "active" | "success" | "failed";
 export type ActionState = "pending-wallet" | "pending-transaction";
@@ -73,6 +74,7 @@ export function ActionFlowProvider({
   const { openChainModal } = useChainModal();
   const publicClient = usePublicClient();
   const { switchChainAsync } = useSwitchChain();
+  const { data: isOfacSanctioned = true } = useAccountIsOfacSanctioned(); // Default to true while fetching...
 
   const startFlow = useCallback(async () => {
     // Must be connected
@@ -103,6 +105,12 @@ export function ActionFlowProvider({
       setActionState("pending-wallet");
       setLastTransactionHash(null);
       setError(null);
+
+      // Don't allow any actions if the account is OFAC sanctioned
+      if (isOfacSanctioned) {
+        setError("This action is not available to OFAC sanctioned accounts.");
+        return;
+      }
 
       try {
         for (const step of signatureRequests) {
@@ -161,10 +169,12 @@ export function ActionFlowProvider({
     openChainModal,
     openConnectModal,
     flowCompletionCb,
+    switchChainAsync,
+    isOfacSanctioned,
   ]);
 
   // Trigger polling of user position once the flow is successful
-  const { triggerFastPolling } = useUserPositionContext();
+  const { triggerFastPolling } = useAccountDataPollingContext();
   useEffect(() => {
     if (flowState == "success") {
       triggerFastPolling();

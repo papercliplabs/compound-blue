@@ -1,4 +1,4 @@
-import { getUserTokenHolding } from "@/data/whisk/getUserTokenHolding";
+import { getAccountTokenHolding } from "@/data/whisk/getAccountTokenHolding";
 import { getAddress } from "viem";
 
 export async function GET(
@@ -8,6 +8,6 @@ export async function GET(
   const paramValues = await params;
   const accountAddress = getAddress(paramValues.accountAddress);
   const tokenAddress = getAddress(paramValues.tokenAddress);
-  const marketPositions = await getUserTokenHolding(tokenAddress, accountAddress);
-  return Response.json(marketPositions);
+  const tokenHolding = await getAccountTokenHolding(tokenAddress, accountAddress);
+  return Response.json(tokenHolding);
 }
