@@ -1,3 +1,4 @@
+import { cn } from "@/utils/shadcn";
 import NumberFlowReact from "@number-flow/react";
 import { ComponentProps } from "react";
 
@@ -40,9 +41,9 @@ export default function NumberFlow({
   }
 
   return (
-    <span className={className}>
+    <span className={cn("inline-flex items-center", className)}>
       {prefix}
-      <NumberFlowReact value={value} format={formatOptions} {...props} className="inline" />
+      <NumberFlowReact value={value} format={formatOptions} {...props} className="inline-flex items-center" />
     </span>
   );
 }

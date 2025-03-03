@@ -31,7 +31,7 @@ export default async function EarnPage() {
       <Card>
         <CardHeader>Vaults</CardHeader>
         <CardContent className="p-0">
-          <Suspense fallback={<Skeleton className="m-4 h-[400px] rounded-[16px]" />}>
+          <Suspense fallback={<Skeleton className="m-4 h-[336px]" />}>
             <EarnTableWrapper />
           </Suspense>
         </CardContent>

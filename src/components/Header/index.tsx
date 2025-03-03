@@ -10,7 +10,7 @@ export const HEADER_HEIGHT = 76;
 export default function Header() {
   return (
     <header
-      className="sticky top-0 z-10 flex w-full items-center justify-center bg-background-primary/60 backdrop-blur-xl"
+      className="sticky top-0 z-[20] flex w-full items-center justify-center bg-background-primary/60 backdrop-blur-xl"
       style={{ height: HEADER_HEIGHT }}
     >
       <div className="flex w-full max-w-screen-xl items-center justify-between p-4">

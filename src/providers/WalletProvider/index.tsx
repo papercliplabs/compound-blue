@@ -4,12 +4,20 @@ import { WagmiProvider } from "wagmi";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { wagmiConfig } from "./wagmi";
 import { useTheme } from "next-themes";
+import { useEffect, useMemo, useState } from "react";
 
 const queryClient = new QueryClient();
 
 export default function WalletProvider({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
-  const isLight = theme === "light";
+
+  // Prevent hydration error from theme...
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const isLight = useMemo(() => theme === "light" && mounted, [theme, mounted]);
+
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>

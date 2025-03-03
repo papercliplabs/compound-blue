@@ -31,7 +31,7 @@ export default function BorrowPage() {
       <Card>
         <CardHeader>Markets</CardHeader>
         <CardContent className="p-0">
-          <Suspense fallback={<Skeleton className="m-4 h-[400px] rounded-[16px]" />}>
+          <Suspense fallback={<Skeleton className="m-4 h-[906px]" />}>
             <BorrowTableWrapper />
           </Suspense>
         </CardContent>

@@ -82,7 +82,7 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
           <Card>
             <CardHeader>Vault Allocation</CardHeader>
             <CardContent className="p-0">
-              <Suspense fallback={<Skeleton className="m-4 h-[400px] rounded-[16px]" />}>
+              <Suspense fallback={<Skeleton className="m-4 h-[400px]" />}>
                 <VaultAllocationTableWrapper marketId={marketId} />
               </Suspense>
             </CardContent>

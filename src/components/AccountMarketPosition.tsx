@@ -47,10 +47,10 @@ export function AccountMarketPosition({ market }: MarketPositionProps) {
       description:
         "The current loan to value (LTV) of your position. If this exceeds the liqudation loan to value (LLTV) you will be liquidated.",
       value: (
-        <>
+        <span className="flex items-center whitespace-pre-wrap">
           <NumberFlow value={marketPosition?.ltv ?? 0} format={{ style: "percent" }} /> /{" "}
           {formatNumber(marketPosition?.market?.lltv ?? 0, { style: "percent" })}
-        </>
+        </span>
       ),
     },
     {
