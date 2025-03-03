@@ -32,4 +32,4 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
   "0x9eacb622c6ef9c2f0fa5f1fda58a8702eb8132d8f49783f6eea6acc3a398e741", // WBTC/WETH - 86%
 ];
 
-export const MAX_BORROW_LTV_MARGIN = 0.05; // Only allow a max borrow origination of up to 5% below LLTV
+export const MAX_BORROW_LTV_MARGIN = 0.05; // 0->1, Only allow a max borrow origination of up to this % below LLTV
