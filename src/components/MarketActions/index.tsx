@@ -102,7 +102,7 @@ function MarketActionsMobile({ market, canRepayAndWithdraw }: MarketActionsProps
 
         <Drawer open={repayOpen} onOpenChange={setRepayOpen}>
           <DrawerTrigger asChild>
-            <Button className="w-full bg-accent-ternary" disabled={!canRepayAndWithdraw}>
+            <Button className="w-full" variant="secondary" disabled={!canRepayAndWithdraw}>
               Repay
             </Button>
           </DrawerTrigger>

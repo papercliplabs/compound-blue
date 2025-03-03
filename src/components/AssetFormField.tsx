@@ -50,29 +50,31 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
                   {...field}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value === "" || /^(0|0\.\d*|[1-9]\d*\.?\d*)$/.test(value)) {
+                    if (/^0*(\d+)?(\.\d*)?$/.test(value)) {
                       field.onChange(value);
                     }
                   }}
                   value={field.value ?? ""}
-                  {...props} // TODO: Trying
+                  {...props}
                 />
               </FormControl>
-              <Button
-                variant="secondary"
-                size="sm"
-                type="button"
-                disabled={!descaledAvailableBalance && !!address} // Something is wrong if so
-                onClick={() => {
-                  if (!descaledAvailableBalance) {
-                    openConnectModal?.();
-                  } else {
-                    field.onChange(numberToString(descaledAvailableBalance));
-                  }
-                }}
-              >
-                Max
-              </Button>
+              {address && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  disabled={!descaledAvailableBalance && !!address} // Something is wrong if so
+                  onClick={() => {
+                    if (descaledAvailableBalance === undefined) {
+                      openConnectModal?.();
+                    } else {
+                      field.onChange(numberToString(descaledAvailableBalance));
+                    }
+                  }}
+                >
+                  Max
+                </Button>
+              )}
             </div>
             <div className="label-sm flex items-center justify-between text-content-secondary">
               {asset.priceUsd && (
@@ -82,7 +84,7 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
                 {asset.icon && (
                   <Image src={asset.icon} alt={asset.symbol} width={12} height={12} className="rounded-full" />
                 )}
-                <NumberFlow value={descaledAvailableBalance ?? 0} format={{ maximumFractionDigits: 4 }} />
+                <NumberFlow value={descaledAvailableBalance ?? 0} />
                 <span>Available</span>
               </div>
             </div>

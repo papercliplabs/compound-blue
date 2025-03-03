@@ -15,7 +15,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-button-supply hover:brightness-90",
+        primary: "bg-button-supply hover:brightness-90 text-white",
         secondary: "bg-button-neutral hover:brightness-90",
         negative: "bg-button-neutral text-semantic-negative hover:brightness-90",
         ghost: "hover:bg-button-neutral",

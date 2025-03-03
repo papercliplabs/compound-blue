@@ -99,7 +99,7 @@ function VaultActionsMobile({ vault, hasSupplyPosition }: { hasSupplyPosition: b
 
         <Drawer open={withdrawOpen} onOpenChange={setWithdrawOpen}>
           <DrawerTrigger asChild>
-            <Button className="w-full" disabled={!hasSupplyPosition}>
+            <Button className="w-full" variant="secondary" disabled={!hasSupplyPosition}>
               Withdraw
             </Button>
           </DrawerTrigger>

@@ -211,8 +211,16 @@ export default function MarketRepayWithdraw({
               />
 
               <div className="flex min-w-0 flex-col gap-2">
-                <Button type="submit" className="w-full bg-accent-ternary" disabled={simulatingBundle}>
-                  {simulatingBundle ? "Simulating..." : "Review"}
+                <Button
+                  type="submit"
+                  className="w-full bg-accent-ternary"
+                  disabled={simulatingBundle || (repayAmount == 0 && withdrawCollateralAmount == 0)}
+                >
+                  {repayAmount == 0 && withdrawCollateralAmount == 0
+                    ? "Enter an Amount"
+                    : simulatingBundle
+                      ? "Simulating..."
+                      : "Review "}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">

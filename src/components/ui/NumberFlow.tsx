@@ -14,7 +14,7 @@ export default function NumberFlow({
   const {
     notation = "compact",
     minimumFractionDigits = 2,
-    maximumFractionDigits = value < 1 && currency !== "USD" && !isPercent ? 4 : 2,
+    maximumFractionDigits = value < 1 && currency !== "USD" && !isPercent ? 3 : 2,
     ...restOptions
   } = format ?? {};
 
@@ -32,8 +32,10 @@ export default function NumberFlow({
     prefix = ">" + prefix;
   }
 
-  if (value !== 0 && value < 10 ** -maximumFractionDigits) {
+  const minDisplayValue = Math.pow(10, -maximumFractionDigits);
+  if (value !== 0 && value < minDisplayValue) {
     prefix = "<" + prefix;
+    value = minDisplayValue;
   }
 
   return (

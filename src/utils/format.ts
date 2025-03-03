@@ -1,8 +1,10 @@
 import { Address, formatUnits } from "viem";
 import { BigIntString } from "./types";
 
+const MAX_USD_VALUE = 1e12;
+
 export function formatNumber(
-  input: number,
+  value: number,
   options: Intl.NumberFormatOptions & {
     currency?: "USD" | "ETH";
   } = {}
@@ -12,19 +14,31 @@ export function formatNumber(
   const {
     notation = "compact",
     minimumFractionDigits = 2,
-    maximumFractionDigits = input < 1 && currency !== "USD" && !isPercent ? 4 : 2,
+    maximumFractionDigits = value < 1 && currency !== "USD" && !isPercent ? 3 : 2,
     ...restOptions
   } = options;
 
   const formatOptions: Intl.NumberFormatOptions = {
-    notation: notation == "compact" && (input > 9999 || input < -9999) ? "compact" : "standard",
+    notation: notation == "compact" && (value > 9999 || value < -9999) ? "compact" : "standard",
     minimumFractionDigits,
     maximumFractionDigits,
     ...restOptions,
   };
 
-  const formatted = new Intl.NumberFormat("en-US", formatOptions).format(input);
-  const prefix = currency === "USD" ? "$" : currency === "ETH" ? "Ξ" : "";
+  const formatted = new Intl.NumberFormat("en-US", formatOptions).format(value);
+  let prefix = currency === "USD" ? "$" : currency === "ETH" ? "Ξ" : "";
+
+  // Clamp to max USD value
+  if (currency === "USD" && value > MAX_USD_VALUE) {
+    value = MAX_USD_VALUE;
+    prefix = ">" + prefix;
+  }
+
+  const minDisplayValue = Math.pow(10, -maximumFractionDigits);
+  if (value !== 0 && value < minDisplayValue) {
+    prefix = "<" + prefix;
+    value = minDisplayValue;
+  }
 
   return `${prefix}${formatted}`;
 }

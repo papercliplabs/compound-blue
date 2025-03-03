@@ -120,8 +120,8 @@ export default function VaultSupply({
               />
 
               <div className="flex min-w-0 flex-col gap-2">
-                <Button type="submit" className="w-full" disabled={simulatingBundle}>
-                  {simulatingBundle ? "Simulating..." : "Review Supply"}
+                <Button type="submit" className="w-full" disabled={simulatingBundle || supplyAmount == 0}>
+                  {supplyAmount == 0 ? "Enter an Amount" : simulatingBundle ? "Simulating..." : "Review Supply"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">

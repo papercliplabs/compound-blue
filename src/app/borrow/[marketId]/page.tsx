@@ -142,7 +142,11 @@ async function MarketMetadata({ marketId }: { marketId: Hex }) {
 
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center">
-      <MarketIcon loanAssetInfo={market.loanAsset} collateralAssetInfo={market.collateralAsset} />
+      <MarketIcon
+        loanAssetInfo={market.loanAsset}
+        collateralAssetInfo={market.collateralAsset}
+        className="border-background-primary"
+      />
       <div className="flex items-center gap-4">
         <h1 className="whitespace-nowrap title-2">{market.name}</h1>
         <div className="label-lg rounded-[4px] bg-button-neutral px-1 text-content-secondary">
@@ -309,7 +313,7 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-y-4 md:grid-cols-3 md:gap-y-10">
+    <div className="grid grid-cols-1 gap-y-8 md:grid-cols-3 md:gap-y-10">
       {metrics.map((metric, i) => (
         <Metric key={i} label={metric.label} description={metric.description}>
           <span className="title-5">{metric.value}</span>

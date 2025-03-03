@@ -28,21 +28,27 @@ declare module "@tanstack/react-table" {
 export function TableRow({ href, className, children }: HTMLAttributes<HTMLDivElement> & { href?: string }) {
   if (!href) {
     return (
-      <div className={cn("flex w-full min-w-fit items-center rounded-[8px] transition-colors", className)}>
-        {children}
+      // Annoying hack for the scroll sync to work
+      <div className="w-fit min-w-full px-4">
+        <div className={cn("flex w-full min-w-fit items-center rounded-[8px] transition-colors", className)}>
+          {children}
+        </div>
       </div>
     );
   }
   return (
-    <Link
-      href={href}
-      className={cn(
-        "flex w-full min-w-fit items-center rounded-[8px] transition-colors hover:bg-background-inverse",
-        className
-      )}
-    >
-      {children}
-    </Link>
+    // Annoying hack for the scroll sync to work
+    <div className="w-fit min-w-full px-4">
+      <Link
+        href={href}
+        className={cn(
+          "flex w-full min-w-fit items-center rounded-[8px] transition-colors hover:bg-background-inverse",
+          className
+        )}
+      >
+        {children}
+      </Link>
+    </div>
   );
 }
 
@@ -108,14 +114,14 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
 
   return (
     <ScrollSync>
-      <div className="relative h-fit min-w-0 grow py-4" ref={tableRef}>
+      <div className="relative h-fit min-w-0 grow overflow-x-visible py-4" ref={tableRef}>
         {/* Gradients on left and right for mobile */}
-        <div className="absolute bottom-0 right-0 top-0 z-[10] w-12 bg-gradient-to-l from-background-secondary to-transparent md:hidden" />
-        <div className="absolute bottom-0 left-0 top-0 z-[10] w-12 bg-gradient-to-r from-background-secondary to-transparent md:hidden" />
+        <div className="absolute bottom-0 right-0 top-0 z-[10] w-8 bg-gradient-to-l from-background-secondary to-transparent md:hidden" />
+        <div className="absolute bottom-0 left-0 top-0 z-[10] w-8 bg-gradient-to-r from-background-secondary to-transparent md:hidden" />
 
         <div className="sticky z-[5] min-w-full" style={{ top: HEADER_HEIGHT - 2 }}>
           <ScrollSyncPane>
-            <div className="overflow-auto overscroll-x-none bg-background-secondary px-4 scrollbar-none">
+            <div className="overflow-auto overscroll-x-none bg-background-secondary scrollbar-none">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="label-sm h-12 text-content-secondary">
                   {headerGroup.headers.map((header) => {
@@ -152,7 +158,7 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
           </ScrollSyncPane>
         </div>
         <ScrollSyncPane>
-          <div className="flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[12px] px-4 scrollbar-none paragraph-lg">
+          <div className="flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[12px] scrollbar-none paragraph-lg">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow href={rowLink(row.original) ?? undefined} className="group h-[72px] gap-0" key={row.id}>

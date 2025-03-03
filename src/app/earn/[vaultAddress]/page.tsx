@@ -239,7 +239,7 @@ async function VaultInfo({ vaultAddress }: { vaultAddress: Address }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-y-4 md:grid-cols-3 md:gap-y-10">
+    <div className="grid grid-cols-1 gap-y-8 md:grid-cols-3 md:gap-y-10">
       {metrics.map((metric, i) => (
         <Metric key={i} label={metric.label} description={metric.description}>
           <span className="title-5">{metric.value}</span>

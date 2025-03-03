@@ -16,14 +16,14 @@ interface MarketIconProps extends HTMLAttributes<HTMLDivElement> {
 
 export default function MarketIcon({ loanAssetInfo, collateralAssetInfo, className, ...props }: MarketIconProps) {
   return (
-    <div className={cn("flex items-center", className)} {...props}>
+    <div className={"flex items-center"} {...props}>
       {collateralAssetInfo?.icon && (
         <Image
           src={collateralAssetInfo.icon}
           alt={collateralAssetInfo.symbol}
           width={40}
           height={40}
-          className="z-[1] rounded-full border-2 border-background-secondary"
+          className={cn("z-[1] rounded-full border-2 border-background-secondary", className)}
         />
       )}
       <div className={clsx("flex items-center gap-3", collateralAssetInfo?.icon && "-ml-[12px]")}>
@@ -33,7 +33,7 @@ export default function MarketIcon({ loanAssetInfo, collateralAssetInfo, classNa
             alt={loanAssetInfo.symbol}
             width={40}
             height={40}
-            className={clsx("rounded-full border-2 border-background-secondary")}
+            className={cn("rounded-full border-2 border-background-secondary", className)}
           />
         )}
       </div>
