@@ -27,7 +27,6 @@ export function formatNumber(
     ...restOptions,
   };
 
-  const formatted = new Intl.NumberFormat("en-US", formatOptions).format(value);
   let prefix = currency === "USD" ? "$" : currency === "ETH" ? "Ξ" : "";
 
   // Clamp to max USD value
@@ -41,6 +40,8 @@ export function formatNumber(
     prefix = "<" + prefix;
     value = minDisplayValue;
   }
+
+  const formatted = new Intl.NumberFormat("en-US", formatOptions).format(value);
 
   return `${prefix}${formatted}`;
 }

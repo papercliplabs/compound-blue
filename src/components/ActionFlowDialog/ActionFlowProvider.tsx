@@ -2,7 +2,7 @@
 import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from "react";
 import { SignatureRequirementFunction } from "@morpho-org/bundler-sdk-viem";
 import { Address, Hex, TransactionRequest as ViemTransactionRequest } from "viem";
-import { useAccount, useConnectorClient } from "wagmi";
+import { useAccount, useConnectorClient, usePublicClient } from "wagmi";
 import { CHAIN_ID } from "@/config";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
@@ -71,10 +71,11 @@ export function ActionFlowProvider({
   const { data: client } = useConnectorClient();
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
+  const publicClient = usePublicClient();
 
   const startFlow = useCallback(async () => {
     // Must be connected
-    if (!client) {
+    if (!client || !publicClient) {
       openConnectModal?.();
       return;
     }
@@ -105,14 +106,15 @@ export function ActionFlowProvider({
           setLastTransactionHash(hash);
           track("transaction", { hash, status: "pending" });
 
+          // Uses public client instead so polling happens through our RPC provider
+          // Not the users wallet provider, which may be unreliable
           setActionState("pending-transaction");
-          const receipt = await waitForTransactionReceipt(client, {
+          const receipt = await waitForTransactionReceipt(publicClient, {
             hash,
             // TODO: handle replacement (?)
             onReplaced: (replacement) => console.log("TX REPLACED", replacement),
-            pollingInterval: 2000,
+            pollingInterval: 4000,
             retryCount: 20,
-            retryDelay: 4000,
           });
 
           if (receipt.status == "success") {
@@ -142,6 +144,7 @@ export function ActionFlowProvider({
     setLastTransactionHash,
     setError,
     client,
+    publicClient,
     chainId,
     signatureRequests,
     transactionRequests,
