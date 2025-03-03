@@ -15,6 +15,7 @@ export function formatNumber(
     notation = "compact",
     minimumFractionDigits = 2,
     maximumFractionDigits = value < 1 && currency !== "USD" && !isPercent ? 3 : 2,
+    style,
     ...restOptions
   } = options;
 
@@ -22,6 +23,7 @@ export function formatNumber(
     notation: notation == "compact" && (value > 9999 || value < -9999) ? "compact" : "standard",
     minimumFractionDigits,
     maximumFractionDigits,
+    style,
     ...restOptions,
   };
 
@@ -34,7 +36,7 @@ export function formatNumber(
     prefix = ">" + prefix;
   }
 
-  const minDisplayValue = Math.pow(10, -maximumFractionDigits);
+  const minDisplayValue = Math.pow(10, -(maximumFractionDigits + (style === "percent" ? 2 : 0)));
   if (value !== 0 && value < minDisplayValue) {
     prefix = "<" + prefix;
     value = minDisplayValue;

@@ -110,8 +110,9 @@ export function ActionFlowProvider({
             hash,
             // TODO: handle replacement (?)
             onReplaced: (replacement) => console.log("TX REPLACED", replacement),
-            pollingInterval: 4000,
-            retryCount: 10,
+            pollingInterval: 2000,
+            retryCount: 20,
+            retryDelay: 4000,
           });
 
           if (receipt.status == "success") {

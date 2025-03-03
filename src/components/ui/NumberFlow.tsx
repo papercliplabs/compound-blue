@@ -32,7 +32,7 @@ export default function NumberFlow({
     prefix = ">" + prefix;
   }
 
-  const minDisplayValue = Math.pow(10, -maximumFractionDigits);
+  const minDisplayValue = Math.pow(10, -(maximumFractionDigits + (format?.style === "percent" ? 2 : 0)));
   if (value !== 0 && value < minDisplayValue) {
     prefix = "<" + prefix;
     value = minDisplayValue;
