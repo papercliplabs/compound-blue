@@ -21,6 +21,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import AssetFormField from "../AssetFormField";
 import { VaultActionsProps } from ".";
 import { PrepareVaultWithdrawActionReturnType, prepareVaultWithdrawBundle } from "@/actions/prepareVaultWithdrawAction";
+import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 
 export default function VaultWithdraw({
   vault,
@@ -112,7 +113,7 @@ export default function VaultWithdraw({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <fieldset disabled={simulatingBundle || open} style={{ all: "unset", width: "100%" }}>
-            <div className="flex w-full flex-col space-y-8 overflow-hidden">
+            <div className="flex w-full flex-col gap-7 overflow-hidden">
               <AssetFormField
                 control={form.control}
                 name="withdrawAmount"
@@ -131,6 +132,7 @@ export default function VaultWithdraw({
                   </p>
                 )}
               </div>
+              <PoweredByMorpho className="self-center" />
             </div>
           </fieldset>
         </form>

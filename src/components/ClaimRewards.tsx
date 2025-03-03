@@ -14,18 +14,21 @@ import { prepareMerklClaimAction } from "@/actions/prepareMerklClaimAction";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import { useUserRewards } from "@/providers/UserPositionProvider";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import LinkExternal from "./LinkExternal";
 
 export default function ClaimRewards() {
-  const [open, setOpen] = useState(false);
+  const [claimFlowOpen, setClaimFlowOpen] = useState(false);
+  const [noRewardsPopoverOpen, setNoRewardsPopoverOpen] = useState(false);
   const { address } = useAccount();
   const { theme } = useTheme();
   const { data } = useUserRewards();
   const [claimed, setClaimed] = useState<boolean>(false);
 
-  const totalRewards = useMemo(
-    () => (data ?? []).reduce((acc, curr) => acc + (curr.unclaimedAmountUsd ?? 0), 0),
-    [data]
-  );
+  const totalRewards = useMemo(() => {
+    const total = (data ?? []).reduce((acc, curr) => acc + (curr.unclaimedAmountUsd ?? 0), 0);
+    return claimed ? 0 : total; // Override total to 0 here if we just claimed. The merkle API is slow to update.
+  }, [data, claimed]);
 
   const preparedAction = useMemo(() => {
     if (!data || !address) {
@@ -47,7 +50,8 @@ export default function ClaimRewards() {
     return prepareMerklClaimAction({ accountAddress: address, tokens, amounts, proofs });
   }, [data, address]);
 
-  if (!data || data.length === 0) {
+  // Hide if the user is not connected
+  if (!address) {
     return null;
   }
 
@@ -55,25 +59,38 @@ export default function ClaimRewards() {
     <>
       {/* Hide this button once claimed since Merkl API is quite slow to update */}
       {!claimed && (
-        <Button variant="secondary" className="border pl-3 pr-4" onClick={() => setOpen(true)}>
-          <Sparkle />
-          <span>{formatNumber(totalRewards, { currency: "USD" })}</span>
-        </Button>
+        <Popover open={noRewardsPopoverOpen} onOpenChange={setNoRewardsPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="secondary"
+              className="border pl-3 pr-4"
+              onClick={() => (totalRewards > 0 ? setClaimFlowOpen(true) : setNoRewardsPopoverOpen(true))}
+            >
+              <Sparkle />
+              <span>{formatNumber(totalRewards, { currency: "USD" })}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent>
+            You currently have no unclaimed rewards. Rewards are allocated daily, check back tomorrow!
+          </PopoverContent>
+        </Popover>
       )}
 
-      {preparedAction?.status === "success" && (
+      {data && preparedAction?.status === "success" && (
         <ActionFlowDialog
-          open={open}
-          onOpenChange={setOpen}
+          open={claimFlowOpen}
+          onOpenChange={setClaimFlowOpen}
           signatureRequests={preparedAction.signatureRequests}
           transactionRequests={preparedAction.transactionRequests}
           footerImage={
-            <Image
-              src={theme === "dark" ? "/merkl-dark.svg" : "/merkl-light.svg"}
-              alt="Merkl"
-              width={235}
-              height={24}
-            />
+            <LinkExternal href="https://app.merkl.xyz/" hideArrow>
+              <Image
+                src={theme === "dark" ? "/merkl-dark.svg" : "/merkl-light.svg"}
+                alt="Merkl"
+                width={235}
+                height={24}
+              />
+            </LinkExternal>
           }
           flowCompletionCb={() => setClaimed(true)}
         >

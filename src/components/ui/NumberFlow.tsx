@@ -18,8 +18,9 @@ export default function NumberFlow({
     ...restOptions
   } = format ?? {};
 
+  const displayValue = format?.style == "percent" ? value * 100 : value;
   const formatOptions: typeof format = {
-    notation: notation == "compact" && (value > 9999 || value < -9999) ? "compact" : "standard",
+    notation: notation == "compact" && (displayValue > 9999 || displayValue < -9999) ? "compact" : "standard",
     minimumFractionDigits,
     maximumFractionDigits,
     ...restOptions,
@@ -32,10 +33,10 @@ export default function NumberFlow({
     prefix = ">" + prefix;
   }
 
-  const minDisplayValue = Math.pow(10, -(maximumFractionDigits + (format?.style === "percent" ? 2 : 0)));
-  if (value !== 0 && value < minDisplayValue) {
+  const minValue = Math.pow(10, -maximumFractionDigits);
+  if (value !== 0 && displayValue < minValue) {
     prefix = "<" + prefix;
-    value = minDisplayValue;
+    value = minValue * Math.pow(10, format?.style === "percent" ? -2 : 0);
   }
 
   return (

@@ -27,6 +27,7 @@ import {
 } from "@/actions/prepareMarketRepayWithdrawAction";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import { UserMarketPositions } from "@/data/whisk/getUserMarketPositions";
+import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 
 export default function MarketRepayWithdraw({
   market,
@@ -172,7 +173,7 @@ export default function MarketRepayWithdraw({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <fieldset disabled={simulatingBundle || open} style={{ all: "unset", width: "100%" }}>
-            <div className="flex w-full flex-col space-y-8 overflow-hidden">
+            <div className="flex w-full flex-col gap-7 overflow-hidden">
               <div className="[&_label]:text-accent-ternary">
                 <AssetFormField
                   control={form.control}
@@ -182,6 +183,7 @@ export default function MarketRepayWithdraw({
                   descaledAvailableBalance={availableRepayAmount}
                 />
               </div>
+              <div className="h-[1px] w-full bg-border-primary" />
               <AssetFormField
                 control={form.control}
                 name="withdrawCollateralAmount"
@@ -208,6 +210,7 @@ export default function MarketRepayWithdraw({
                   </p>
                 )}
               </div>
+              <PoweredByMorpho className="self-center" />
             </div>
           </fieldset>
         </form>

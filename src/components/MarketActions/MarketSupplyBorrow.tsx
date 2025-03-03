@@ -27,6 +27,7 @@ import {
 import { MarketId } from "@morpho-org/blue-sdk";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import { UserMarketPositions } from "@/data/whisk/getUserMarketPositions";
+import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 
 export default function MarketSupplyBorrow({
   market,
@@ -155,7 +156,7 @@ export default function MarketSupplyBorrow({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <fieldset disabled={simulatingBundle || open} style={{ all: "unset", width: "100%" }}>
-            <div className="flex w-full flex-col space-y-8 overflow-hidden">
+            <div className="flex w-full flex-col gap-7 overflow-hidden">
               <AssetFormField
                 control={form.control}
                 name="supplyCollateralAmount"
@@ -163,6 +164,7 @@ export default function MarketSupplyBorrow({
                 asset={market.collateralAsset}
                 descaledAvailableBalance={descaledCollateralTokenBalance}
               />
+              <div className="h-[1px] w-full bg-border-primary" />
               <div className="[&_label]:text-accent-ternary">
                 <AssetFormField
                   control={form.control}
@@ -192,6 +194,7 @@ export default function MarketSupplyBorrow({
                   </p>
                 )}
               </div>
+              <PoweredByMorpho className="self-center" />
             </div>
           </fieldset>
         </form>

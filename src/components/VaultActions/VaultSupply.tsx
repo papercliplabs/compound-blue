@@ -20,6 +20,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import AssetFormField from "../AssetFormField";
 import { VaultActionsProps } from ".";
 import { ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog/ActionFlowSummary";
+import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 
 export default function VaultSupply({
   vault,
@@ -111,7 +112,7 @@ export default function VaultSupply({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <fieldset disabled={simulatingBundle || open} style={{ all: "unset", width: "100%" }}>
-            <div className="flex w-full flex-col space-y-8 overflow-hidden">
+            <div className="flex w-full flex-col gap-7 overflow-hidden">
               <AssetFormField
                 control={form.control}
                 name="supplyAmount"
@@ -130,6 +131,7 @@ export default function VaultSupply({
                   </p>
                 )}
               </div>
+              <PoweredByMorpho className="self-center" />
             </div>
           </fieldset>
         </form>

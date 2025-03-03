@@ -19,8 +19,9 @@ export function formatNumber(
     ...restOptions
   } = options;
 
+  const displayValue = style == "percent" ? value * 100 : value;
   const formatOptions: Intl.NumberFormatOptions = {
-    notation: notation == "compact" && (value > 9999 || value < -9999) ? "compact" : "standard",
+    notation: notation == "compact" && (displayValue > 9999 || displayValue < -9999) ? "compact" : "standard",
     minimumFractionDigits,
     maximumFractionDigits,
     style,
@@ -35,10 +36,10 @@ export function formatNumber(
     prefix = ">" + prefix;
   }
 
-  const minDisplayValue = Math.pow(10, -(maximumFractionDigits + (style === "percent" ? 2 : 0)));
-  if (value !== 0 && value < minDisplayValue) {
+  const minValue = Math.pow(10, -maximumFractionDigits);
+  if (value !== 0 && displayValue < minValue) {
     prefix = "<" + prefix;
-    value = minDisplayValue;
+    value = minValue * Math.pow(10, style === "percent" ? -2 : 0);
   }
 
   const formatted = new Intl.NumberFormat("en-US", formatOptions).format(value);

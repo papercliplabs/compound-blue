@@ -52,6 +52,7 @@ const query = graphql(`
           asset {
             symbol
             priceUsd
+            icon
           }
         }
       }
