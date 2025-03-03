@@ -15,6 +15,8 @@ import { UserVaultPosition, UserVaultPositionHighlight } from "@/components/User
 import VaultActions from "@/components/VaultActions";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { WHITELISTED_VAULT_ADDRESSES } from "@/config";
+import BackButton from "@/components/BackButton";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Vault",
@@ -26,6 +28,10 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
     vaultAddress = getAddress((await params).vaultAddress);
   } catch {
     notFound();
+  }
+
+  if (!WHITELISTED_VAULT_ADDRESSES.includes(vaultAddress)) {
+    return <UnsupportedVault />;
   }
 
   return (
@@ -267,6 +273,16 @@ async function UserVaultPositionWrapper({ vaultAddress }: { vaultAddress: Addres
   }
 
   return <UserVaultPosition vault={vault} />;
+}
+
+function UnsupportedVault() {
+  return (
+    <div className="flex w-full grow flex-col items-center justify-center gap-6 text-center">
+      <h1>Unsupported Vault</h1>
+      <p className="text-content-secondary">This vault is not currently supported on the Compound Blue interface.</p>
+      <BackButton />
+    </div>
+  );
 }
 
 export const dynamic = "force-static";

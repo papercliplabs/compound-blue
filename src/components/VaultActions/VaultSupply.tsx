@@ -48,13 +48,14 @@ export default function VaultSupply({
         .pipe(
           z.coerce
             .number()
-            .positive({ message: "Amount must be greater than zero." })
+            .positive("Amount must be greater than zero.")
             .max(decaledWalletBalance ?? Number.MAX_VALUE, { message: "Amount exceeds wallet balance." })
         ),
     });
   }, [decaledWalletBalance]);
 
   const form = useForm<z.infer<typeof formSchema>>({
+    mode: "onChange",
     resolver: zodResolver(formSchema),
   });
 
@@ -120,7 +121,7 @@ export default function VaultSupply({
               />
 
               <div className="flex min-w-0 flex-col gap-2">
-                <Button type="submit" className="w-full" disabled={simulatingBundle || supplyAmount == 0}>
+                <Button type="submit" className="w-full" disabled={simulatingBundle || !form.formState.isValid}>
                   {supplyAmount == 0 ? "Enter an Amount" : simulatingBundle ? "Simulating..." : "Review Supply"}
                 </Button>
                 {preparedAction?.status == "error" && (

@@ -7,6 +7,7 @@ import { CHAIN_ID } from "@/config";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { useUserPositionContext } from "@/providers/UserPositionProvider";
+import { track } from "@vercel/analytics";
 
 export type ActionFlowState = "review" | "active" | "success" | "failed";
 export type ActionState = "pending-wallet" | "pending-transaction";
@@ -102,6 +103,7 @@ export function ActionFlowProvider({
           setActionState("pending-wallet");
           const hash = await sendTransaction(client, step.tx());
           setLastTransactionHash(hash);
+          track("transaction", { hash, status: "pending" });
 
           setActionState("pending-transaction");
           const receipt = await waitForTransactionReceipt(client, {
@@ -113,8 +115,10 @@ export function ActionFlowProvider({
           });
 
           if (receipt.status == "success") {
+            track("transaction", { hash, status: "success" });
             setActiveStep((step) => step + 1);
           } else {
+            track("transaction", { hash, status: "failed" });
             setFlowState("failed");
             return;
           }

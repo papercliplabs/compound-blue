@@ -30,6 +30,10 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
   "0x40aa905825a89eda33acce144f9125f6568411154e8166b5c65df31c40e0b999", // WETH idle
   "0xb8ae474af3b91c8143303723618b31683b52e9c86566aa54c06f0bc27906bcae", // wstETH/WETH - 91.5%
   "0x9eacb622c6ef9c2f0fa5f1fda58a8702eb8132d8f49783f6eea6acc3a398e741", // WBTC/WETH - 86%
+
+  // Morpho Test markets
+  "0x88a2953e642f96afcb8d8ba2a1cc2e732e9ba89bb99eecf2d6101ad558ab7698",
+  "0xe558a51e10f1fdf7156c9470d2f68b93b3fd1ad5e775c020ae4a7f805e8d5674",
 ];
 
 export const MAX_BORROW_LTV_MARGIN = 0.05; // 0->1, Only allow a max borrow origination of up to this % below LLTV

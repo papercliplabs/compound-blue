@@ -17,6 +17,8 @@ import { UserMarketPosition, UserMarketPositionHighlight } from "@/components/Us
 import MarketActions from "@/components/MarketActions";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { WHITELISTED_MARKET_IDS } from "@/config";
+import BackButton from "@/components/BackButton";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Market",
@@ -26,6 +28,10 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
   const marketId = (await params).marketId as Hex;
   if (!isHex(marketId)) {
     notFound();
+  }
+
+  if (!WHITELISTED_MARKET_IDS.includes(marketId)) {
+    return <UnsupportedMarket />;
   }
 
   return (
@@ -341,6 +347,16 @@ async function UserMarketPositionWrapper({ marketId }: { marketId: Hex }) {
   }
 
   return <UserMarketPosition market={market} />;
+}
+
+function UnsupportedMarket() {
+  return (
+    <div className="flex w-full grow flex-col items-center justify-center gap-6 text-center">
+      <h1>Unsupported Market</h1>
+      <p className="text-content-secondary">This market is not currently supported on the Compound Blue interface.</p>
+      <BackButton />
+    </div>
+  );
 }
 
 export const dynamic = "force-static";

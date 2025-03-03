@@ -56,6 +56,7 @@ export default function VaultWithdraw({
   }, [decaledPositionBalance]);
 
   const form = useForm<z.infer<typeof formSchema>>({
+    mode: "onChange",
     resolver: zodResolver(formSchema),
   });
 
@@ -121,7 +122,7 @@ export default function VaultWithdraw({
               />
 
               <div className="flex min-w-0 flex-col gap-2">
-                <Button type="submit" className="w-full" disabled={simulatingBundle || withdrawAmount == 0}>
+                <Button type="submit" className="w-full" disabled={simulatingBundle || !form.formState.isValid}>
                   {withdrawAmount == 0 ? "Enter an Amount" : simulatingBundle ? "Simulating..." : "Review Withdraw"}
                 </Button>
                 {preparedAction?.status == "error" && (

@@ -11,8 +11,10 @@ const query = graphql(`
       market {
         marketId
         lltv
+        collateralPriceInLoanAsset
         collateralAsset {
           symbol
+          decimals
         }
         loanAsset {
           symbol

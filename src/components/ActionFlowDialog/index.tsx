@@ -177,8 +177,11 @@ function ActionFlowStepIcon({
           />
         </div>
       ) : (
-        <div className="label-sm flex h-8 w-8 items-center justify-center rounded-full border border-accent-primary bg-background-secondary">
-          {stepNumber}
+        <div className="relative">
+          <div className="animate-subtle-ping absolute inline-flex h-full w-full rounded-full bg-accent-primary opacity-75" />
+          <div className="label-sm relative flex h-8 w-8 items-center justify-center rounded-full border border-accent-primary bg-background-secondary">
+            {stepNumber}
+          </div>
         </div>
       );
     case "pending":

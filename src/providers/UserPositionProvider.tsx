@@ -10,7 +10,7 @@ import { UserTokenHolding } from "@/data/whisk/getUserTokenHolding";
 import { UserRewards } from "@/data/whisk/getUserRewards";
 
 const DEFAULT_POLLING_INTERVAL_MS = 60 * 1000;
-const FAST_POLLING_INTERVAL_MS = 3 * 1000;
+const FAST_POLLING_INTERVAL_MS = 1 * 1000;
 const FAST_POLLING_TIME_MS = 30 * 1000;
 
 type UserPositionContextType = {

@@ -7,7 +7,7 @@ import {
   ActionFlowSummary,
   ActionFlowSummaryAssetItem,
 } from "@/components/ActionFlowDialog";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
 import { useUserMarketPosition, useUserTokenHolding } from "@/providers/UserPositionProvider";
@@ -26,6 +26,7 @@ import {
 } from "@/actions/prepareMarketSupplyBorrowAction";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
+import { UserMarketPositions } from "@/data/whisk/getUserMarketPositions";
 
 export default function MarketSupplyBorrow({
   market,
@@ -53,22 +54,37 @@ export default function MarketSupplyBorrow({
   );
 
   const formSchema = useMemo(() => {
-    return z.object({
-      supplyCollateralAmount: z
-        .string()
-        .optional()
-        .pipe(
-          z.coerce
-            .number()
-            .nonnegative()
-            .max(descaledCollateralTokenBalance ?? Number.MAX_VALUE, { message: "Amount exceeds wallet balance." })
-            .optional()
-        ),
-      borrowAmount: z.string().optional().pipe(z.coerce.number().nonnegative().optional()),
-    });
-  }, [descaledCollateralTokenBalance]);
+    return z
+      .object({
+        supplyCollateralAmount: z
+          .string()
+          .optional()
+          .pipe(
+            z.coerce
+              .number()
+              .nonnegative()
+              .max(descaledCollateralTokenBalance ?? Number.MAX_VALUE, { message: "Amount exceeds wallet balance." })
+              .optional()
+          ),
+        borrowAmount: z.string().optional().pipe(z.coerce.number().nonnegative().optional()),
+      })
+      .refine(
+        (data) => {
+          if (!userPosition) {
+            return true;
+          }
+          const newBorrowMax = computeNewBorrowMax(data.supplyCollateralAmount ?? 0, userPosition);
+          return (data.borrowAmount ?? 0) <= newBorrowMax;
+        },
+        {
+          message: "Amount exceeds borrow capacity.",
+          path: ["borrowAmount"],
+        }
+      );
+  }, [descaledCollateralTokenBalance, userPosition]);
 
   const form = useForm<z.infer<typeof formSchema>>({
+    mode: "onChange",
     resolver: zodResolver(formSchema),
   });
 
@@ -81,19 +97,14 @@ export default function MarketSupplyBorrow({
   const supplyCollateralAmount = Number(form.watch("supplyCollateralAmount") ?? 0);
   const borrowAmount = Number(form.watch("borrowAmount") ?? 0);
 
-  const descaledBorrowMax = useMemo(() => {
-    const currentCollateralDescaled = descaleBigIntToNumber(
-      userPosition?.collateralAssets ?? BigInt(0),
-      market.collateralAsset.decimals
-    );
-    const newTotalCollateralDescaled = currentCollateralDescaled + supplyCollateralAmount;
-    const maxTotalLoanDescaled =
-      newTotalCollateralDescaled * market.collateralPriceInLoanAsset * (market.lltv - MAX_BORROW_LTV_MARGIN);
+  // Anytime the supplyCollateralAmount changes, trigger the borrowAmount validation since it depends on it
+  useEffect(() => {
+    form.trigger("borrowAmount");
+  }, [supplyCollateralAmount, form]);
 
-    return (
-      maxTotalLoanDescaled - descaleBigIntToNumber(userPosition?.borrowAssets ?? BigInt(0), market.loanAsset.decimals)
-    );
-  }, [userPosition, supplyCollateralAmount, market]);
+  const descaledBorrowMax = useMemo(() => {
+    return computeNewBorrowMax(supplyCollateralAmount, userPosition);
+  }, [userPosition, supplyCollateralAmount]);
 
   const onSubmit = useCallback(
     async (values: z.infer<typeof formSchema>) => {
@@ -108,19 +119,6 @@ export default function MarketSupplyBorrow({
       }
 
       const { supplyCollateralAmount = 0, borrowAmount = 0 } = values;
-
-      // Final form validation
-      if (borrowAmount == 0 && supplyCollateralAmount == 0) {
-        // At least one must be set
-        form.setError("borrowAmount", { message: "Amount is required." });
-        form.setError("supplyCollateralAmount", { message: "Amount is required." });
-        return;
-      }
-
-      if (borrowAmount > descaledBorrowMax) {
-        form.setError("borrowAmount", { message: "Amount exceeds borrow capacity." });
-        return;
-      }
 
       setSimulatingBundle(true);
 
@@ -149,7 +147,7 @@ export default function MarketSupplyBorrow({
 
       setSimulatingBundle(false);
     },
-    [publicClient, address, market, openConnectModal, descaledCollateralTokenBalance, descaledBorrowMax, form]
+    [publicClient, address, market, openConnectModal, descaledCollateralTokenBalance]
   );
 
   return (
@@ -178,7 +176,9 @@ export default function MarketSupplyBorrow({
                 <Button
                   type="submit"
                   className="w-full bg-accent-ternary"
-                  disabled={simulatingBundle || (borrowAmount == 0 && supplyCollateralAmount == 0)}
+                  disabled={
+                    simulatingBundle || (borrowAmount == 0 && supplyCollateralAmount == 0) || !form.formState.isValid
+                  }
                 >
                   {borrowAmount == 0 && supplyCollateralAmount == 0
                     ? "Enter an Amount"
@@ -282,4 +282,18 @@ export default function MarketSupplyBorrow({
       )}
     </>
   );
+}
+
+function computeNewBorrowMax(newCollateral: number, position?: UserMarketPositions[number]): number {
+  if (!position?.market?.collateralAsset) {
+    return 0;
+  }
+
+  const currentCollateral = descaleBigIntToNumber(position.collateralAssets, position.market.collateralAsset.decimals);
+  const currentLoan = descaleBigIntToNumber(position.borrowAssets, position.market.loanAsset.decimals);
+  const newTotalCollateral = currentCollateral + newCollateral;
+  const maxLoan =
+    newTotalCollateral * position.market.collateralPriceInLoanAsset * (position.market.lltv - MAX_BORROW_LTV_MARGIN);
+
+  return Math.max(maxLoan - currentLoan, 0);
 }

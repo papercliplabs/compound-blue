@@ -49,6 +49,14 @@ export default {
           disabled: "rgb(var(--button-disabled))",
         },
       },
+      animation: {
+        "subtle-ping": "subtle-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite",
+      },
+      keyframes: {
+        "subtle-ping": {
+          "70%, 100%": { transform: "scale(1.4)", opacity: "0" },
+        },
+      },
     },
   },
   plugins: [

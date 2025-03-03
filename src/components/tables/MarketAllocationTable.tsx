@@ -57,7 +57,7 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
             </TooltipTrigger>
             <TooltipContent>
               The current allocation to this market is using {formatNumber(percentOfCap, { style: "percent" })} of the{" "}
-              {formatNumber(allocation.position.supplyAssetsUsd, { currency: "USD" })} supply cap.
+              {formatNumber(allocation.supplyCapUsd, { currency: "USD" })} supply cap.
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

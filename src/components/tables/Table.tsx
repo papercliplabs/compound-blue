@@ -114,10 +114,10 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
 
   return (
     <ScrollSync>
-      <div className="relative h-fit min-w-0 grow overflow-x-visible py-4" ref={tableRef}>
+      <div className="relative h-fit min-w-0 grow overflow-x-visible pt-4" ref={tableRef}>
         {/* Gradients on left and right for mobile */}
-        <div className="absolute bottom-0 right-0 top-0 z-[10] w-8 bg-gradient-to-l from-background-secondary to-transparent md:hidden" />
-        <div className="absolute bottom-0 left-0 top-0 z-[10] w-8 bg-gradient-to-r from-background-secondary to-transparent md:hidden" />
+        <div className="absolute bottom-0 left-0 top-0 z-[10] w-8 rounded-bl-[12px] bg-gradient-to-r from-background-secondary to-transparent md:hidden" />
+        <div className="absolute bottom-0 right-0 top-0 z-[10] w-8 rounded-br-[12px] bg-gradient-to-l from-background-secondary to-transparent md:hidden" />
 
         <div className="sticky z-[5] min-w-full" style={{ top: HEADER_HEIGHT - 2 }}>
           <ScrollSyncPane>
@@ -158,7 +158,7 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
           </ScrollSyncPane>
         </div>
         <ScrollSyncPane>
-          <div className="flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[12px] scrollbar-none paragraph-lg">
+          <div className="flex w-full flex-col overflow-x-auto overscroll-x-none pb-4 scrollbar-none paragraph-lg">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow href={rowLink(row.original) ?? undefined} className="group h-[72px] gap-0" key={row.id}>
