@@ -7,6 +7,7 @@ import Image from "next/image";
 import NumberFlow from "./ui/NumberFlow";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
+import { numberToString } from "@/utils/format";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface AssetFormFieldProps<TFieldValues extends Record<string, any>>
@@ -66,7 +67,7 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
                   if (!descaledAvailableBalance) {
                     openConnectModal?.();
                   } else {
-                    field.onChange(descaledAvailableBalance.toString());
+                    field.onChange(numberToString(descaledAvailableBalance));
                   }
                 }}
               >

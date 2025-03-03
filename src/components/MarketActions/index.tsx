@@ -4,16 +4,16 @@ import { Card } from "../ui/card";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useUserMarketPosition } from "@/providers/UserPositionProvider";
-import { Market } from "@/data/whisk/getMarket";
 import { Hex } from "viem";
 import MarketSupplyBorrow from "./MarketSupplyBorrow";
 import MarketRepayWithdraw from "./MarketRepayWithdraw";
 import { useResponsiveContext } from "@/providers/ResponsiveProvider";
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { MarketNonIdle } from "@/data/whisk/getMarket";
 
 export interface MarketActionsProps {
-  market: Market;
+  market: MarketNonIdle;
 }
 
 export default function MarketActions({ market }: MarketActionsProps) {

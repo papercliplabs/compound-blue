@@ -38,3 +38,12 @@ export function descaleBigIntToNumber(value: bigint | BigIntString, decimals: nu
 export function formatAddress(address: Address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
+
+// Avoid scientific notation for large or small entries
+export function numberToString(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    useGrouping: false,
+    maximumFractionDigits: 20,
+    minimumFractionDigits: 0,
+  }).format(value);
+}

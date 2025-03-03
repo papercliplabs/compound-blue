@@ -33,6 +33,9 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
         </div>
       );
     },
+    meta: {
+      tooltip: "The borrowable asset.",
+    },
     minSize: 160,
   },
   {
@@ -56,6 +59,9 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
         "N/A"
       );
     },
+    meta: {
+      tooltip: "The asset used as collateral for loans.",
+    },
     minSize: 160,
   },
   {
@@ -78,6 +84,9 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
         </span>
       );
     },
+    meta: {
+      tooltip: "Your loan to value (LTV), versus the market's liquidation loan to value (LLTV) threshold.",
+    },
     minSize: 160,
   },
   {
@@ -85,6 +94,9 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
     header: "Liquidity",
     accessorFn: (row) => formatNumber(row.liquidityAssetsUsd, { currency: "USD" }),
     minSize: 140,
+    meta: {
+      tooltip: "The total assets available to be borrowed, including via public reallocation.",
+    },
   },
   {
     accessorKey: "borrowApy.total",
@@ -92,6 +104,9 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
     cell: ({ row }) => {
       const market = row.original;
       return <Apy type="borrow" apy={market.borrowApy} />;
+    },
+    meta: {
+      tooltip: "The total borrow APY including rewards.",
     },
     minSize: 140,
   },

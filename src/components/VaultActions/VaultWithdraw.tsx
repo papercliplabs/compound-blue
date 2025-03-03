@@ -16,7 +16,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import AssetFormField from "../AssetFormField";
 import { VaultActionsProps } from ".";
@@ -78,7 +78,7 @@ export default function VaultWithdraw({
       const withdrawAmountBigInt =
         withdrawAmount === decaledPositionBalance
           ? maxUint256
-          : parseUnits(withdrawAmount.toString(), vault.asset.decimals);
+          : parseUnits(numberToString(withdrawAmount), vault.asset.decimals);
 
       const preparedAction = await prepareVaultWithdrawBundle({
         publicClient,

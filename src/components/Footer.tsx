@@ -13,7 +13,7 @@ export default function Footer() {
             keepReferrer
             hideArrow
           >
-            Build by Paperclip Labs
+            Built by Paperclip Labs
           </LinkExternal>
           <LinkExternal
             href="https://github.com/papercliplabs/compound-blue"

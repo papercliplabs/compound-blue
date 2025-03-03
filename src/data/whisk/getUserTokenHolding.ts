@@ -2,8 +2,8 @@ import "server-only";
 import { graphql } from "@/generated/gql/whisk";
 import { whiskClient } from "./client";
 import { CHAIN_ID } from "@/config";
-import { cache } from "react";
 import { Address } from "viem";
+import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
   query getUserTokenHolding($chainId: Number!, $tokenAddress: String!, $accountAddress: String!) {
@@ -20,10 +20,9 @@ const query = graphql(`
   }
 `);
 
-export const getUserTokenHolding = cache(async (tokenAddress: Address, accountAddress: Address) => {
-  console.debug("getUserTokenHolding");
+export const getUserTokenHolding = cacheAndCatch(async (tokenAddress: Address, accountAddress: Address) => {
   const tokenHoldings = await whiskClient.request(query, { chainId: CHAIN_ID, tokenAddress, accountAddress });
   return tokenHoldings.tokenHolding;
-});
+}, "getUserTokenHolding");
 
-export type UserTokenHolding = Awaited<ReturnType<typeof getUserTokenHolding>>;
+export type UserTokenHolding = NonNullable<Awaited<ReturnType<typeof getUserTokenHolding>>>;

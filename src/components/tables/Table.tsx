@@ -1,19 +1,49 @@
 "use client";
 import { cn } from "@/utils/shadcn";
-import { ColumnDef, getCoreRowModel, getSortedRowModel, SortingState, useReactTable } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  getCoreRowModel,
+  getSortedRowModel,
+  RowData,
+  SortingState,
+  useReactTable,
+} from "@tanstack/react-table";
 import Link from "next/link";
-import { ComponentProps, HTMLAttributes, HTMLProps, useEffect, useRef, useState } from "react";
+import { HTMLAttributes, useEffect, useRef, useState } from "react";
 import { flexRender } from "@tanstack/react-table";
 import { ScrollSync, ScrollSyncPane } from "react-scroll-sync";
 import SortIcon from "../ui/icons/Sort";
 import { HEADER_HEIGHT } from "../Header";
+import "@tanstack/react-table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
-export function TableRow({ className, ...props }: HTMLProps<HTMLDivElement>) {
-  return <div className={cn("flex w-full min-w-fit items-center", className)} {...props} />;
+// Add a tooltip column to meta
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    tooltip?: string;
+  }
 }
 
-export function TableRowLink({ className, ...props }: ComponentProps<typeof Link>) {
-  return <Link className={cn("flex w-full min-w-fit items-center", className)} {...props} />;
+export function TableRow({ href, className, children }: HTMLAttributes<HTMLDivElement> & { href?: string }) {
+  if (!href) {
+    return (
+      <div className={cn("flex w-full min-w-fit items-center transition-colors last:rounded-b-[12px]", className)}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex w-full min-w-fit items-center transition-colors last:rounded-b-[12px] hover:bg-background-inverse",
+        className
+      )}
+    >
+      {children}
+    </Link>
+  );
 }
 
 export interface TableCellProps extends HTMLAttributes<HTMLDivElement> {
@@ -41,7 +71,7 @@ interface TableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   initialSortKey?: string;
-  rowLink: (row: TData) => string;
+  rowLink: (row: TData) => string | null;
 }
 
 export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }: TableProps<TData, TValue>) {
@@ -79,21 +109,40 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
   return (
     <ScrollSync>
       <div className="relative h-fit min-w-0 grow py-4" ref={tableRef}>
+        {/* Gradients on left and right for mobile */}
+        <div className="absolute bottom-0 right-0 top-0 z-[10] w-12 bg-gradient-to-l from-background-secondary to-transparent md:hidden" />
+        <div className="absolute bottom-0 left-0 top-0 z-[10] w-12 bg-gradient-to-r from-background-secondary to-transparent md:hidden" />
+
         <div className="sticky z-[5] min-w-full" style={{ top: HEADER_HEIGHT - 2 }}>
           <ScrollSyncPane>
-            <div className="scrollbar-none overflow-auto overscroll-x-none bg-background-secondary px-4">
+            <div className="overflow-auto overscroll-x-none bg-background-secondary px-4 scrollbar-none">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="h-12 font-semibold text-content-secondary">
                   {headerGroup.headers.map((header) => {
+                    const cellContent = (
+                      <div className="flex h-12 select-none items-center hover:cursor-pointer">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        <SortIcon state={header.column.getIsSorted()} />
+                      </div>
+                    );
+
+                    const tooltip = header.column.columnDef.meta?.tooltip;
                     return (
                       <TableCell
                         minWidth={header.column.columnDef.minSize}
                         key={header.id}
                         onClick={header.column.getToggleSortingHandler()}
-                        className="h-12 select-none items-center hover:cursor-pointer"
                       >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        <SortIcon state={header.column.getIsSorted()} />
+                        {tooltip ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>{cellContent}</TooltipTrigger>
+                              <TooltipContent>{tooltip}</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          cellContent
+                        )}
                       </TableCell>
                     );
                   })}
@@ -103,28 +152,20 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
           </ScrollSyncPane>
         </div>
         <ScrollSyncPane>
-          <div className="scrollbar-none flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[12px] px-4 font-semibold paragraph-lg">
+          <div className="flex w-full flex-col overflow-x-auto overscroll-x-none rounded-b-[12px] px-4 font-semibold scrollbar-none paragraph-lg">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRowLink
-                  href={rowLink(row.original)}
-                  className="group h-16 gap-0 transition-colors last:rounded-b-[12px] hover:bg-background-inverse"
-                  key={row.id}
-                >
+                <TableRow href={rowLink(row.original) ?? undefined} className="group h-16 gap-0" key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      minWidth={cell.column.columnDef.minSize}
-                      key={cell.id}
-                      // className={clsx(cell.column.getIsSorted() && "bg-background-inverse")}
-                    >
+                    <TableCell minWidth={cell.column.columnDef.minSize} key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
-                </TableRowLink>
+                </TableRow>
               ))
             ) : (
-              <div className="flex h-[100px] flex-col items-center justify-center gap-1">
-                <span>No items :(.</span>
+              <div className="flex h-[100px] flex-col items-center justify-center gap-1 text-content-secondary">
+                <span>No items</span>
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { getMarket } from "@/data/whisk/getMarket";
+import { getMarket, isNonIdleMarket } from "@/data/whisk/getMarket";
 import Link from "next/link";
 import { getAddress, Hex, isHex } from "viem";
 import { ArrowLeft } from "lucide-react";
@@ -16,6 +16,7 @@ import IrmChart from "@/components/IrmChart";
 import { UserMarketPosition, UserMarketPositionHighlight } from "@/components/UserMarketPosition";
 import MarketActions from "@/components/MarketActions";
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Market",
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
 export default async function MarketPage({ params }: { params: Promise<{ marketId: string }> }) {
   const marketId = (await params).marketId as Hex;
   if (!isHex(marketId)) {
-    return <div>Invalid market id</div>;
+    notFound();
   }
 
   return (
@@ -111,7 +112,7 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
             fallback={
               <Card>
                 <CardContent>
-                  <Skeleton className="h-[170px] w-full" />
+                  <Skeleton className="h-[300px] w-full" />
                 </CardContent>
               </Card>
             }
@@ -121,7 +122,9 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
           <Card>
             <CardContent className="flex flex-col gap-7">
               <span className="font-semibold text-content-secondary paragraph-sm">Position Summary</span>
-              <UserMarketPosition marketId={marketId} />
+              <Suspense fallback={<Skeleton className="h-[240px] w-full" />}>
+                <UserMarketPositionWrapper marketId={marketId} />
+              </Suspense>
             </CardContent>
           </Card>
         </div>
@@ -134,7 +137,7 @@ async function MarketMetadata({ marketId }: { marketId: Hex }) {
   const market = await getMarket(marketId);
 
   if (!market) {
-    return null;
+    notFound();
   }
 
   return (
@@ -170,8 +173,8 @@ async function MarketState({ marketId }: { marketId: Hex }) {
       value: formatNumber(market.liquidityAssetsUsd, { currency: "USD" }),
     },
     {
-      label: "Borrow Rate",
-      description: "The annual percent yield (APY) payed by borrowing from this market.",
+      label: "Borrow APY",
+      description: "The annual percent yield (APY) payed for borrowing from this market, including rewards.",
       value: <Apy type="supply" apy={market.borrowApy} />,
     },
   ];
@@ -207,26 +210,26 @@ async function MarketIrm({ marketId }: { marketId: Hex }) {
   const metrics: { label: string; description: string; value: ReactNode }[] = [
     {
       label: "Target Utilization",
-      description: "TODO.",
+      description: "The target utilization level of the market.",
       value: formatNumber(market.irm.targetUtilization, { style: "percent" }),
     },
     {
       label: "Current Utilization",
-      description: "TODO.",
+      description: "The current utilization level of the market.",
       value: formatNumber(market.utilization, { style: "percent" }),
     },
     {
       label: "Interest Rate Model",
-      description: "TODO.",
+      description: "The address of the interest rate model contract.",
       value: <LinkExternalBlockExplorer address={getAddress(market.irm.address)} />,
     },
   ];
 
   return (
     <div className="flex flex-col justify-between gap-8 lg:flex-row">
-      <div className="flex flex-col justify-between gap-6">
+      <div className="flex flex-col justify-between gap-6 md:flex-row lg:flex-col">
         {metrics.map((metric, i) => (
-          <Metric key={i} label={metric.label} description={metric.description}>
+          <Metric key={i} label={metric.label} description={metric.description} className="flex-1">
             <span className="title-5">{metric.value}</span>
           </Metric>
         ))}
@@ -246,22 +249,23 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
   const metrics: { label: string; description: string; value: ReactNode }[] = [
     {
       label: "LLTV",
-      description: "TODO.",
+      description:
+        "The liquidation loan-to-value (LLTV) threshold sets the limit at which positions become eligible for liquidation.",
       value: formatNumber(market.lltv, { style: "percent" }),
     },
     {
       label: "Liquidation Penality",
-      description: "TODO.",
+      description: "The penalty incurred by borrowers upon liquidation, designed to incentivize liquidators.",
       value: formatNumber(market.liquidationPenalty, { style: "percent" }),
     },
     {
       label: "Oracle Address",
-      description: "TODO.",
+      description: "The address of the oracle contract used to price the collateral asset.",
       value: <LinkExternalBlockExplorer address={getAddress(market.oracleAddress)} />,
     },
     {
       label: "Collateral Asset",
-      description: "TODO",
+      description: "The collateral asset of the market that can be used to borrow against.",
       value: market.collateralAsset ? (
         <LinkExternalBlockExplorer address={getAddress(market.collateralAsset.address)}>
           {market.collateralAsset.icon && (
@@ -281,7 +285,7 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
     },
     {
       label: "Loan Asset",
-      description: "TODO",
+      description: "The loan asset of the market that can be borrowed.",
       value: (
         <LinkExternalBlockExplorer address={getAddress(market.loanAsset.address)}>
           {market.loanAsset.icon && (
@@ -299,7 +303,7 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
     },
     {
       label: "Oracle Price",
-      description: "TODO",
+      description: "The current price from the oracle.",
       value: `1 ${market.loanAsset.symbol} = ${formatNumber(market.collateralPriceInLoanAsset)} ${market.collateralAsset?.symbol}`,
     },
   ];
@@ -318,11 +322,21 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
 async function MarketActionsWrapper({ marketId }: { marketId: Hex }) {
   const market = await getMarket(marketId);
 
-  if (!market) {
+  if (!isNonIdleMarket(market)) {
     return null;
   }
 
   return <MarketActions market={market} />;
+}
+
+async function UserMarketPositionWrapper({ marketId }: { marketId: Hex }) {
+  const market = await getMarket(marketId);
+
+  if (!isNonIdleMarket(market)) {
+    return null;
+  }
+
+  return <UserMarketPosition market={market} />;
 }
 
 export const dynamic = "force-static";

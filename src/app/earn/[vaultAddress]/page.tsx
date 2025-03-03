@@ -14,6 +14,7 @@ import { Address, getAddress } from "viem";
 import { UserVaultPosition, UserVaultPositionHighlight } from "@/components/UserVaultPosition";
 import VaultActions from "@/components/VaultActions";
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Vault",
@@ -24,7 +25,7 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
   try {
     vaultAddress = getAddress((await params).vaultAddress);
   } catch {
-    return <div>Invalid vault address</div>;
+    notFound();
   }
 
   return (
@@ -110,7 +111,9 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
           <Card>
             <CardContent className="flex flex-col gap-7">
               <span className="font-semibold text-content-secondary paragraph-sm">Position Summary</span>
-              <UserVaultPosition vaultAddress={vaultAddress} />
+              <Suspense fallback={<Skeleton className="h-[80px] w-full" />}>
+                <UserVaultPositionWrapper vaultAddress={vaultAddress} />
+              </Suspense>
             </CardContent>
           </Card>
         </div>
@@ -123,7 +126,7 @@ async function VaultMetadata({ vaultAddress }: { vaultAddress: Address }) {
   const vault = await getVault(vaultAddress);
 
   if (!vault) {
-    return null;
+    notFound();
   }
 
   return (
@@ -160,12 +163,12 @@ async function VaultState({ vaultAddress }: { vaultAddress: Address }) {
     },
     {
       label: "Available Liquidity",
-      description: "The available assets that are not currently bring borrowed.",
+      description: "The available assets that can be withdrawn or reallocated.",
       value: formatNumber(vault.liquidityAssetsUsd, { currency: "USD" }),
     },
     {
       label: "APY",
-      description: "The annual percent yield (APY) earned by depositing into this vault.",
+      description: "The annual percent yield (APY) earned by depositing into this vault, including rewards and fees.",
       value: <Apy type="supply" apy={vault.supplyApy} />,
     },
   ];
@@ -201,12 +204,12 @@ async function VaultInfo({ vaultAddress }: { vaultAddress: Address }) {
   const metrics: { label: string; description: string; value: ReactNode }[] = [
     {
       label: "Performance Fee",
-      description: "TODO.",
+      description: "The percentage of vault profits the fee recipient receives.",
       value: formatNumber(vault.performanceFee, { style: "percent" }),
     },
     {
       label: "Fee Recipient",
-      description: "TODO.",
+      description: "The recipient of the vaults performance fee.",
       value: vault.feeRecipientAddress ? (
         <LinkExternalBlockExplorer address={getAddress(vault.feeRecipientAddress)} />
       ) : (
@@ -215,22 +218,22 @@ async function VaultInfo({ vaultAddress }: { vaultAddress: Address }) {
     },
     {
       label: "Owner",
-      description: "TODO.",
+      description: "The entity whom owns the vault and has full control privileges.",
       value: vault.ownerAddress ? <LinkExternalBlockExplorer address={getAddress(vault.ownerAddress)} /> : "None",
     },
     {
       label: "Vault Address",
-      description: "TODO",
+      description: "The smart contract address that holds and manages the vault's assets.",
       value: vault.vaultAddress ? <LinkExternalBlockExplorer address={getAddress(vault.vaultAddress)} /> : "None",
     },
     {
       label: "Curator",
-      description: "TODO",
+      description: "The entity responsible for managing the vault's strategy.",
       value: vault.curatorAddress ? <LinkExternalBlockExplorer address={getAddress(vault.curatorAddress)} /> : "None",
     },
     {
       label: "Guardian",
-      description: "",
+      description: "A security role in the vault that can intervene to protect funds if needed.",
       value: vault.guardianAddress ? <LinkExternalBlockExplorer address={getAddress(vault.guardianAddress)} /> : "None",
     },
   ];
@@ -254,6 +257,16 @@ async function VaultActionsWrapper({ vaultAddress }: { vaultAddress: Address }) 
   }
 
   return <VaultActions vault={vault} />;
+}
+
+async function UserVaultPositionWrapper({ vaultAddress }: { vaultAddress: Address }) {
+  const vault = await getVault(vaultAddress);
+
+  if (!vault) {
+    return null;
+  }
+
+  return <UserVaultPosition vault={vault} />;
 }
 
 export const dynamic = "force-static";

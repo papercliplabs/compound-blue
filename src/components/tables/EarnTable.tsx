@@ -52,13 +52,19 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
     accessorKey: "supplyAssetsUsd",
     header: "Total Deposits",
     accessorFn: (row) => formatNumber(row.supplyAssetsUsd, { currency: "USD" }),
+    meta: {
+      tooltip: "The total assets deposited.",
+    },
     minSize: 160,
   },
   {
     accessorKey: "liquidityAssetsUsd",
-    header: "Liqudity",
+    header: "Liquidity",
     accessorFn: (row) => formatNumber(row.liquidityAssetsUsd, { currency: "USD" }),
     minSize: 120,
+    meta: {
+      tooltip: "The available assets to be withdrawn or reallocated.",
+    },
   },
   {
     accessorKey: "marketAllocations",
@@ -77,6 +83,9 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
         />
       );
     },
+    meta: {
+      tooltip: "The collateral asset exposure through market allocations.",
+    },
     minSize: 160,
   },
   {
@@ -85,6 +94,9 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
     cell: ({ row }) => {
       const vault = row.original;
       return <Apy type="supply" apy={vault.supplyApy} />;
+    },
+    meta: {
+      tooltip: "The total supply APY including rewards and fees.",
     },
     minSize: 130,
   },

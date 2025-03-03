@@ -80,9 +80,9 @@ export function prepareBundle(
   try {
     let { operations } = populateBundle(inputOps, simulationState, {});
     operations = finalizeBundle(operations, simulationState, accountAddress);
-
-    console.log("operations", operations);
     const bundle = encodeBundle(operations, simulationState);
+
+    console.log("BUNDLE", bundle);
 
     const signatureRequests = bundle.requirements.signatures.map((sig) => ({
       sign: sig.sign,

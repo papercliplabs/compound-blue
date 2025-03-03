@@ -2,12 +2,13 @@ import { graphql } from "@/generated/gql/whisk";
 import { whiskClient } from "./client";
 import { Hex } from "viem";
 import { CHAIN_ID } from "@/config";
-import { cache } from "react";
+import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
   query getMarket($chainId: Number!, $marketId: String!) {
     morphoMarket(chainId: $chainId, marketId: $marketId) {
       marketId
+      isIdle
       name
       collateralAsset {
         priceUsd
@@ -85,10 +86,15 @@ const query = graphql(`
   }
 `);
 
-export const getMarket = cache(async (marketId: Hex) => {
-  console.debug("getMarket", marketId);
+export const getMarket = cacheAndCatch(async (marketId: Hex) => {
   const market = await whiskClient.request(query, { chainId: CHAIN_ID, marketId });
-  return market.morphoMarket ?? null;
-});
+  return market.morphoMarket;
+}, "getMarket");
 
 export type Market = NonNullable<Awaited<ReturnType<typeof getMarket>>>;
+
+// Helpers for type checking non-idle markets
+export type MarketNonIdle = Market & { isIdle: false; collateralAsset: NonNullable<Market["collateralAsset"]> };
+export function isNonIdleMarket(market: Market | null): market is MarketNonIdle {
+  return !!market && market.isIdle === false && !!market.collateralAsset;
+}

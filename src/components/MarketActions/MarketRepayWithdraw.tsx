@@ -16,7 +16,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import AssetFormField from "../AssetFormField";
 import { MarketActionsProps } from ".";
@@ -25,8 +25,7 @@ import {
   prepareMarketRepayWithdrawAction,
   PrepareMarketRepayWithdrawActionReturnType,
 } from "@/actions/prepareMarketRepayWithdrawAction";
-
-const MAX_BORROW_LTV_MARGIN = 0.05; // Only allow a max borrow origination of up to 5% below LLTV
+import { MAX_BORROW_LTV_MARGIN } from "@/config";
 
 export default function MarketRepayWithdraw({
   market,
@@ -103,11 +102,11 @@ export default function MarketRepayWithdraw({
         newLoanAmount / (market.lltv - MAX_BORROW_LTV_MARGIN) / market.collateralPriceInLoanAsset;
       const descaledCurrentCollateralAmount = descaleBigIntToNumber(
         userPosition?.collateralAssets ?? BigInt(0),
-        market.collateralAsset?.decimals ?? 18
+        market.collateralAsset.decimals
       );
 
       return {
-        descaledCollateralWithdrawMax: descaledCurrentCollateralAmount - requiredCollateralAmount,
+        descaledCollateralWithdrawMax: Math.max(descaledCurrentCollateralAmount - requiredCollateralAmount, 0),
         descaledPositionCollateralAmount: descaledCurrentCollateralAmount,
       };
     } else {
@@ -153,12 +152,12 @@ export default function MarketRepayWithdraw({
       const repayAmountBigInt =
         repayAmount > 0 && repayAmount == descaledLoanAmount
           ? maxUint256
-          : parseUnits(repayAmount.toString(), market.loanAsset.decimals ?? 18);
+          : parseUnits(numberToString(repayAmount), market.loanAsset.decimals ?? 18);
 
       const withdrawCollateralAmountBigInt =
         withdrawCollateralAmount > 0 && withdrawCollateralAmount == descaledPositionCollateralAmount
           ? maxUint256
-          : parseUnits(withdrawCollateralAmount.toString(), market.collateralAsset?.decimals ?? 18);
+          : parseUnits(numberToString(withdrawCollateralAmount), market.collateralAsset.decimals);
 
       const preparedAction = await prepareMarketRepayWithdrawAction({
         publicClient,
@@ -187,10 +186,6 @@ export default function MarketRepayWithdraw({
       form,
     ]
   );
-
-  if (!market.collateralAsset) {
-    return null; // Handle, can't borrow from idle market...
-  }
 
   return (
     <>

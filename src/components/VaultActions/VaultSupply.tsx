@@ -15,7 +15,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import AssetFormField from "../AssetFormField";
 import { VaultActionsProps } from ".";
@@ -75,7 +75,9 @@ export default function VaultSupply({
       // Uint256 max if the user wants to supply their entire balance
       const { supplyAmount } = values;
       const supplyAmountBigInt =
-        supplyAmount === decaledWalletBalance ? maxUint256 : parseUnits(supplyAmount.toString(), vault.asset.decimals);
+        supplyAmount === decaledWalletBalance
+          ? maxUint256
+          : parseUnits(numberToString(supplyAmount), vault.asset.decimals);
 
       const preparedAction = await prepareVaultSupplyBundle({
         publicClient,

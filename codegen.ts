@@ -9,6 +9,9 @@ const config: CodegenConfig = {
   generates: {
     "./src/generated/gql/whisk/": {
       preset: "client",
+      config: {
+        avoidOptionals: true,
+      },
     },
     "./src/generated/gql/schema.graphql": {
       plugins: ["schema-ast"],

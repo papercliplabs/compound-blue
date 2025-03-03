@@ -37,6 +37,9 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
     accessorKey: "vaultSupplyShare",
     header: "Allocation",
     accessorFn: (row) => formatNumber(row.vaultSupplyShare, { style: "percent" }),
+    meta: {
+      tooltip: "The percentage of the vault's supply that is allocated to this market.",
+    },
     minSize: 130,
   },
   {
@@ -60,16 +63,29 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
         </TooltipProvider>
       );
     },
+    meta: {
+      tooltip: "The total amount of assets supplied to this market.",
+    },
     minSize: 150,
   },
   {
     accessorKey: "market.supplyApy.total",
     header: "Supply APY",
     accessorFn: (row) => formatNumber(row.market.supplyApy.total, { style: "percent" }),
+    meta: {
+      tooltip: "The supply APY earned by the vault for it's position in this market.",
+    },
     minSize: 130,
   },
 ];
 
 export default function MarketAllocationTable({ allocations }: TableProps) {
-  return <Table columns={columns} data={allocations} rowLink={(row) => `/borrow/${row.market.marketId}`} />;
+  return (
+    <Table
+      columns={columns}
+      data={allocations}
+      initialSortKey="vaultSupplyShare"
+      rowLink={(row) => (row.market.isIdle ? null : `/borrow/${row.market.marketId}`)} // No link for idle markets
+    />
+  );
 }

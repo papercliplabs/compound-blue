@@ -42,5 +42,5 @@ export default function BorrowPage() {
 
 async function BorrowTableWrapper() {
   const marketSummaries = await getMarketSummaries();
-  return <BorrowTable marketSummaries={marketSummaries} />;
+  return <BorrowTable marketSummaries={marketSummaries ?? []} />;
 }

@@ -2,7 +2,7 @@ import "server-only";
 import { graphql } from "@/generated/gql/whisk";
 import { whiskClient } from "./client";
 import { CHAIN_ID, WHITELISTED_VAULT_ADDRESSES } from "@/config";
-import { cache } from "react";
+import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
   query getVaultSummary($chainId: Number!, $address: String!) {
@@ -43,12 +43,11 @@ const query = graphql(`
   }
 `);
 
-export const getVaultSummaries = cache(async () => {
-  console.debug("getVaultSummaries");
+export const getVaultSummaries = cacheAndCatch(async () => {
   const vaultSummaries = await Promise.all(
     WHITELISTED_VAULT_ADDRESSES.map((address) => whiskClient.request(query, { chainId: CHAIN_ID, address }))
   );
   return vaultSummaries.filter((summary) => summary.morphoVault).map((summary) => summary.morphoVault!);
-});
+}, "getVaultSummaries");
 
-export type VaultSummary = Awaited<ReturnType<typeof getVaultSummaries>>[number];
+export type VaultSummary = NonNullable<Awaited<ReturnType<typeof getVaultSummaries>>>[number];

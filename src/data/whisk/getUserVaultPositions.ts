@@ -2,8 +2,8 @@ import "server-only";
 import { graphql } from "@/generated/gql/whisk";
 import { whiskClient } from "./client";
 import { CHAIN_ID, WHITELISTED_VAULT_ADDRESSES } from "@/config";
-import { cache } from "react";
 import { Address } from "viem";
+import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
   query getVaultPosition($chainId: Number!, $vaultAddress: String!, $accountAddress: String!) {
@@ -32,8 +32,7 @@ const query = graphql(`
   }
 `);
 
-export const getUserVaultPositions = cache(async (accountAddress: Address) => {
-  console.debug("getUserVaultPositions");
+export const getUserVaultPositions = cacheAndCatch(async (accountAddress: Address) => {
   const vaultPositions = await Promise.all(
     WHITELISTED_VAULT_ADDRESSES.map((vaultAddress) =>
       whiskClient.request(query, { chainId: CHAIN_ID, vaultAddress, accountAddress })
@@ -44,6 +43,6 @@ export const getUserVaultPositions = cache(async (accountAddress: Address) => {
       .filter((position) => position.morphoVaultPosition)
       .map((position) => [position.morphoVaultPosition!.vaultAddress, position.morphoVaultPosition!])
   );
-});
+}, "getUserVaultPositions");
 
-export type UserVaultPositions = Awaited<ReturnType<typeof getUserVaultPositions>>;
+export type UserVaultPositions = NonNullable<Awaited<ReturnType<typeof getUserVaultPositions>>>;

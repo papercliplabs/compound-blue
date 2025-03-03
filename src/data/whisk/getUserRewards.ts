@@ -1,9 +1,9 @@
 import "server-only";
 import { graphql } from "@/generated/gql/whisk";
 import { whiskClient } from "./client";
-import { cache } from "react";
 import { Address } from "viem";
 import { CHAIN_ID } from "@/config";
+import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
   query getUserRewards($chainId: Number!, $address: String!) {
@@ -25,10 +25,9 @@ const query = graphql(`
   }
 `);
 
-export const getUserRewards = cache(async (address: Address) => {
-  console.debug("getUserRewards");
+export const getUserRewards = cacheAndCatch(async (address: Address) => {
   const userRewards = await whiskClient.request(query, { chainId: CHAIN_ID, address });
   return userRewards.merklUserRewards?.rewards.filter((r) => r.token && (r.unclaimedAmountUsd ?? 0) > 0);
-});
+}, "getUserRewards");
 
-export type UserRewards = Awaited<ReturnType<typeof getUserRewards>>;
+export type UserRewards = NonNullable<Awaited<ReturnType<typeof getUserRewards>>>;

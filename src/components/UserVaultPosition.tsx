@@ -1,51 +1,53 @@
 "use client";
 import { descaleBigIntToNumber } from "@/utils/format";
-import { Address } from "viem";
+import { Address, getAddress } from "viem";
 import { useUserPositionContext, useUserVaultPosition } from "@/providers/UserPositionProvider";
-import { useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 import { Skeleton } from "./ui/skeleton";
 import Metric from "./Metric";
 import { useAccount } from "wagmi";
 import Image from "next/image";
 import NumberFlow from "./ui/NumberFlow";
 import Apy from "./Apy";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
+import { Vault } from "@/data/whisk/getVault";
 
 interface VaultPositionProps {
-  vaultAddress: Address;
+  vault: Vault;
 }
 
-export function UserVaultPosition({ vaultAddress }: VaultPositionProps) {
-  const { data: vaultPosition, isLoading } = useUserVaultPosition(vaultAddress);
+export function UserVaultPosition({ vault }: VaultPositionProps) {
+  const { data: vaultPosition, isLoading } = useUserVaultPosition(getAddress(vault.vaultAddress));
+
+  const items: { label: string; description: string; value: ReactNode }[] = [
+    {
+      label: "Balance",
+      description: "Your position's balance.",
+      value: <NumberFlow value={vaultPosition?.supplyAssetsUsd ?? 0} format={{ currency: "USD" }} />,
+    },
+    {
+      label: "APY",
+      description: "The current APY of your position including rewards and fees. This will equal the vault's APY.",
+      value: <Apy type="supply" apy={vault.supplyApy} className="gap-1" />,
+    },
+  ];
 
   return (
     <>
-      <div className="flex w-full justify-between font-semibold">
-        <span>Supplied</span>
-        <span>
-          {isLoading ? (
-            <Skeleton className="h-5 w-12" />
-          ) : (
-            <NumberFlow value={vaultPosition?.supplyAssetsUsd ?? 0} format={{ currency: "USD" }} />
-          )}
-        </span>
-      </div>
-      <div className="flex w-full justify-between font-semibold">
-        <span>Apy</span>
-        <span>
-          {isLoading ? (
-            <Skeleton className="h-5 w-12" />
-          ) : vaultPosition?.supplyApy != undefined ? (
-            <Apy type="supply" apy={vaultPosition.supplyApy} className="gap-1" />
-          ) : (
-            "0.00%"
-          )}
-        </span>
-      </div>
+      {items.map((item, i) => (
+        <div key={i} className="flex w-full justify-between font-semibold">
+          <TooltipPopover>
+            <TooltipPopoverTrigger>{item.label}</TooltipPopoverTrigger>
+            <TooltipPopoverContent>{item.description}</TooltipPopoverContent>
+          </TooltipPopover>
+          <span>{isLoading ? <Skeleton className="h-5 w-12" /> : item.value}</span>
+        </div>
+      ))}
     </>
   );
 }
 
-export function UserVaultPositionHighlight({ vaultAddress }: VaultPositionProps) {
+export function UserVaultPositionHighlight({ vaultAddress }: { vaultAddress: Address }) {
   const { address } = useAccount();
   const { data: vaultPosition } = useUserVaultPosition(vaultAddress);
 
@@ -56,7 +58,10 @@ export function UserVaultPositionHighlight({ vaultAddress }: VaultPositionProps)
 
   return (
     <div className="flex flex-col md:items-end md:text-end">
-      <Metric label={<span className="justify-end text-accent-secondary">Supplying</span>} description="TODO">
+      <Metric
+        label={<span className="justify-end text-accent-secondary">Supplying</span>}
+        description="Your supply balance in this vault."
+      >
         <span className="title-3">
           <NumberFlow value={vaultPosition.supplyAssetsUsd} format={{ currency: "USD" }} />
         </span>
@@ -107,13 +112,19 @@ export function UserVaultPositionAggregate() {
 
   return (
     <div className="flex gap-10 md:text-end">
-      <Metric label={<span className="justify-end text-accent-secondary">Your Deposits</span>} description="TODO">
+      <Metric
+        label={<span className="justify-end text-accent-secondary">Your Deposits</span>}
+        description="Your total deposit balance across all vaults."
+      >
         <span className="title-3">
           <NumberFlow value={totalSupplyUsd} format={{ currency: "USD" }} />
         </span>
       </Metric>
 
-      <Metric label={<span className="justify-end">Avg. Earn APY</span>} description="TODO">
+      <Metric
+        label={<span className="justify-end">Avg. Earn APY</span>}
+        description="Your average supply APY across all vaults, including rewards and fees."
+      >
         <span className="title-3">
           <NumberFlow value={avgApy} format={{ style: "percent" }} />
         </span>

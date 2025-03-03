@@ -2,8 +2,8 @@ import "server-only";
 import { graphql } from "@/generated/gql/whisk";
 import { whiskClient } from "./client";
 import { CHAIN_ID, WHITELISTED_MARKET_IDS } from "@/config";
-import { cache } from "react";
 import { Address } from "viem";
+import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
   query getMarketPosition($chainId: Number!, $marketId: String!, $accountAddress: String!) {
@@ -43,8 +43,7 @@ const query = graphql(`
   }
 `);
 
-export const getUserMarketPositions = cache(async (accountAddress: Address) => {
-  console.debug("getUserMarketPositions");
+export const getUserMarketPositions = cacheAndCatch(async (accountAddress: Address) => {
   const marketPositions = await Promise.all(
     WHITELISTED_MARKET_IDS.map((marketId) =>
       whiskClient.request(query, { chainId: CHAIN_ID, marketId, accountAddress })
@@ -55,6 +54,6 @@ export const getUserMarketPositions = cache(async (accountAddress: Address) => {
       .filter((position) => position.morphoMarketPosition?.market)
       .map((position) => [position.morphoMarketPosition!.market!.marketId, position.morphoMarketPosition!])
   );
-});
+}, "getUserMarketPositions");
 
-export type UserMarketPositions = Awaited<ReturnType<typeof getUserMarketPositions>>;
+export type UserMarketPositions = NonNullable<Awaited<ReturnType<typeof getUserMarketPositions>>>;

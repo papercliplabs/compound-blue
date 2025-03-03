@@ -3,7 +3,7 @@ import { graphql } from "@/generated/gql/whisk";
 import { whiskClient } from "./client";
 import { Address } from "viem";
 import { CHAIN_ID } from "@/config";
-import { cache } from "react";
+import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
   query getVault($chainId: Number!, $address: String!) {
@@ -50,6 +50,7 @@ const query = graphql(`
       marketAllocations {
         market {
           marketId
+          isIdle
           name
           lltv
           loanAsset {
@@ -74,10 +75,9 @@ const query = graphql(`
   }
 `);
 
-export const getVault = cache(async (address: Address) => {
-  console.debug("getVault", address);
+export const getVault = cacheAndCatch(async (address: Address) => {
   const vault = await whiskClient.request(query, { chainId: CHAIN_ID, address });
   return vault.morphoVault ?? null;
-});
+}, "getVault");
 
 export type Vault = NonNullable<Awaited<ReturnType<typeof getVault>>>;

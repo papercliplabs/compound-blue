@@ -43,12 +43,18 @@ export const columns: ColumnDef<Market["vaultAllocations"][number]>[] = [
       const curator = row.original.vault.curatorAddress;
       return curator ? formatAddress(getAddress(curator)) : null;
     },
+    meta: {
+      tooltip: "The entity responsible for managing the vault's strategy.",
+    },
     minSize: 170,
   },
   {
     accessorKey: "marketSupplyShare",
     header: "Supply Share",
     accessorFn: (row) => formatNumber(row.marketSupplyShare, { style: "percent" }),
+    meta: {
+      tooltip: "The percentage of the market's supply that is from this vault.",
+    },
     minSize: 150,
   },
   {
@@ -72,10 +78,20 @@ export const columns: ColumnDef<Market["vaultAllocations"][number]>[] = [
         </TooltipProvider>
       );
     },
+    meta: {
+      tooltip: "The amount of assets supplied to market from this vault.",
+    },
     minSize: 140,
   },
 ];
 
 export default function VaultAllocationTable({ allocations }: TableProps) {
-  return <Table columns={columns} data={allocations} rowLink={(row) => `/earn/${row.vault.vaultAddress}`} />;
+  return (
+    <Table
+      columns={columns}
+      data={allocations}
+      initialSortKey="marketSupplyShare"
+      rowLink={(row) => `/earn/${row.vault.vaultAddress}`}
+    />
+  );
 }
