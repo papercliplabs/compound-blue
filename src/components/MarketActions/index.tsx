@@ -5,8 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useUserMarketPosition } from "@/providers/UserPositionProvider";
 import { Hex } from "viem";
-import MarketSupplyBorrow from "./MarketSupplyBorrow";
-import MarketRepayWithdraw from "./MarketRepayWithdraw";
+import MarketSupplyCollateralBorrow from "./MarketSupplyCollateralBorrow";
+import MarketRepayWithdrawCollateral from "./MarketRepayWithdrawCollateral";
 import { useResponsiveContext } from "@/providers/ResponsiveProvider";
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -73,8 +73,8 @@ function MarketActionsDesktop({ market, canRepayAndWithdraw }: MarketActionsProp
 
       <Card>
         <CardContent>
-          {selection == "supply-borrow" && <MarketSupplyBorrow market={market} />}
-          {selection == "repay-withdraw" && <MarketRepayWithdraw market={market} />}
+          {selection == "supply-borrow" && <MarketSupplyCollateralBorrow market={market} />}
+          {selection == "repay-withdraw" && <MarketRepayWithdrawCollateral market={market} />}
         </CardContent>
       </Card>
     </div>
@@ -96,7 +96,7 @@ function MarketActionsMobile({ market, canRepayAndWithdraw }: MarketActionsProps
             <VisuallyHidden>
               <DrawerTitle>Add collateral and borrow from market</DrawerTitle>
             </VisuallyHidden>
-            <MarketSupplyBorrow market={market} onCloseAfterSuccess={() => setBorrowOpen(false)} />
+            <MarketSupplyCollateralBorrow market={market} onCloseAfterSuccess={() => setBorrowOpen(false)} />
           </DrawerContent>
         </Drawer>
 
@@ -110,7 +110,7 @@ function MarketActionsMobile({ market, canRepayAndWithdraw }: MarketActionsProps
             <VisuallyHidden>
               <DrawerTitle>Repay loan and withdraw collateral from market</DrawerTitle>
             </VisuallyHidden>
-            <MarketRepayWithdraw market={market} onCloseAfterSuccess={() => setRepayOpen(false)} />
+            <MarketRepayWithdrawCollateral market={market} onCloseAfterSuccess={() => setRepayOpen(false)} />
           </DrawerContent>
         </Drawer>
       </div>

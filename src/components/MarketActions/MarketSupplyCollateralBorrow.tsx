@@ -21,21 +21,21 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import AssetFormField from "../AssetFormField";
 import { MarketActionsProps } from ".";
 import {
-  prepareMarketSupplyBorrowAction,
-  PrepareMarketSupplyBorrowActionReturnType,
-} from "@/actions/prepareMarketSupplyBorrowAction";
+  prepareMarketSupplyCollateralBorrowAction,
+  PrepareMarketSupplyCollateralBorrowActionReturnType,
+} from "@/actions/prepareMarketSupplyCollateralBorrowAction";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import { UserMarketPositions } from "@/data/whisk/getUserMarketPositions";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 
-export default function MarketSupplyBorrow({
+export default function MarketSupplyCollateralBorrow({
   market,
   onCloseAfterSuccess,
 }: MarketActionsProps & { onCloseAfterSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
-  const [preparedAction, setPreparedAction] = useState<PrepareMarketSupplyBorrowActionReturnType | undefined>(
+  const [preparedAction, setPreparedAction] = useState<PrepareMarketSupplyCollateralBorrowActionReturnType | undefined>(
     undefined
   );
   const [success, setSuccess] = useState(false);
@@ -131,13 +131,13 @@ export default function MarketSupplyBorrow({
 
       const borrowAmountBigInt = parseUnits(numberToString(borrowAmount), market.loanAsset.decimals);
 
-      const preparedAction = await prepareMarketSupplyBorrowAction({
+      const preparedAction = await prepareMarketSupplyCollateralBorrowAction({
         publicClient,
         accountAddress: address,
         marketId: market.marketId as MarketId,
         supplyCollateralAmount: supplyCollateralAmountBigInt,
         borrowAmount: borrowAmountBigInt,
-        requiresReallocation: false, // TODO: handle this case...
+        requiresReallocation: false, // TODO: add support for public allocator, need to determine if reallocaiton is needed and possible based on our data.
       });
 
       setPreparedAction(preparedAction);

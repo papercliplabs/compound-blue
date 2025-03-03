@@ -2,11 +2,10 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Table } from "./Table";
 import { formatAddress, formatNumber } from "@/utils/format";
-import PercentRing from "../ui/icons/PercentRing";
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import { Market } from "@/data/whisk/getMarket";
 import Image from "next/image";
 import { getAddress } from "viem";
+import TotalSupplyWithCap from "../TotalSupplyWithCap";
 
 interface TableProps {
   allocations: Market["vaultAllocations"];
@@ -62,20 +61,11 @@ export const columns: ColumnDef<Market["vaultAllocations"][number]>[] = [
     header: "Total Supply",
     cell: ({ row }) => {
       const allocation = row.original;
-      const percentOfCap = allocation.supplyCapUsd ? allocation.position.supplyAssetsUsd / allocation.supplyCapUsd : 0;
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger className="flex items-center gap-2">
-              {formatNumber(allocation.position.supplyAssetsUsd, { currency: "USD" })}
-              <PercentRing percent={percentOfCap} />
-            </TooltipTrigger>
-            <TooltipContent>
-              The current allocation to this market is using {formatNumber(percentOfCap, { style: "percent" })} of the{" "}
-              {formatNumber(allocation.supplyCapUsd, { currency: "USD" })} supply cap.
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <TotalSupplyWithCap
+          totalSupplyUsd={allocation.position.supplyAssetsUsd}
+          supplyCapUsd={allocation.supplyCapUsd}
+        />
       );
     },
     meta: {

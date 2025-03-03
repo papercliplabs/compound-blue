@@ -1,4 +1,4 @@
-import { GetSimuationStateMarketSupplyBorrowParameters, getSimulationState } from "@/data/getSimulationState";
+import { getSimulationState, GetSimulationStateMarketRepayWithdrawParameters } from "@/data/getSimulationState";
 import { addresses, DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
 import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } from "./helpers";
 import { CHAIN_ID } from "@/config";
@@ -7,12 +7,15 @@ import { maxUint256 } from "viem";
 
 const { morpho } = addresses[CHAIN_ID];
 
-type PrepareMarketSupplyBorrowActionParameters = Omit<GetSimuationStateMarketSupplyBorrowParameters, "actionType"> & {
-  supplyCollateralAmount: bigint; // Max uint256 for entire account collateral balance
-  borrowAmount: bigint; // Don't support max here since we will only allow origination below a marging from LLTV
+type PrepareMarketRepayWithdrawCollateralActionParameters = Omit<
+  GetSimulationStateMarketRepayWithdrawParameters,
+  "actionType"
+> & {
+  repayAmount: bigint; // Max uint256 for entire position balance
+  withdrawCollateralAmount: bigint; // Max uint256 for entire position collateral balance
 };
 
-export type PrepareMarketSupplyBorrowActionReturnType =
+export type PrepareMarketRepayWithdrawCollateralActionReturnType =
   | (Omit<
       Extract<PrepareMorphoActionReturnType, { status: "success" }>,
       "initialSimulationState" | "finalSimulationState"
@@ -23,66 +26,67 @@ export type PrepareMarketSupplyBorrowActionReturnType =
     })
   | Extract<PrepareMorphoActionReturnType, { status: "error" }>;
 
-// TODO: enable the public allocator here!!!
-export async function prepareMarketSupplyBorrowAction({
-  supplyCollateralAmount,
-  borrowAmount,
+export async function prepareMarketRepayWithdrawCollateralAction({
+  repayAmount,
+  withdrawCollateralAmount,
   accountAddress,
   marketId,
   ...params
-}: PrepareMarketSupplyBorrowActionParameters): Promise<PrepareMarketSupplyBorrowActionReturnType> {
+}: PrepareMarketRepayWithdrawCollateralActionParameters): Promise<PrepareMarketRepayWithdrawCollateralActionReturnType> {
   const simulationState = await getSimulationState({
-    actionType: "market-supply-borrow",
+    actionType: "market-repay-withdraw-collateral",
     accountAddress,
     marketId,
     ...params,
   });
 
-  const market = simulationState.markets?.[marketId];
-  const userCollateralBalance =
-    simulationState.holdings?.[accountAddress]?.[market?.params.collateralToken ?? "0x"]?.balance;
-  if (supplyCollateralAmount == maxUint256) {
-    if (!userCollateralBalance) {
-      // Won't happen, we need this to have a correct simulation anyways
-      return {
-        status: "error",
-        message: "Pre simulation error: Missing user asset balance for max collateral supply.",
-      };
-    }
-    supplyCollateralAmount = userCollateralBalance;
+  const isMaxRepay = repayAmount == maxUint256;
+  const isMaxWithdrawCollateral = withdrawCollateralAmount == maxUint256;
+
+  const userPosition = simulationState.positions?.[accountAddress]?.[marketId];
+  if ((isMaxRepay || isMaxWithdrawCollateral) && !userPosition) {
+    return {
+      status: "error",
+      message: "Pre simulation error: Missing user position.",
+    };
   }
 
-  const isSupply = supplyCollateralAmount > BigInt(0);
-  const isBorrow = borrowAmount > BigInt(0);
+  if (isMaxWithdrawCollateral) {
+    withdrawCollateralAmount = userPosition!.collateral;
+  }
+
+  const isRepay = repayAmount > BigInt(0);
+  const isWithdraw = withdrawCollateralAmount > BigInt(0);
 
   const preparedAction = prepareBundle(
     [
-      ...(isSupply
+      ...(isRepay
         ? [
             {
-              type: "Blue_SupplyCollateral",
+              type: "Blue_Repay",
               sender: accountAddress,
               address: morpho,
               args: {
                 id: marketId,
                 onBehalf: accountAddress,
-                assets: supplyCollateralAmount,
+                // Use shares if a max repay to ensure fully closed position
+                ...(isMaxRepay ? { shares: userPosition!.borrowShares } : { assets: repayAmount }),
+                slippage: DEFAULT_SLIPPAGE_TOLERANCE,
               },
             } as InputBundlerOperation,
           ]
         : []),
-      ...(isBorrow
+      ...(isWithdraw
         ? [
             {
-              type: "Blue_Borrow",
+              type: "Blue_WithdrawCollateral",
               sender: accountAddress,
               address: morpho,
               args: {
                 id: marketId,
                 onBehalf: accountAddress,
                 receiver: accountAddress,
-                assets: borrowAmount,
-                slippage: DEFAULT_SLIPPAGE_TOLERANCE,
+                assets: withdrawCollateralAmount,
               },
             } as InputBundlerOperation,
           ]
@@ -90,14 +94,14 @@ export async function prepareMarketSupplyBorrowAction({
     ],
     accountAddress,
     simulationState,
-    `Confirm ${isSupply ? "Supply" : ""}${isSupply && isBorrow ? " & " : ""}${isBorrow ? "Borrow" : ""}`
+    `Confirm ${isRepay ? "Repay" : ""}${isRepay && isWithdraw ? " & " : ""}${isWithdraw ? "Withdraw" : ""}`
   );
 
   if (preparedAction.status == "success") {
     const positionBefore = preparedAction.initialSimulationState.positions?.[accountAddress]?.[marketId];
     const positionAfter = preparedAction.finalSimulationState.positions?.[accountAddress]?.[marketId];
     const marketBefore = preparedAction.initialSimulationState.markets?.[marketId];
-    const marketAfter = preparedAction.initialSimulationState.markets?.[marketId];
+    const marketAfter = preparedAction.finalSimulationState.markets?.[marketId];
 
     const positionCollateralBefore = positionBefore?.collateral ?? BigInt(0);
     const positionCollateralAfter = positionAfter?.collateral ?? BigInt(0);

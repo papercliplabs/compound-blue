@@ -33,12 +33,12 @@ export type GetSimulationStateVaultWithdrawParameters = GetSimulationStateBasePa
 };
 
 export type GetSimulationStateMarketRepayWithdrawParameters = GetSimulationStateBaseParameters & {
-  actionType: "market-repay-withdraw";
+  actionType: "market-repay-withdraw-collateral";
   marketId: MarketId;
 };
 
 export type GetSimuationStateMarketSupplyBorrowParameters = GetSimulationStateBaseParameters & {
-  actionType: "market-supply-borrow";
+  actionType: "market-supply-collateral-borrow";
   marketId: MarketId;
   requiresReallocation: boolean;
 };
@@ -59,10 +59,10 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
     case "vault-withdraw":
       vaultAddresses = [params.vaultAddress];
       break;
-    case "market-repay-withdraw":
+    case "market-repay-withdraw-collateral":
       marketIds = [params.marketId];
       break;
-    case "market-supply-borrow":
+    case "market-supply-collateral-borrow":
       if (params.requiresReallocation) {
         // Requires everything for public reallocation
         marketIds = [params.marketId, ...(WHITELISTED_MARKET_IDS as MarketId[]).filter((id) => id !== params.marketId)]; // target market id is first
@@ -114,8 +114,8 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
     case "vault-withdraw":
       tokenAddresses = [vaults[0].asset, vaults[0].address]; // Underliying and the vault share token move
       break;
-    case "market-repay-withdraw":
-    case "market-supply-borrow":
+    case "market-repay-withdraw-collateral":
+    case "market-supply-collateral-borrow":
       tokenAddresses = [markets[0].params.loanToken, markets[0].params.collateralToken];
       break;
   }

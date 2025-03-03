@@ -4,9 +4,8 @@ import { Vault } from "@/data/whisk/getVault";
 import { Table } from "./Table";
 import { formatNumber } from "@/utils/format";
 import clsx from "clsx";
-import PercentRing from "../ui/icons/PercentRing";
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 import MarketIcon from "../MarketIcon";
+import TotalSupplyWithCap from "../TotalSupplyWithCap";
 
 interface TableProps {
   allocations: Vault["marketAllocations"];
@@ -47,20 +46,11 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
     header: "Total Supply",
     cell: ({ row }) => {
       const allocation = row.original;
-      const percentOfCap = allocation.supplyCapUsd ? allocation.position.supplyAssetsUsd / allocation.supplyCapUsd : 0;
       return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger className="flex items-center gap-2">
-              {formatNumber(allocation.position.supplyAssetsUsd, { currency: "USD" })}
-              <PercentRing percent={percentOfCap} />
-            </TooltipTrigger>
-            <TooltipContent>
-              The current allocation to this market is using {formatNumber(percentOfCap, { style: "percent" })} of the{" "}
-              {formatNumber(allocation.supplyCapUsd, { currency: "USD" })} supply cap.
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <TotalSupplyWithCap
+          totalSupplyUsd={allocation.position.supplyAssetsUsd}
+          supplyCapUsd={allocation.supplyCapUsd}
+        />
       );
     },
     meta: {

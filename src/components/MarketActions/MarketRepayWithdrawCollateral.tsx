@@ -22,22 +22,22 @@ import AssetFormField from "../AssetFormField";
 import { MarketActionsProps } from ".";
 import { MarketId } from "@morpho-org/blue-sdk";
 import {
-  prepareMarketRepayWithdrawAction,
-  PrepareMarketRepayWithdrawActionReturnType,
-} from "@/actions/prepareMarketRepayWithdrawAction";
+  prepareMarketRepayWithdrawCollateralAction,
+  PrepareMarketRepayWithdrawCollateralActionReturnType,
+} from "@/actions/prepareMarketRepayWithdrawCollateralAction";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import { UserMarketPositions } from "@/data/whisk/getUserMarketPositions";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 
-export default function MarketRepayWithdraw({
+export default function MarketRepayWithdrawCollateral({
   market,
   onCloseAfterSuccess,
 }: MarketActionsProps & { onCloseAfterSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
-  const [preparedAction, setPreparedAction] = useState<PrepareMarketRepayWithdrawActionReturnType | undefined>(
-    undefined
-  );
+  const [preparedAction, setPreparedAction] = useState<
+    PrepareMarketRepayWithdrawCollateralActionReturnType | undefined
+  >(undefined);
   const [success, setSuccess] = useState(false);
 
   const { openConnectModal } = useConnectModal();
@@ -149,7 +149,7 @@ export default function MarketRepayWithdraw({
           ? maxUint256
           : parseUnits(numberToString(withdrawCollateralAmount), market.collateralAsset.decimals);
 
-      const preparedAction = await prepareMarketRepayWithdrawAction({
+      const preparedAction = await prepareMarketRepayWithdrawCollateralAction({
         publicClient,
         accountAddress: address,
         marketId: market.marketId as MarketId,

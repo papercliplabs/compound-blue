@@ -2,7 +2,7 @@
 import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from "react";
 import { SignatureRequirementFunction } from "@morpho-org/bundler-sdk-viem";
 import { Address, Hex, TransactionRequest as ViemTransactionRequest } from "viem";
-import { useAccount, useConnectorClient, usePublicClient } from "wagmi";
+import { useAccount, useConnectorClient, usePublicClient, useSwitchChain } from "wagmi";
 import { CHAIN_ID } from "@/config";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
@@ -72,6 +72,7 @@ export function ActionFlowProvider({
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
   const publicClient = usePublicClient();
+  const { switchChainAsync } = useSwitchChain();
 
   const startFlow = useCallback(async () => {
     // Must be connected
@@ -82,8 +83,17 @@ export function ActionFlowProvider({
 
     // Must be on the correct chain
     if (chainId != CHAIN_ID) {
-      openChainModal?.();
-      return;
+      try {
+        // Try to automatically switch chain
+        const { id } = await switchChainAsync({ chainId: CHAIN_ID });
+        if (id != CHAIN_ID) {
+          throw new Error("Unable to automaitcally switch chains.");
+        }
+      } catch {
+        // Open modal and let the user do it manually
+        openChainModal?.();
+        return;
+      }
     }
 
     if (flowState == "review") {
