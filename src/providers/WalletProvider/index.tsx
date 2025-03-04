@@ -2,9 +2,9 @@
 import { darkTheme, lightTheme, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-import { wagmiConfig } from "./wagmi";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useState } from "react";
+import { wagmiConfig } from "./wagmi";
 
 const queryClient = new QueryClient();
 

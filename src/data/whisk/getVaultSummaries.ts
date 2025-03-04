@@ -11,6 +11,7 @@ const query = graphql(`
       name
       metadata {
         image
+        riskTier
       }
       asset {
         symbol

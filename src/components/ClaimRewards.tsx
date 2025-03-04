@@ -16,6 +16,7 @@ import Image from "next/image";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import LinkExternal from "./LinkExternal";
 import { useAccountRewards } from "@/hooks/useAccountRewards";
+import NumberFlow from "./ui/NumberFlow";
 
 export default function ClaimRewards() {
   const [claimFlowOpen, setClaimFlowOpen] = useState(false);
@@ -23,11 +24,11 @@ export default function ClaimRewards() {
   const { address } = useAccount();
   const { theme } = useTheme();
   const { data } = useAccountRewards();
-  const [claimed, setClaimed] = useState<boolean>(false);
+  const [claimed, setClaimed] = useState(false);
 
   const totalRewards = useMemo(() => {
-    const total = (data ?? []).reduce((acc, curr) => acc + (curr.unclaimedAmountUsd ?? 0), 0);
-    return claimed ? 0 : total; // Override total to 0 here if we just claimed. The merkle API is slow to update.
+    const total = claimed ? 0 : (data ?? []).reduce((acc, curr) => acc + (curr.unclaimedAmountUsd ?? 0), 0);
+    return total;
   }, [data, claimed]);
 
   const preparedAction = useMemo(() => {
@@ -57,26 +58,23 @@ export default function ClaimRewards() {
 
   return (
     <>
-      {/* Hide this button once claimed since Merkl API is quite slow to update */}
-      {!claimed && (
-        <Popover open={noRewardsPopoverOpen} onOpenChange={setNoRewardsPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="secondary"
-              className="border pl-3 pr-4"
-              onClick={() => (totalRewards > 0 ? setClaimFlowOpen(true) : setNoRewardsPopoverOpen(true))}
-            >
-              <Sparkle />
-              <span>{formatNumber(totalRewards, { currency: "USD" })}</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent>
-            You currently have no unclaimed rewards. Rewards are allocated daily, check back tomorrow!
-          </PopoverContent>
-        </Popover>
-      )}
+      <Popover open={noRewardsPopoverOpen} onOpenChange={setNoRewardsPopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="secondary"
+            className="border pl-3 pr-4"
+            onClick={() => (totalRewards > 0 ? setClaimFlowOpen(true) : setNoRewardsPopoverOpen(true))}
+          >
+            <Sparkle />
+            <NumberFlow value={totalRewards} format={{ currency: "USD" }} />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent>
+          You currently have no unclaimed rewards. Rewards are allocated daily, check back tomorrow!
+        </PopoverContent>
+      </Popover>
 
-      {data && preparedAction?.status === "success" && (
+      {data && !claimed && preparedAction?.status === "success" && (
         <ActionFlowDialog
           open={claimFlowOpen}
           onOpenChange={setClaimFlowOpen}

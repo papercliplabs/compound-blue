@@ -33,7 +33,15 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
           />
           <div className="flex flex-col justify-between">
             <span className="label-lg">{vault.name}</span>
-            <span className="label-sm text-content-secondary">{vault.asset.symbol}</span>
+            <div className="flex">
+              <span className="label-sm text-content-secondary">{vault.asset.symbol}</span>
+              {vault.metadata?.riskTier && (
+                <span className="label-sm inline whitespace-pre-wrap text-content-secondary">
+                  {" "}
+                  • {vault.metadata.riskTier.slice(0, 1).toUpperCase() + vault.metadata.riskTier.slice(1)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       );

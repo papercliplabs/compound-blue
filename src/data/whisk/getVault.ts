@@ -15,6 +15,7 @@ const query = graphql(`
         description
         forumLink
         image
+        riskTier
       }
       feeRecipientAddress
       ownerAddress

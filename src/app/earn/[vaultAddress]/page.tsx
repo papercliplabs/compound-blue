@@ -47,7 +47,7 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
               <div className="flex flex-col gap-4">
                 <div className="flex gap-4">
                   <Skeleton className="h-9 w-9 rounded-full" />
-                  <Skeleton className="w-[200px]" />
+                  <Skeleton className="w-[400px]" />
                 </div>
                 <Skeleton className="h-8 w-full max-w-[600px]" />
               </div>
@@ -145,10 +145,17 @@ async function VaultMetadata({ vaultAddress }: { vaultAddress: Address }) {
           alt={vault.asset.symbol}
           className="rounded-full"
         />
-        <h1 className="title-2">{vault.name}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="inline title-2">{vault.name}</h1>
+          {vault.metadata?.riskTier && (
+            <span className="label-md inline h-[20px] w-fit rounded-[4px] bg-button-neutral px-1 text-content-secondary">
+              {vault.metadata.riskTier.toUpperCase()}
+            </span>
+          )}
+        </div>
       </div>
       {vault.metadata?.description && (
-        <p className="w-full max-w-[600px] text-content-secondary">{vault.metadata?.description}</p>
+        <p className="w-full max-w-[696px] text-content-secondary">{vault.metadata?.description}</p>
       )}
     </div>
   );

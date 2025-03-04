@@ -1,15 +1,13 @@
+import { CHAIN, TRANSPORTS } from "@/config";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { fallback, http } from "viem";
-import { polygon } from "wagmi/chains";
 
 export const wagmiConfig = getDefaultConfig({
-  chains: [polygon],
+  chains: [CHAIN],
   transports: {
-    [polygon.id]: fallback([http(process.env.NEXT_PUBLIC_RPC_URL_1!), http(process.env.NEXT_PUBLIC_RPC_URL_2!)]),
+    [CHAIN.id]: TRANSPORTS,
   },
   ssr: true,
-
-  projectId: "9e858cb5d9bceba08fef523bed55cae7",
+  projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID!,
   appName: "Compound Blue",
   appDescription: "DeFi lending and borrowing interface for Compound-managed deployments on the Morpho protocol.",
   appUrl: process.env.NEXT_PUBLIC_URL!,

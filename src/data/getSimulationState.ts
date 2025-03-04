@@ -76,7 +76,7 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
   const vaults = await Promise.all(vaultAddresses.map((vaultAddress) => fetchVault(vaultAddress, publicClient)));
 
   // Add markets from the vault queues
-  marketIds = marketIds.concat(values(vaults).flatMap((vault) => vault?.supplyQueue.concat(vault.withdrawQueue) ?? []));
+  marketIds = marketIds.concat(values(vaults).flatMap((vault) => vault.supplyQueue.concat(vault.withdrawQueue) ?? []));
 
   const userAddresses = [accountAddress, bundler3.generalAdapter1, ...vaultAddresses];
 

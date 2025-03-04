@@ -8,6 +8,7 @@ import Apy from "../Apy";
 import { useMemo } from "react";
 import NumberFlow from "../ui/NumberFlow";
 import { useAccountMarketPositions } from "@/hooks/useAccountMarketPosition";
+import MarketAvailableLiquidity from "../MarketAvailableLiquidity";
 
 interface TableProps {
   marketSummaries: MarketSummary[];
@@ -92,7 +93,16 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
   {
     accessorKey: "liquidityAssetsUsd",
     header: "Liquidity",
-    accessorFn: (row) => formatNumber(row.liquidityAssetsUsd, { currency: "USD" }),
+    // accessorFn: (row) => formatNumber(row.liquidityAssetsUsd, { currency: "USD" }),
+    cell: ({ row }) => {
+      const market = row.original;
+      return (
+        <MarketAvailableLiquidity
+          liquidityAssetUsd={market.liquidityAssetsUsd}
+          publicAllocatorSharedLiquidityAssetsUsd={market.publicAllocatorSharedLiquidityAssetsUsd}
+        />
+      );
+    },
     minSize: 140,
     meta: {
       tooltip: "The total assets available to be borrowed, including via public reallocation.",

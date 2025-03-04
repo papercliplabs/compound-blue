@@ -19,6 +19,7 @@ import { notFound } from "next/navigation";
 import { WHITELISTED_MARKET_IDS } from "@/config";
 import BackButton from "@/components/BackButton";
 import { AccountMarketPosition, AccountMarketPositionHighlight } from "@/components/AccountMarketPosition";
+import MarketAvailableLiquidity from "@/components/MarketAvailableLiquidity";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Market",
@@ -180,7 +181,12 @@ async function MarketState({ marketId }: { marketId: Hex }) {
       label: "Available Liquidity",
       description:
         "The total amount of assets available to borrow, including liquidity that can be reallocated from other markets through the public allocator.",
-      value: formatNumber(market.liquidityAssetsUsd, { currency: "USD" }),
+      value: (
+        <MarketAvailableLiquidity
+          liquidityAssetUsd={market.liquidityAssetsUsd}
+          publicAllocatorSharedLiquidityAssetsUsd={market.publicAllocatorSharedLiquidityAssetsUsd}
+        />
+      ),
     },
     {
       label: "Borrow APY",

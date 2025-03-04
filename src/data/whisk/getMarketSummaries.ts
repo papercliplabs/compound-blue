@@ -30,6 +30,7 @@ const query = graphql(`
       }
       supplyAssetsUsd
       liquidityAssetsUsd
+      publicAllocatorSharedLiquidityAssetsUsd
       borrowAssetsUsd
       utilization
     }

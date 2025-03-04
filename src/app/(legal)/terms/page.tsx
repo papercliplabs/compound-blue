@@ -7,7 +7,7 @@ export default function TermsPage() {
       <section>
         <div>
           <h1>Terms of Use</h1>
-          <p>Last Updated: March 3, 2025</p>
+          <p>Last Updated: March 4, 2025</p>
         </div>
         <p>
           These Terms of Use (“<b>Terms</b>”) govern your access to and use of both the compound.blue website (the “
@@ -576,6 +576,11 @@ export default function TermsPage() {
           </li>
           <li>you may not use any data mining, robots or similar data-gathering or extraction methods.</li>
         </ul>
+        <p>
+          For the avoidance of doubt, the intellectual property restrictions set forth in these Terms shall not apply to
+          any intellectual property that is identified as open source or otherwise publicly available under an
+          open-source license.
+        </p>
       </section>
 
       <section>

@@ -1,9 +1,14 @@
-import { Address, getAddress, Hex } from "viem";
+import { Address, fallback, Hex, http, getAddress } from "viem";
 import { polygon } from "viem/chains";
 
-export const CHAIN_ID = polygon.id;
+export const CHAIN = polygon;
+export const CHAIN_ID = CHAIN.id;
+export const TRANSPORTS = fallback([
+  http(process.env.NEXT_PUBLIC_RPC_URL_1!),
+  http(process.env.NEXT_PUBLIC_RPC_URL_2!),
+]);
 
-export const BLOCK_EXPLORER_BASE_URL = "https://polygonscan.com";
+export const BLOCK_EXPLORER_BASE_URL = CHAIN.blockExplorers.default.url;
 
 export const MERKLE_DISTRIBUTION_ADDRESS = getAddress("0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae");
 

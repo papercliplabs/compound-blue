@@ -39,7 +39,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cdn.morpho.org",
         port: "",
-        pathname: "/assets/logos/**",
+        pathname: "/*/assets/**",
       },
       {
         protocol: "https",

@@ -47,9 +47,10 @@ export default function IrmChart({ data, currentUtilization }: IrmChartProps) {
             return formatNumber(value, { style: "percent", minimumFractionDigits: 0, maximumFractionDigits: 0 });
           }}
           interval="preserveStartEnd"
-          className="label-md text-content-secondary"
+          className="label-md"
+          style={{ fill: "rgb(var(--content-secondary))" }}
         />
-        <ChartTooltip content={<CustomTooltip />} position={{ y: 0 }} cursor={{ strokeWidth: 3 }} />
+        <ChartTooltip content={<CustomTooltip />} position={{ y: 0 }} cursor={{ strokeWidth: 2 }} />
         <ReferenceLine x={currentUtilization} stroke="rgb(var(--border-primary))" strokeDasharray="4 4" strokeWidth={2}>
           <Label
             value="Current"
@@ -57,7 +58,7 @@ export default function IrmChart({ data, currentUtilization }: IrmChartProps) {
             position={
               currentUtilization < 0.035 ? "insideTopLeft" : currentUtilization > 0.965 ? "insideTopRight" : "insideTop"
             }
-            className="text-content-secondary"
+            className="fill-content-secondary"
           />
         </ReferenceLine>
 

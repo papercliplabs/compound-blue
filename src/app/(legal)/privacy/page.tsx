@@ -7,7 +7,7 @@ export default function PrivacyPage() {
       <section>
         <div>
           <h1>Privacy Policy</h1>
-          <p>Effective date: March 3, 2025</p>
+          <p>Effective date: March 4, 2025</p>
         </div>
         <p>
           This Privacy Policy describes the policies and procedures of Office Supply Ventures LLC (<b>“OSV,”</b>{" "}
@@ -429,13 +429,13 @@ export default function PrivacyPage() {
             If you are a California, Colorado, Connecticut, Montana, Oregon, or Texas resident, you may be able to
             authorize an agent (an “Authorized Agent”) to exercise your rights on your behalf. To do this, you must
             provide your Authorized Agent with written permission to exercise your rights on your behalf, and we may
-            request a copy of this written permission from your Authorized Agent when they make a request on your
+            request a copy of this written permission from your Authorized Agent when they make a request on your
             behalf. Appealing a Denial Under applicable privacy laws in Colorado, Connecticut, Montana, Oregon, Texas,
             and Virginia, if we refuse to take action on a request within a reasonable period of time after receiving
             your request in accordance with this section, you may appeal our decision. In such appeal, you must (1)
-            provide sufficient information to allow us to verify that you are the person about whom the original request
+            provide sufficient information to allow us to verify that you are the person about whom the original request
             pertains and to identify the original request, (2) specify a qualifying state of residence and (3) provide a
-            description of the basis of your appeal. You may appeal a decision by us using the following methods: ‍
+            description of the basis of your appeal. You may appeal a decision by us using the following methods:
           </p>
         </section>
 
@@ -455,10 +455,7 @@ export default function PrivacyPage() {
               Email us at: <ContactUs /> (title must include “[STATE OF RESIDENCE] Appeal”)
             </li>
           </ul>
-          <p>
-            If we deny your appeal, you have the right to contact the Attorney General of your State, including by the
-            following links: Colorado, Connecticut, Montana, Oregon, Texas, and Virginia.
-          </p>
+          <p>If we deny your appeal, you may contact the Attorney General of your State.</p>
         </section>
       </section>
 
