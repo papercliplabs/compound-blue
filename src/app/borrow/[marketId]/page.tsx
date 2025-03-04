@@ -314,7 +314,7 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
     {
       label: "Oracle Price",
       description: "The current price from the oracle.",
-      value: `1 ${market.loanAsset.symbol} = ${formatNumber(market.collateralPriceInLoanAsset)} ${market.collateralAsset?.symbol}`,
+      value: `1 ${market.collateralAsset?.symbol} = ${formatNumber(market.collateralPriceInLoanAsset)} ${market.loanAsset.symbol}`,
     },
   ];
 
