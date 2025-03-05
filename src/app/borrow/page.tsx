@@ -44,3 +44,6 @@ async function BorrowTableWrapper() {
   const marketSummaries = await getMarketSummaries();
   return <BorrowTable marketSummaries={marketSummaries ?? []} />;
 }
+
+export const dynamic = "force-static";
+export const revalidate = 60;

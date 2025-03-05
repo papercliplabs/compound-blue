@@ -42,3 +42,6 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
 ];
 
 export const MAX_BORROW_LTV_MARGIN = 0.05; // 0->1, Only allow a max borrow origination of up to this % below LLTV
+
+// Target utilization above which the public allocator shared liquidity algorithm is enabled for borrowing (WAD)
+export const PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION = BigInt(90_5000000000000000);

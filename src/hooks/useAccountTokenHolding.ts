@@ -7,12 +7,13 @@ import { Address } from "viem";
 import { AccountTokenHolding } from "@/data/whisk/getAccountTokenHolding";
 
 export function useAccountTokenHolding(tokenAddress: Address) {
-  const { pollingInterval } = useAccountDataPollingContext();
+  const { pollingInterval, revalidateSignal } = useAccountDataPollingContext();
   const { address } = useAccount();
   return useQuery({
-    queryKey: ["user-token-holding", tokenAddress, address],
+    queryKey: ["user-token-holding", tokenAddress, address, revalidateSignal],
     queryFn: async () => safeFetch<AccountTokenHolding>(`/api/account/${address}/holding/${tokenAddress}`),
     enabled: !!address,
     refetchInterval: pollingInterval,
+    placeholderData: (prev) => prev,
   });
 }

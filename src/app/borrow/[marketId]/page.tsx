@@ -20,6 +20,7 @@ import { WHITELISTED_MARKET_IDS } from "@/config";
 import BackButton from "@/components/BackButton";
 import { AccountMarketPosition, AccountMarketPositionHighlight } from "@/components/AccountMarketPosition";
 import MarketAvailableLiquidity from "@/components/MarketAvailableLiquidity";
+import NumberFlow from "@/components/ui/NumberFlow";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Market",
@@ -175,7 +176,7 @@ async function MarketState({ marketId }: { marketId: Hex }) {
     {
       label: "Total Deposits",
       description: "The total amount of assets currently deposited into the market.",
-      value: formatNumber(market.supplyAssetsUsd, { currency: "USD" }),
+      value: <NumberFlow value={market.supplyAssetsUsd} format={{ currency: "USD" }} />,
     },
     {
       label: "Available Liquidity",
@@ -232,7 +233,7 @@ async function MarketIrm({ marketId }: { marketId: Hex }) {
     {
       label: "Current Utilization",
       description: "The current utilization level of the market.",
-      value: formatNumber(market.utilization, { style: "percent" }),
+      value: <NumberFlow value={market.utilization} format={{ style: "percent" }} />,
     },
     {
       label: "Interest Rate Model",

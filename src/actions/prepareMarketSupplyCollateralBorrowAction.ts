@@ -26,7 +26,6 @@ export type PrepareMarketSupplyCollateralBorrowActionReturnType =
     })
   | Extract<PrepareMorphoActionReturnType, { status: "error" }>;
 
-// TODO: enable the public allocator here!!!
 export async function prepareMarketSupplyCollateralBorrowAction({
   supplyCollateralAmount,
   borrowAmount,

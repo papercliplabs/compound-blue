@@ -8,13 +8,14 @@ import { Address } from "viem";
 import { useAccount } from "wagmi";
 
 export function useAccountVaultPositions() {
-  const { pollingInterval } = useAccountDataPollingContext();
+  const { pollingInterval, revalidateSignal } = useAccountDataPollingContext();
   const { address } = useAccount();
   return useQuery({
-    queryKey: ["account-vault-positions", address],
+    queryKey: ["account-vault-positions", address, revalidateSignal],
     queryFn: async () => safeFetch<AccountVaultPositions>(`/api/account/${address}/vault-positions`),
     enabled: !!address,
     refetchInterval: pollingInterval,
+    placeholderData: (prev) => prev,
   });
 }
 

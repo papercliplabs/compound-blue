@@ -68,6 +68,7 @@ export default function IrmChart({ data, currentUtilization }: IrmChartProps) {
           dot={false}
           activeDot={<CustomActiveDot color="var(--color-borrowApy)" />}
           strokeWidth={3}
+          animationDuration={800}
         />
         <Line
           dataKey="supplyApy"
@@ -75,6 +76,7 @@ export default function IrmChart({ data, currentUtilization }: IrmChartProps) {
           dot={false}
           activeDot={<CustomActiveDot color="var(--color-supplyApy)" />}
           strokeWidth={3}
+          animationDuration={800}
         />
       </LineChart>
     </ChartContainer>

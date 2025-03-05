@@ -68,6 +68,7 @@ const query = graphql(`
       vaultAllocations {
         vault {
           vaultAddress
+          ownerAddress
           curatorAddress
           name
           metadata {

@@ -24,11 +24,12 @@ import {
   PrepareMarketSupplyCollateralBorrowActionReturnType,
 } from "@/actions/prepareMarketSupplyCollateralBorrowAction";
 import { MarketId } from "@morpho-org/blue-sdk";
-import { MAX_BORROW_LTV_MARGIN } from "@/config";
+import { MAX_BORROW_LTV_MARGIN, PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION } from "@/config";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
+import { WAD } from "@/utils/constants";
 
 export default function MarketSupplyCollateralBorrow({
   market,
@@ -132,13 +133,18 @@ export default function MarketSupplyCollateralBorrow({
 
       const borrowAmountBigInt = parseUnits(numberToString(borrowAmount), market.loanAsset.decimals);
 
+      const supplyAssets = BigInt(market.supplyAssets);
+      const newBorrowAssets = BigInt(market.borrowAssets) + borrowAmountBigInt;
+      const newUtilization = supplyAssets > BigInt(0) ? (newBorrowAssets * WAD) / supplyAssets : BigInt(0);
+
       const preparedAction = await prepareMarketSupplyCollateralBorrowAction({
         publicClient,
         accountAddress: address,
         marketId: market.marketId as MarketId,
         supplyCollateralAmount: supplyCollateralAmountBigInt,
         borrowAmount: borrowAmountBigInt,
-        requiresReallocation: false, // TODO: add support for public allocator, need to determine if reallocaiton is needed and possible based on our data.
+        // This is just a hint for the simulator to assemble the entire vault + market state for a reallocation
+        requiresReallocation: newUtilization > PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION,
       });
 
       setPreparedAction(preparedAction);

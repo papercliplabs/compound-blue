@@ -8,14 +8,17 @@ import { Hex } from "viem";
 import { useAccount } from "wagmi";
 
 export function useAccountMarketPositions() {
-  const { pollingInterval } = useAccountDataPollingContext();
+  const { pollingInterval, revalidateSignal } = useAccountDataPollingContext();
   const { address } = useAccount();
-  return useQuery({
-    queryKey: ["user-market-positions", address],
+  const query = useQuery({
+    queryKey: ["user-market-positions", address, revalidateSignal],
     queryFn: async () => safeFetch<AccountMarketPositions>(`/api/account/${address}/market-positions`),
     enabled: !!address,
     refetchInterval: pollingInterval,
+    placeholderData: (prev) => prev,
   });
+
+  return query;
 }
 
 export function useAccountMarketPosition(marketId: Hex) {

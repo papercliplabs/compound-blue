@@ -1,6 +1,7 @@
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import PercentRing from "./ui/icons/PercentRing";
 import { formatNumber } from "@/utils/format";
+import NumberFlow from "./ui/NumberFlow";
 
 interface TotalSupplyWithCapProps {
   totalSupplyUsd: number;
@@ -30,7 +31,7 @@ export default function TotalSupplyWithCap({ totalSupplyUsd, supplyCapUsd }: Tot
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger className="flex items-center gap-2">
-          {formatNumber(totalSupplyUsd, { currency: "USD" })}
+          <NumberFlow value={totalSupplyUsd} format={{ currency: "USD" }} />
           <PercentRing percent={percentOfCap} />
         </TooltipTrigger>
         <TooltipContent className="flex w-[320px] flex-col gap-4">

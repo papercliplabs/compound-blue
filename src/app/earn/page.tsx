@@ -45,4 +45,5 @@ async function EarnTableWrapper() {
   return <EarnTable vaultSummaries={vaultSummaries ?? []} />;
 }
 
+export const dynamic = "force-static";
 export const revalidate = 60;

@@ -9,6 +9,7 @@ import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { track } from "@vercel/analytics";
 import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
 import { useAccountIsOfacSanctioned } from "@/hooks/useAccountIsOfacSanctioned";
+import { revalidateDynamicPages } from "@/utils/revalidateDynamicPages";
 
 export type ActionFlowState = "review" | "active" | "success" | "failed";
 export type ActionState = "pending-wallet" | "pending-transaction";
@@ -153,6 +154,9 @@ export function ActionFlowProvider({
 
       flowCompletionCb?.();
       setFlowState("success");
+
+      // Re-fetch dynamic pages next visit since state has updated (default 60s revalidation)
+      revalidateDynamicPages();
     }
   }, [
     flowState,

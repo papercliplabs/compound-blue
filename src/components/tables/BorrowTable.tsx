@@ -79,7 +79,7 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
     cell: ({ row }) => {
       const market = row.original;
       return (
-        <span>
+        <span className="flex items-center gap-1">
           <NumberFlow value={row.original.userLtv} format={{ style: "percent", minimumFractionDigits: 1 }} /> /{" "}
           {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 1 })}
         </span>

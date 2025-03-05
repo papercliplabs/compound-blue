@@ -6,6 +6,7 @@ import { formatNumber } from "@/utils/format";
 import clsx from "clsx";
 import MarketIcon from "../MarketIcon";
 import TotalSupplyWithCap from "../TotalSupplyWithCap";
+import NumberFlow from "../ui/NumberFlow";
 
 interface TableProps {
   allocations: Vault["marketAllocations"];
@@ -35,9 +36,11 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
   {
     accessorKey: "vaultSupplyShare",
     header: "Allocation",
-    accessorFn: (row) => formatNumber(row.vaultSupplyShare, { style: "percent" }),
     meta: {
       tooltip: "The percentage of the vault's supply that is allocated to this market.",
+    },
+    cell: ({ row }) => {
+      return <NumberFlow value={row.original.vaultSupplyShare} format={{ style: "percent" }} />;
     },
     minSize: 130,
   },
@@ -61,7 +64,9 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
   {
     accessorKey: "market.supplyApy.total",
     header: "Supply APY",
-    accessorFn: (row) => formatNumber(row.market.supplyApy.total, { style: "percent" }),
+    cell: ({ row }) => {
+      return <NumberFlow value={row.original.market.supplyApy.total} format={{ style: "percent" }} />;
+    },
     meta: {
       tooltip: "The supply APY earned by the vault for it's position in this market.",
     },

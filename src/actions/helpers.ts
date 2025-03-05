@@ -1,4 +1,5 @@
 import { SignatureRequest, TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
+import { PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION } from "@/config";
 import {
   encodeBundle,
   finalizeBundle,
@@ -78,7 +79,12 @@ export function prepareBundle(
   executeBundleName: string
 ): PrepareMorphoActionReturnType {
   try {
-    let { operations } = populateBundle(inputOps, simulationState, {});
+    let { operations } = populateBundle(inputOps, simulationState, {
+      publicAllocatorOptions: {
+        enabled: true,
+        defaultSupplyTargetUtilization: PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION,
+      },
+    });
     operations = finalizeBundle(operations, simulationState, accountAddress);
     const bundle = encodeBundle(operations, simulationState);
 

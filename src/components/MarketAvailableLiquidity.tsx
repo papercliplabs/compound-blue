@@ -1,5 +1,6 @@
 import { formatNumber } from "@/utils/format";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
+import NumberFlow from "./ui/NumberFlow";
 
 interface MarketAvailableLiquidityProps {
   liquidityAssetUsd: number;
@@ -28,7 +29,9 @@ export default function MarketAvailableLiquidity({
 
   return (
     <TooltipPopover>
-      <TooltipPopoverTrigger>{formatNumber(total, { currency: "USD" })}</TooltipPopoverTrigger>
+      <TooltipPopoverTrigger>
+        <NumberFlow value={total} format={{ currency: "USD" }} />
+      </TooltipPopoverTrigger>
       <TooltipPopoverContent className="flex w-[320px] flex-col gap-4">
         <span className="label-md">Market Liquidity</span>
         <p className="text-content-secondary paragraph-sm">

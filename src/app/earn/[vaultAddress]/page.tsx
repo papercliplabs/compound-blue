@@ -17,6 +17,7 @@ import { notFound } from "next/navigation";
 import { WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import BackButton from "@/components/BackButton";
 import { AccountVaultPosition, AccoutnVaultPositionHighlight } from "@/components/AccountVaultPosition";
+import NumberFlow from "@/components/ui/NumberFlow";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Vault",
@@ -172,12 +173,12 @@ async function VaultState({ vaultAddress }: { vaultAddress: Address }) {
     {
       label: "Total Deposits",
       description: "The total amount of assets currently deposited into the vault.",
-      value: formatNumber(vault.supplyAssetsUsd, { currency: "USD" }),
+      value: <NumberFlow value={vault.supplyAssetsUsd} format={{ currency: "USD" }} />,
     },
     {
       label: "Available Liquidity",
       description: "The available assets that can be withdrawn or reallocated.",
-      value: formatNumber(vault.liquidityAssetsUsd, { currency: "USD" }),
+      value: <NumberFlow value={vault.liquidityAssetsUsd} format={{ currency: "USD" }} />,
     },
     {
       label: "APY",

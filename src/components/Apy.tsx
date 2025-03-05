@@ -4,6 +4,7 @@ import { HTMLAttributes, ReactNode } from "react";
 import Sparkle from "./ui/icons/Sparkle";
 import { cn } from "@/utils/shadcn";
 import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "./ui/tooltipPopover";
+import NumberFlow from "./ui/NumberFlow";
 
 interface ApyProps extends HTMLAttributes<HTMLDivElement> {
   type: "supply" | "borrow";
@@ -40,7 +41,7 @@ export default function Apy({ type, apy, className }: ApyProps) {
   return (
     <TooltipPopover>
       <TooltipPopoverTrigger className={cn("flex items-center gap-2", className)}>
-        {formatNumber(apy.total, { style: "percent" })}
+        <NumberFlow value={apy.total} format={{ style: "percent" }} />
         <Sparkle className="h-5 w-5" />
       </TooltipPopoverTrigger>
       <TooltipPopoverContent className="flex max-w-[320px] flex-col gap-4">

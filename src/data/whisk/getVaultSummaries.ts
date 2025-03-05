@@ -17,6 +17,7 @@ const query = graphql(`
         symbol
         icon
       }
+      ownerAddress
       supplyAssetsUsd
       liquidityAssetsUsd
       supplyApy {
