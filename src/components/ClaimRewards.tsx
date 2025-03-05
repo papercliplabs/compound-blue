@@ -94,7 +94,7 @@ export default function ClaimRewards() {
         >
           <ActionFlowSummary>
             {data.map((reward, i) => {
-              if (!reward.token || reward.unclaimedAmountUsd < 0.005) {
+              if (!reward.token) {
                 return null;
               }
 

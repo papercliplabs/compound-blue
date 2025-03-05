@@ -10,8 +10,6 @@ export const TRANSPORTS = fallback([
 
 export const BLOCK_EXPLORER_BASE_URL = CHAIN.blockExplorers.default.url;
 
-export const MERKLE_DISTRIBUTION_ADDRESS = getAddress("0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae");
-
 export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
   getAddress("0x781FB7F6d845E3bE129289833b04d43Aa8558c42"), // USDC
   getAddress("0xF5C81d25ee174d83f1FD202cA94AE6070d073cCF"), // WETH
@@ -41,7 +39,16 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
   "0xe558a51e10f1fdf7156c9470d2f68b93b3fd1ad5e775c020ae4a7f805e8d5674",
 ];
 
-export const MAX_BORROW_LTV_MARGIN = 0.05; // 0->1, Only allow a max borrow origination of up to this % below LLTV
+export const MERKLE_DISTRIBUTION_ADDRESS = getAddress("0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae");
+
+// The reward tokens to support for distribution
+export const MERKL_REWARD_TOKEN_ADDRESSES: Address[] = [
+  getAddress("0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270"), // WPOL
+  getAddress("0x8505b9d2254A7Ae468c0E9dd10Ccea3A837aef5c"), // COMP
+];
+
+// 0->1, Only allow a max borrow origination of up to this % below LLTV
+export const MAX_BORROW_LTV_MARGIN = 0.05;
 
 // Target utilization above which the public allocator shared liquidity algorithm is enabled for borrowing (WAD)
 export const PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION = BigInt(90_5000000000000000);
