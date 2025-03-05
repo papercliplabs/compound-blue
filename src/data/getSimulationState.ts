@@ -1,4 +1,4 @@
-import { CHAIN_ID, WHITELISTED_MARKET_IDS, WHITELISTED_VAULT_ADDRESSES } from "@/config";
+import { CHAIN_ID } from "@/config";
 import { addresses, Holding, MarketId, Position, VaultMarketConfig, VaultUser } from "@morpho-org/blue-sdk";
 import {
   fetchHolding,
@@ -10,7 +10,6 @@ import {
   fetchVaultMarketConfig,
   fetchVaultUser,
 } from "@morpho-org/blue-sdk-viem";
-import { values } from "@morpho-org/morpho-ts";
 import { SimulationState } from "@morpho-org/simulation-sdk";
 import { Address, Client, zeroAddress } from "viem";
 import { getBlock } from "viem/actions";
@@ -40,6 +39,7 @@ export type GetSimulationStateMarketRepayWithdrawParameters = GetSimulationState
 export type GetSimuationStateMarketSupplyBorrowParameters = GetSimulationStateBaseParameters & {
   actionType: "market-supply-collateral-borrow";
   marketId: MarketId;
+  allocatingVaultAddresses: Address[];
   requiresReallocation: boolean;
 };
 
@@ -65,8 +65,8 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
     case "market-supply-collateral-borrow":
       if (params.requiresReallocation) {
         // Requires everything for public reallocation
-        marketIds = [params.marketId, ...(WHITELISTED_MARKET_IDS as MarketId[]).filter((id) => id !== params.marketId)]; // target market id is first
-        vaultAddresses = WHITELISTED_VAULT_ADDRESSES;
+        vaultAddresses = params.allocatingVaultAddresses;
+        marketIds = [params.marketId]; // All other markets of this vaults get's appended below (potential source markets for public reallocation)
       } else {
         marketIds = [params.marketId];
       }
@@ -76,7 +76,9 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
   const vaults = await Promise.all(vaultAddresses.map((vaultAddress) => fetchVault(vaultAddress, publicClient)));
 
   // Add markets from the vault queues
-  marketIds = marketIds.concat(values(vaults).flatMap((vault) => vault.supplyQueue.concat(vault.withdrawQueue) ?? []));
+  marketIds = Array.from(
+    new Set(marketIds.concat(vaults.flatMap((vault) => vault.supplyQueue.concat(vault.withdrawQueue))))
+  );
 
   const userAddresses = [accountAddress, bundler3.generalAdapter1, ...vaultAddresses];
 

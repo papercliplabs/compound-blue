@@ -141,6 +141,9 @@ export default function MarketSupplyCollateralBorrow({
         publicClient,
         accountAddress: address,
         marketId: market.marketId as MarketId,
+        allocatingVaultAddresses: market.vaultAllocations.map((allocation) =>
+          getAddress(allocation.vault.vaultAddress)
+        ),
         supplyCollateralAmount: supplyCollateralAmountBigInt,
         borrowAmount: borrowAmountBigInt,
         // This is just a hint for the simulator to assemble the entire vault + market state for a reallocation
