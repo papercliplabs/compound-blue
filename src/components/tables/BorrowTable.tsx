@@ -74,7 +74,7 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
     minSize: 160,
   },
   {
-    accessorKey: "lltv",
+    accessorKey: "userLtv",
     header: "Your LTV / LLTV",
     cell: ({ row }) => {
       const market = row.original;
@@ -93,7 +93,6 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
   {
     accessorKey: "liquidityAssetsUsd",
     header: "Liquidity",
-    // accessorFn: (row) => formatNumber(row.liquidityAssetsUsd, { currency: "USD" }),
     cell: ({ row }) => {
       const market = row.original;
       return (
@@ -103,10 +102,14 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
         />
       );
     },
-    minSize: 140,
     meta: {
       tooltip: "The total assets available to be borrowed, including via public reallocation.",
     },
+    sortingFn: (rowA, rowB) =>
+      rowA.original.liquidityAssetsUsd +
+      rowA.original.publicAllocatorSharedLiquidityAssetsUsd -
+      (rowB.original.liquidityAssetsUsd + rowB.original.publicAllocatorSharedLiquidityAssetsUsd),
+    minSize: 140,
   },
   {
     accessorKey: "borrowApy.total",

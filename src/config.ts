@@ -15,6 +15,7 @@ export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
   getAddress("0xF5C81d25ee174d83f1FD202cA94AE6070d073cCF"), // WETH
   getAddress("0xfD06859A671C21497a2EB8C5E3fEA48De924D6c8"), // USDT
   getAddress("0x27d6a7f9078104135b19d3b196d38316399a71a1"), // Morpho TEST
+  // getAddress("0xFEf1b0dc9F6a337548088AaF882DA563a6f7D56C"), // TEST (my own)
 ];
 
 export const WHITELISTED_MARKET_IDS: Hex[] = [

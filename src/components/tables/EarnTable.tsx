@@ -59,7 +59,7 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
   {
     accessorKey: "supplyAssetsUsd",
     header: "Total Deposits",
-    accessorFn: (row) => formatNumber(row.supplyAssetsUsd, { currency: "USD" }),
+    cell: ({ row }) => formatNumber(row.original.supplyAssetsUsd, { currency: "USD" }),
     meta: {
       tooltip: "The total assets deposited.",
     },
@@ -68,7 +68,7 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
   {
     accessorKey: "liquidityAssetsUsd",
     header: "Liquidity",
-    accessorFn: (row) => formatNumber(row.liquidityAssetsUsd, { currency: "USD" }),
+    cell: ({ row }) => formatNumber(row.original.liquidityAssetsUsd, { currency: "USD" }),
     minSize: 120,
     meta: {
       tooltip: "The available assets to be withdrawn or reallocated.",
@@ -94,6 +94,7 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
     meta: {
       tooltip: "The collateral asset exposure through market allocations.",
     },
+    sortingFn: (rowA, rowB) => rowA.original.marketAllocations.length - rowB.original.marketAllocations.length,
     minSize: 160,
   },
   {
