@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { LinkExternalBlockExplorer } from "../LinkExternal";
 import PercentRing from "../ui/icons/PercentRing";
 import { DialogDrawer, DialogDrawerContent, DialogDrawerTitle } from "../ui/dialogDrawer";
+import AcknowledgeTerms from "../AcknowledgeTerms";
+import { useAcknowledgeTermsContext } from "@/providers/AcknowledgeTermsProvider";
 
 interface ActionFlowDialogProps extends ComponentProps<typeof ActionFlowProvider> {
   children: ReactNode;
@@ -32,6 +34,7 @@ export function ActionFlowDialog({
   ...providerProps
 }: ActionFlowDialogProps) {
   const [render, setRender] = useState<boolean>(open);
+  const { acknowledgedTerms } = useAcknowledgeTermsContext();
 
   const closeDialog = useCallback(() => {
     onOpenChange(false);
@@ -50,6 +53,10 @@ export function ActionFlowDialog({
 
     return () => clearTimeout(timeout);
   }, [open]);
+
+  if (!acknowledgedTerms) {
+    return <AcknowledgeTerms open={open} onOpenChange={onOpenChange} />;
+  }
 
   // Don't render at all if not open to let react lifecycle reset the flow provider
   return (
@@ -107,7 +114,7 @@ function ActionFlowDialogContent({
 
         <Button
           onClick={() => (preventClose ? setPopoverOpen(true) : closeDialog())}
-          className="a h-5 w-5 bg-content-ternary"
+          className="h-5 w-5 bg-content-ternary"
           variant="none"
           size="icon"
         >
@@ -178,15 +185,15 @@ function ActionFlowStepIcon({
         </div>
       ) : (
         <div className="relative">
-          <div className="animate-subtle-ping absolute inline-flex h-full w-full rounded-full bg-accent-primary opacity-75" />
-          <div className="label-sm relative flex h-8 w-8 items-center justify-center rounded-full border border-accent-primary bg-background-secondary">
+          <div className="absolute inline-flex h-full w-full animate-subtle-ping rounded-full bg-accent-primary opacity-75" />
+          <div className="relative flex h-8 w-8 items-center justify-center rounded-full border border-accent-primary bg-background-secondary label-sm">
             {stepNumber}
           </div>
         </div>
       );
     case "pending":
       return (
-        <div className="label-sm flex h-8 w-8 items-center justify-center rounded-full bg-background-secondary text-content-secondary">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-background-secondary text-content-secondary label-sm">
           {stepNumber}
         </div>
       );

@@ -13,7 +13,7 @@ import { Address, getAddress, Hex } from "viem";
 import { prepareMerklClaimAction } from "@/actions/prepareMerklClaimAction";
 import { useTheme } from "next-themes";
 import Image from "next/image";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover";
 import LinkExternal from "./LinkExternal";
 import { useAccountRewards } from "@/hooks/useAccountRewards";
 import NumberFlow from "./ui/NumberFlow";
@@ -59,7 +59,7 @@ export default function ClaimRewards() {
   return (
     <>
       <Popover open={noRewardsPopoverOpen} onOpenChange={setNoRewardsPopoverOpen}>
-        <PopoverTrigger asChild>
+        <PopoverAnchor>
           <Button
             variant="secondary"
             className="border pl-3 pr-4"
@@ -68,7 +68,7 @@ export default function ClaimRewards() {
             <Sparkle />
             <NumberFlow value={totalRewards} format={{ currency: "USD" }} />
           </Button>
-        </PopoverTrigger>
+        </PopoverAnchor>
         <PopoverContent>
           You currently have no unclaimed rewards. Rewards are allocated daily, check back tomorrow!
         </PopoverContent>

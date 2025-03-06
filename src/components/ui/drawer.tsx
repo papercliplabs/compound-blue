@@ -36,7 +36,7 @@ const DrawerContent = React.forwardRef<
       aria-describedby={undefined}
       {...props}
     >
-      <div className="w-full overflow-y-auto bg-background-inverse px-8 py-10">
+      <div className="w-full overflow-y-auto bg-background-inverse px-6 py-10">
         <div className={cn("flex flex-1 flex-col gap-6", className)}>{children}</div>
       </div>
     </DrawerPrimitive.Content>
@@ -48,7 +48,7 @@ const DrawerTitle = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <DrawerPrimitive.Title ref={ref} className={cn("label-lg leading-none tracking-tight", className)} {...props} />
+  <DrawerPrimitive.Title ref={ref} className={cn("leading-none tracking-tight label-lg", className)} {...props} />
 ));
 DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
 
