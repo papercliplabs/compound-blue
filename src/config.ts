@@ -14,7 +14,7 @@ export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
   getAddress("0x781FB7F6d845E3bE129289833b04d43Aa8558c42"), // USDC
   getAddress("0xF5C81d25ee174d83f1FD202cA94AE6070d073cCF"), // WETH
   getAddress("0xfD06859A671C21497a2EB8C5E3fEA48De924D6c8"), // USDT
-  getAddress("0x27d6a7f9078104135b19d3b196d38316399a71a1"), // Morpho TEST
+  // getAddress("0x27d6a7f9078104135b19d3b196d38316399a71a1"), // Morpho TEST
   // getAddress("0xFEf1b0dc9F6a337548088AaF882DA563a6f7D56C"), // TEST (my own)
 ];
 
@@ -36,8 +36,8 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
   "0x9eacb622c6ef9c2f0fa5f1fda58a8702eb8132d8f49783f6eea6acc3a398e741", // WBTC/WETH - 86%
 
   // Morpho Test markets
-  "0x88a2953e642f96afcb8d8ba2a1cc2e732e9ba89bb99eecf2d6101ad558ab7698",
-  "0xe558a51e10f1fdf7156c9470d2f68b93b3fd1ad5e775c020ae4a7f805e8d5674",
+  // "0x88a2953e642f96afcb8d8ba2a1cc2e732e9ba89bb99eecf2d6101ad558ab7698",
+  // "0xe558a51e10f1fdf7156c9470d2f68b93b3fd1ad5e775c020ae4a7f805e8d5674",
 ];
 
 export const MERKLE_DISTRIBUTION_ADDRESS = getAddress("0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae");
