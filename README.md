@@ -1,6 +1,6 @@
 # Compound Blue 
 
-[Compound](https://compound.finance/) managed lending built on the [Morpho protocol](https://morpho.xyz/) on [Polygon POS](https://polygon.technology/polygon-pos).
+An open source [Next.js](https://nextjs.org/) frontend for [Compound](https://compound.finance/)-managed lending, powered by the [Morpho protocol](https://morpho.xyz/) on [Polygon POS](https://polygon.technology/polygon-pos).
 
 ---
 
@@ -31,7 +31,9 @@ bun run build
 
 ## Configuration
 
-TODO: Add configuration instructions.
+All configuration parameters outside of environment variables are set in [`src/config.ts`](./src/config.ts). 
+
+All read-only data is powered by [Whisk](https://www.whisk.so/), and enters the app via the [data layer](src/data/whisk). You can shim this layer out with your own data source, or [reach out](https://paperclip.xyz/contact) if you want to use Whisk.
 
 ---
 

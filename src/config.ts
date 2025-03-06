@@ -1,15 +1,16 @@
 import { Address, fallback, Hex, http, getAddress } from "viem";
 import { polygon } from "viem/chains";
 
+// Chain the app will support, all addresses below should be on this chain.
 export const CHAIN = polygon;
-export const CHAIN_ID = CHAIN.id;
 export const TRANSPORTS = fallback([
   http(process.env.NEXT_PUBLIC_RPC_URL_1!),
   http(process.env.NEXT_PUBLIC_RPC_URL_2!),
 ]);
-
+export const CHAIN_ID = CHAIN.id;
 export const BLOCK_EXPLORER_BASE_URL = CHAIN.blockExplorers.default.url;
 
+// Vaults that will show up in earn table and are supported by the app.
 export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
   getAddress("0x781FB7F6d845E3bE129289833b04d43Aa8558c42"), // USDC
   getAddress("0xF5C81d25ee174d83f1FD202cA94AE6070d073cCF"), // WETH
@@ -18,6 +19,7 @@ export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
   // getAddress("0xFEf1b0dc9F6a337548088AaF882DA563a6f7D56C"), // TEST (my own)
 ];
 
+// Markets that will show up in borrow table and are supported by the app.
 export const WHITELISTED_MARKET_IDS: Hex[] = [
   "0xfacd2aaa4ba788e9161c4572a44ce7bbe0944768fac271859d9034f2422e606c", // USDC idle
   "0x1cfe584af3db05c7f39d60e458a87a8b2f6b5d8c6125631984ec489f1d13553b", // WBTC/USDC - 86%
@@ -40,6 +42,7 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
   // "0xe558a51e10f1fdf7156c9470d2f68b93b3fd1ad5e775c020ae4a7f805e8d5674",
 ];
 
+// Merkl reward distribution contract for reward claiming
 export const MERKLE_DISTRIBUTION_ADDRESS = getAddress("0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae");
 
 // The reward tokens to support for distribution
@@ -48,7 +51,7 @@ export const MERKL_REWARD_TOKEN_ADDRESSES: Address[] = [
   getAddress("0x8505b9d2254A7Ae468c0E9dd10Ccea3A837aef5c"), // COMP
 ];
 
-// 0->1, Only allow a max borrow origination of up to this % below LLTV
+// [0, 1], Only allow a max borrow origination of up to this % below LLTV
 export const MAX_BORROW_LTV_MARGIN = 0.05;
 
 // Target utilization above which the public allocator shared liquidity algorithm is enabled for borrowing (WAD)
