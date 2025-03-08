@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
       {
         source: "/",
         destination: "/earn",
-        permanent: false, // Can add home page in future if desired
+        permanent: true,
       },
     ];
   },
