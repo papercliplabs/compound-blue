@@ -5,7 +5,7 @@ import { Address, Hex, TransactionRequest as ViemTransactionRequest } from "viem
 import { useAccount, useConnectorClient, usePublicClient, useSwitchChain } from "wagmi";
 import { CHAIN_ID } from "@/config";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
-import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
+import { estimateGas, sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { track } from "@vercel/analytics";
 import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
 import { useAccountIsOfacSanctioned } from "@/hooks/useAccountIsOfacSanctioned";
@@ -13,6 +13,10 @@ import { revalidateDynamicPages } from "@/utils/revalidateDynamicPages";
 
 export type ActionFlowState = "review" | "active" | "success" | "failed";
 export type ActionState = "pending-wallet" | "pending-transaction";
+
+// Gives buffer on gas estimate to help prevent out of gas error
+// For wallets that decide to respect this...
+const GAS_BUFFER = 0.2;
 
 type ActionFlowContextType = {
   flowState: ActionFlowState;
@@ -121,7 +125,11 @@ export function ActionFlowProvider({
 
         for (const step of transactionRequests) {
           setActionState("pending-wallet");
-          const hash = await sendTransaction(client, step.tx());
+
+          const txReq = step.tx();
+          const gasEstimate = await estimateGas(client, { ...txReq, account: client.account });
+          const gasEstimateWithBuffer = (gasEstimate * BigInt((1 + GAS_BUFFER) * 1000)) / BigInt(1000);
+          const hash = await sendTransaction(client, { ...txReq, gas: gasEstimateWithBuffer });
           setLastTransactionHash(hash);
           track("transaction", { hash, status: "pending" });
 
