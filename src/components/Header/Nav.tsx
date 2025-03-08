@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 
 const NAV_ITEMS: { href: string; name: string }[] = [
-  { href: "/earn", name: "Earn" },
+  { href: "/", name: "Earn" },
   { href: "/borrow", name: "Borrow" },
 ];
 
@@ -14,7 +14,16 @@ export default function Nav() {
     <div className="flex items-center gap-2">
       {NAV_ITEMS.map((item) => (
         <Link key={item.href} href={item.href}>
-          <Button variant={pathname.includes(item.href) ? "secondary" : "ghost"} size="md" className="h-7 px-4">
+          <Button
+            variant={
+              (item.href === "/" && (pathname === "/" || pathname.match(/^\/0x[a-fA-F0-9]{40}$/))) ||
+              (item.href === "/borrow" && pathname.startsWith("/borrow"))
+                ? "secondary"
+                : "ghost"
+            }
+            size="md"
+            className="h-7 px-4"
+          >
             {item.name}
           </Button>
         </Link>

@@ -29,7 +29,7 @@ export const columns: ColumnDef<Market["vaultAllocations"][number]>[] = [
           />
           <div className="flex flex-col justify-between">
             <span className="label-lg">{vault.name}</span>
-            <span className="label-sm text-content-secondary">{vault.asset.symbol}</span>
+            <span className="text-content-secondary label-sm">{vault.asset.symbol}</span>
           </div>
         </div>
       );
@@ -84,7 +84,7 @@ export default function VaultAllocationTable({ allocations }: TableProps) {
       columns={columns}
       data={allocations}
       initialSortKey="marketSupplyShare"
-      rowLink={(row) => `/earn/${row.vault.vaultAddress}`}
+      rowLink={(row) => `/${row.vault.vaultAddress}`}
     />
   );
 }

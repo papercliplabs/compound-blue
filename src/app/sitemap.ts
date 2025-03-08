@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const vaultPages = WHITELISTED_VAULT_ADDRESSES.map((address) => ({
-    url: `https://www.compound.blue/earn/${address}`,
+    url: `https://www.compound.blue/${address}`,
     lastModified: new Date(),
     changeFrequency: "monthly",
     priority: 0.8,
@@ -18,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     {
-      url: "https://www.compound.blue/earn",
+      url: "https://www.compound.blue",
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 1,

@@ -39,7 +39,7 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
     <>
       <section className="flex flex-col justify-between gap-6 md:flex-row">
         <div className="flex flex-col gap-3">
-          <Link href="/earn" className="label-md flex items-center gap-2 text-content-secondary">
+          <Link href="/" className="flex items-center gap-2 text-content-secondary label-md">
             <ArrowLeft size={16} className="stroke-content-secondary" /> Earn
           </Link>
 
@@ -117,7 +117,7 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
           </Suspense>
           <Card>
             <CardContent className="flex flex-col gap-7">
-              <span className="label-sm text-content-secondary">Position Summary</span>
+              <span className="text-content-secondary label-sm">Position Summary</span>
               <Suspense fallback={<Skeleton className="h-[80px] w-full" />}>
                 <UserVaultPositionWrapper vaultAddress={vaultAddress} />
               </Suspense>
@@ -149,7 +149,7 @@ async function VaultMetadata({ vaultAddress }: { vaultAddress: Address }) {
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="inline title-2">{vault.name}</h1>
           {vault.metadata?.riskTier && (
-            <span className="label-md inline h-[20px] w-fit rounded-[4px] bg-button-neutral px-1 text-content-secondary">
+            <span className="inline h-[20px] w-fit rounded-[4px] bg-button-neutral px-1 text-content-secondary label-md">
               {vault.metadata.riskTier.toUpperCase()}
             </span>
           )}
