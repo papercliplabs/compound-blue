@@ -47,6 +47,8 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
               <FormControl>
                 <Input
                   placeholder="0"
+                  inputMode="decimal"
+                  type="text"
                   {...field}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -76,7 +78,7 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
                 </Button>
               )}
             </div>
-            <div className="label-sm flex items-center justify-between text-content-secondary">
+            <div className="flex items-center justify-between text-content-secondary label-sm">
               {asset.priceUsd && (
                 <NumberFlow value={(field.value ?? 0) * asset.priceUsd} format={{ currency: "USD" }} />
               )}
