@@ -31,6 +31,7 @@ const cspHeader = `
       wss://*.walletconnect.com
       wss://*.walletconnect.org
       wss://www.walletlink.org
+      https://chain-proxy.wallet.coinbase.com
       https://va.vercel-scripts.com/v1/script.debug.js;
     frame-src 'self' 
         https://verify.walletconnect.com 
@@ -38,6 +39,7 @@ const cspHeader = `
         https://secure.walletconnect.com 
         https://secure.walletconnect.org;
     upgrade-insecure-requests;
+    report-to csp-report-endpoint;
 `;
 
 const nextConfig: NextConfig = {
@@ -48,7 +50,11 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy-Report-Only", // Report only for now
-            value: cspHeader.replace(/\n/g, ""),
+            value: cspHeader.replace(/\s{2,}/g, " ").trim(),
+          },
+          {
+            key: "Reporting-Endpoints",
+            value: `csp-report-endpoint="${process.env.NEXT_PUBLIC_URL!}/api/csp-report"`,
           },
         ],
       },
