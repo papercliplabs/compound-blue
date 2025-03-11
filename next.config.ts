@@ -14,7 +14,7 @@ const cspHeader = `
         https://tokens.1inch.io 
         https://ipfs.io 
         https://cdn.zerion.io
-        https://api.whisk.so
+        https://cdn.whisk.so
         https://cdn.morpho.org
         https://raw.githubusercontent.com/trustwallet/assets/**
         https://coin-images.coingecko.com/coins/images/**;
@@ -96,9 +96,9 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "api.whisk.so",
+        hostname: "cdn.whisk.so",
         port: "",
-        pathname: "/static/img/**",
+        pathname: "**",
       },
     ],
   },
