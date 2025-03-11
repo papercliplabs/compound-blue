@@ -1,7 +1,8 @@
-import { BLOCK_EXPLORER_BASE_URL } from "@/config";
+import { BLOCK_EXPLORER_BASE_URL, KNOWN_ADDRESSES } from "@/config";
 import { formatAddress } from "@/utils/format";
 import { cn } from "@/utils/shadcn";
 import { ArrowUpRight } from "lucide-react";
+import Image from "next/image";
 import { AnchorHTMLAttributes } from "react";
 import { Address } from "viem";
 
@@ -41,17 +42,37 @@ export function LinkExternalBlockExplorer({
   ...props
 }: { address?: Address; txHash?: Address } & LinkExternalProps) {
   let path;
+  let displayName: string;
+  let displayIcon: string | undefined = undefined;
   if (address && !txHash) {
     path = `/address/${address}`;
+
+    const knownAddress = KNOWN_ADDRESSES[address];
+    displayName = knownAddress?.name ?? formatAddress(address);
+    displayIcon = knownAddress?.iconSrc;
   } else if (txHash && !address) {
     path = `/tx/${txHash}`;
+    displayName = formatAddress(txHash);
   } else {
     throw new Error("Only one of address or txHash must be provided");
   }
 
   return (
     <LinkExternal href={`${BLOCK_EXPLORER_BASE_URL}${path}`} {...props}>
-      {children ?? formatAddress((address ?? txHash)!)}
+      {children ?? (
+        <>
+          {displayName}
+          {displayIcon && (
+            <Image
+              src={displayIcon}
+              width={24}
+              height={24}
+              alt={displayName}
+              className="h-6 w-6 shrink-0 rounded-[4px] border"
+            />
+          )}
+        </>
+      )}
     </LinkExternal>
   );
 }

@@ -56,3 +56,15 @@ export const MAX_BORROW_LTV_MARGIN = 0.05;
 
 // Target utilization above which the public allocator shared liquidity algorithm is enabled for borrowing (WAD)
 export const PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION = BigInt(90_5000000000000000);
+
+// Used to display a name and icon for addresses instead of the raw address in the UI
+export const KNOWN_ADDRESSES: Record<Address, { name: string; iconSrc?: string } | undefined> = {
+  [getAddress("0x9E33faAE38ff641094fa68c65c2cE600b3410585")]: {
+    name: "Gauntlet",
+    iconSrc: "/identity/gauntlet.png",
+  },
+  [getAddress("0xCC3E7c85Bb0EE4f09380e041fee95a0caeDD4a02")]: {
+    name: "Compound DAO",
+    iconSrc: "/identity/compound.png",
+  },
+};
