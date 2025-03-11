@@ -104,18 +104,18 @@ export function ActionFlowProvider({
     }
 
     if (flowState == "review") {
+      // Don't allow any actions if the account is OFAC sanctioned
+      if (isOfacSanctioned) {
+        setError("This action is not available to OFAC sanctioned accounts.");
+        return;
+      }
+
       // Reset state
       setFlowState("active");
       //   setActiveStep(0); // Don't reset step, let's pick up where we left off.
       setActionState("pending-wallet");
       setLastTransactionHash(null);
       setError(null);
-
-      // Don't allow any actions if the account is OFAC sanctioned
-      if (isOfacSanctioned) {
-        setError("This action is not available to OFAC sanctioned accounts.");
-        return;
-      }
 
       try {
         for (const step of signatureRequests) {
