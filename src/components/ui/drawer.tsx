@@ -5,8 +5,16 @@ import { Drawer as DrawerPrimitive } from "vaul";
 
 import { cn } from "@/utils/shadcn";
 
-const Drawer = ({ shouldScaleBackground = true, ...props }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
-  <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
+const Drawer = ({
+  shouldScaleBackground = true,
+  repositionInputs,
+  ...props
+}: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
+  <DrawerPrimitive.Root
+    shouldScaleBackground={shouldScaleBackground}
+    repositionInputs={repositionInputs ?? false}
+    {...props}
+  />
 );
 Drawer.displayName = "Drawer";
 
