@@ -16,7 +16,7 @@ export type ActionState = "pending-wallet" | "pending-transaction";
 
 // Gives buffer on gas estimate to help prevent out of gas error
 // For wallets that decide to respect this...
-const GAS_BUFFER = 0.2;
+const GAS_BUFFER = 0.3;
 
 type ActionFlowContextType = {
   flowState: ActionFlowState;
@@ -75,6 +75,7 @@ export function ActionFlowProvider({
 
   const { chainId } = useAccount();
   const { data: client } = useConnectorClient();
+  const { connector } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
   const publicClient = usePublicClient();
@@ -110,6 +111,9 @@ export function ActionFlowProvider({
         return;
       }
 
+      // For tracking purposes to determine if we are seeing issues with a specific connector
+      const connectorName = connector?.name ?? "unknown";
+
       // Reset state
       setFlowState("active");
       //   setActiveStep(0); // Don't reset step, let's pick up where we left off.
@@ -131,7 +135,7 @@ export function ActionFlowProvider({
           const gasEstimateWithBuffer = (gasEstimate * BigInt((1 + GAS_BUFFER) * 1000)) / BigInt(1000);
           const hash = await sendTransaction(client, { ...txReq, gas: gasEstimateWithBuffer });
           setLastTransactionHash(hash);
-          track("transaction", { hash, status: "pending" });
+          track("transaction", { hash, status: "pending", connector: connectorName });
 
           // Uses public client instead so polling happens through our RPC provider
           // Not the users wallet provider, which may be unreliable
@@ -145,10 +149,10 @@ export function ActionFlowProvider({
           });
 
           if (receipt.status == "success") {
-            track("transaction", { hash, status: "success" });
+            track("transaction", { hash, status: "success", connector: connectorName });
             setActiveStep((step) => step + 1);
           } else {
-            track("transaction", { hash, status: "failed" });
+            track("transaction", { hash, status: "failed", connector: connectorName });
             setFlowState("failed");
             return;
           }
@@ -183,6 +187,7 @@ export function ActionFlowProvider({
     flowCompletionCb,
     switchChainAsync,
     isOfacSanctioned,
+    connector,
   ]);
 
   // Trigger polling of user position once the flow is successful
