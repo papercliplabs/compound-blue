@@ -29,6 +29,7 @@ import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
+import { ArrowRight } from "lucide-react";
 
 export default function MarketRepayWithdrawCollateral({
   market,
@@ -283,15 +284,22 @@ export default function MarketRepayWithdrawCollateral({
                 )}
               />
             )}
-            <ActionFlowReviewItem
-              name={`LTV`}
-              valueBefore={formatNumber(descaleBigIntToNumber(preparedAction.positionLtvChange.before, 18), {
-                style: "percent",
-              })}
-              valueAfter={formatNumber(descaleBigIntToNumber(preparedAction.positionLtvChange.after, 18), {
-                style: "percent",
-              })}
-            />
+            <div className="flex items-center justify-between">
+              <span>LTV / LLTV</span>
+              <div className="flex items-center gap-1 label-md">
+                <span className="text-content-secondary">
+                  (
+                  {formatNumber(descaleBigIntToNumber(preparedAction.positionLtvChange.before, 18), {
+                    style: "percent",
+                  })}
+                </span>
+                <ArrowRight size={14} className="stroke-content-secondary" />
+                {formatNumber(descaleBigIntToNumber(preparedAction.positionLtvChange.after, 18), {
+                  style: "percent",
+                })}
+                ) / {formatNumber(market.lltv, { style: "percent" })}
+              </div>
+            </div>
           </ActionFlowReview>
           <ActionFlowButton className="bg-accent-ternary">
             {repayAmount > 0 && "Repay"}

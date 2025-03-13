@@ -21,6 +21,8 @@ import { VaultActionsProps } from ".";
 import { ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog/ActionFlowSummary";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
+import { VAULT_ASSET_CALLOUT } from "@/config";
+import { Info } from "lucide-react";
 
 export default function VaultSupply({
   vault,
@@ -113,6 +115,14 @@ export default function VaultSupply({
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <fieldset disabled={simulatingBundle || open} style={{ all: "unset", width: "100%" }}>
             <div className="flex w-full flex-col gap-7 overflow-hidden">
+              {VAULT_ASSET_CALLOUT[getAddress(vault.asset.address)] && (
+                <div className="flex gap-2 rounded-[8px] bg-background-secondary p-3 lg:bg-background-inverse">
+                  <Info size={16} className="shrink-0 items-center stroke-accent-primary" />
+                  <p className="text-content-secondary paragraph-sm">
+                    {VAULT_ASSET_CALLOUT[getAddress(vault.asset.address)]}
+                  </p>
+                </div>
+              )}
               <AssetFormField
                 control={form.control}
                 name="supplyAmount"

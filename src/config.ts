@@ -42,6 +42,12 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
   // "0xe558a51e10f1fdf7156c9470d2f68b93b3fd1ad5e775c020ae4a7f805e8d5674",
 ];
 
+// Explicit callouts for a vault asset, this will be placed above the input field for the supply action
+// Indexed by underlying asset address
+export const VAULT_ASSET_CALLOUT: Record<Address, string> = {
+  [getAddress("0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359")]: "This vault only supports native USDC.",
+};
+
 // Merkl reward distribution contract for reward claiming
 export const MERKLE_DISTRIBUTION_ADDRESS = getAddress("0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae");
 

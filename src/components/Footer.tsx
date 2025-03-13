@@ -28,6 +28,22 @@ export default function Footer() {
             >
               Github
             </LinkExternal>
+            <LinkExternal
+              href="https://docs.morpho.org"
+              className="hover:underline hover:brightness-100"
+              keepReferrer
+              hideArrow
+            >
+              Docs
+            </LinkExternal>
+            <LinkExternal
+              href="mailto:contact@officesupply.biz"
+              className="hover:underline hover:brightness-100"
+              keepReferrer
+              hideArrow
+            >
+              Support
+            </LinkExternal>
             <Link href="/privacy" className="hover:underline">
               Privacy
             </Link>
