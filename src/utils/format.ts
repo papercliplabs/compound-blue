@@ -37,7 +37,7 @@ export function formatNumber(
   }
 
   const minValue = Math.pow(10, -maximumFractionDigits);
-  if (value !== 0 && displayValue < minValue) {
+  if (value !== 0 && Math.abs(displayValue) < minValue) {
     prefix = "<" + prefix;
     value = minValue * Math.pow(10, style === "percent" ? -2 : 0);
   }
