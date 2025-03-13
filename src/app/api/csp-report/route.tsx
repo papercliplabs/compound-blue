@@ -1,11 +1,11 @@
-import { track } from "@vercel/analytics/server";
+import { trackEvent } from "@/data/trackEvent";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const cspReport = body["csp-report"] || body;
 
-    await track("csp-violation", {
+    await trackEvent("csp-violation", {
       type: cspReport.type,
       url: cspReport.url,
       body: cspReport.body,

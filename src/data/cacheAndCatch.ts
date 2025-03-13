@@ -1,6 +1,6 @@
 "server-only";
 import { cache } from "react";
-import { track } from "@vercel/analytics/server";
+import { trackEvent } from "./trackEvent";
 
 const MAX_RETRIES = 5;
 const RETRY_BASE_DELAY_MS = 500; // Exponential backoff on this base
@@ -19,7 +19,7 @@ export function cacheAndCatch<Args extends any[], T>(
         const errorMessage = err instanceof Error ? err.message : String(err);
 
         console.error(`Data fetch error - invalid response in ${name}, attempt: ${attempt}, message: ${errorMessage}`);
-        await track("data-fetch-error", { name, attempt, message: errorMessage });
+        await trackEvent("data-fetch-error", { name, attempt, message: errorMessage });
 
         // Exponential backoff
         const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
