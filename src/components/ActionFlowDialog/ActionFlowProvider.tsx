@@ -159,8 +159,14 @@ export function ActionFlowProvider({
         }
       } catch (error) {
         // TODO: Parse this error
-        setError(error instanceof Error ? error.message : String(error));
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        setError(errorMessage);
         setFlowState("review");
+        track("transaction-flow-error", {
+          accountAddress: client.account.address,
+          connector: connectorName,
+          error: errorMessage,
+        });
         return;
       }
 
