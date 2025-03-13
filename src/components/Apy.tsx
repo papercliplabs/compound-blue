@@ -74,11 +74,15 @@ function ApyBreakdown({ base, rewards, performanceFee, total }: ApyProps["apy"])
               <div className="flex items-center gap-2">
                 <span>Performance Fee</span>
                 <div className="rounded-[4px] bg-button-neutral px-1 font-semibold">
-                  {formatNumber(performanceFee, { style: "percent", minimumFractionDigits: 0 })}
+                  {formatNumber(base > 0 ? performanceFee / base : 0, {
+                    style: "percent",
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 1,
+                  })}
                 </div>
               </div>
             ),
-            apy: performanceFee,
+            apy: -performanceFee, // Negative to show as a subtraction
           },
         ]
       : []),

@@ -38,8 +38,9 @@ export function formatNumber(
 
   const minValue = Math.pow(10, -maximumFractionDigits);
   if (value !== 0 && Math.abs(displayValue) < minValue) {
-    prefix = "<" + prefix;
-    value = minValue * Math.pow(10, style === "percent" ? -2 : 0);
+    const neg = value < 0;
+    prefix = neg ? ">" : "<" + prefix;
+    value = minValue * Math.pow(10, style === "percent" ? -2 : 0) * (neg ? -1 : 1);
   }
 
   const formatted = new Intl.NumberFormat("en-US", formatOptions).format(value);
