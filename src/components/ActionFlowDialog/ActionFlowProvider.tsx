@@ -6,10 +6,10 @@ import { useAccount, useConnectorClient, usePublicClient, useSwitchChain } from 
 import { CHAIN_ID } from "@/config";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { estimateGas, sendTransaction, waitForTransactionReceipt } from "viem/actions";
-import { track } from "@vercel/analytics";
 import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
 import { useAccountIsOfacSanctioned } from "@/hooks/useAccountIsOfacSanctioned";
 import { revalidateDynamicPages } from "@/utils/revalidateDynamicPages";
+import { trackEvent } from "@/data/trackEvent";
 
 export type ActionFlowState = "review" | "active" | "success" | "failed";
 export type ActionState = "pending-wallet" | "pending-transaction";
@@ -17,6 +17,9 @@ export type ActionState = "pending-wallet" | "pending-transaction";
 // Gives buffer on gas estimate to help prevent out of gas error
 // For wallets that decide to respect this...
 const GAS_BUFFER = 0.3;
+
+// Upper bound for all actions, used when a gas estimate fails to still allow tx to proceed (still <$0.02)
+const FALLBACK_GAS_ESTIMATE = BigInt(1_200_000);
 
 type ActionFlowContextType = {
   flowState: ActionFlowState;
@@ -131,11 +134,26 @@ export function ActionFlowProvider({
           setActionState("pending-wallet");
 
           const txReq = step.tx();
-          const gasEstimate = await estimateGas(client, { ...txReq, account: client.account });
-          const gasEstimateWithBuffer = (gasEstimate * BigInt((1 + GAS_BUFFER) * 1000)) / BigInt(1000);
+
+          let gasEstimateWithBuffer: bigint;
+          try {
+            // Uses public client instead so estimate happens throught our reliable RPC provider
+            const gasEstimate = await estimateGas(publicClient, { ...txReq, account: client.account });
+            gasEstimateWithBuffer = (gasEstimate * BigInt((1 + GAS_BUFFER) * 1000)) / BigInt(1000);
+          } catch (error) {
+            // Should never really happen, but if it does let's let the user try to proceed with fallback, and track it
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            gasEstimateWithBuffer = FALLBACK_GAS_ESTIMATE;
+            trackEvent("tx-gas-estimate-failed", {
+              accountAddress: client.account.address,
+              connector: connectorName,
+              error: errorMessage,
+            });
+          }
+
           const hash = await sendTransaction(client, { ...txReq, gas: gasEstimateWithBuffer });
           setLastTransactionHash(hash);
-          track("transaction", { hash, status: "pending", connector: connectorName });
+          trackEvent("transaction", { hash, status: "pending", connector: connectorName });
 
           // Uses public client instead so polling happens through our RPC provider
           // Not the users wallet provider, which may be unreliable
@@ -149,10 +167,10 @@ export function ActionFlowProvider({
           });
 
           if (receipt.status == "success") {
-            track("transaction", { hash, status: "success", connector: connectorName });
+            trackEvent("transaction", { hash, status: "success", connector: connectorName });
             setActiveStep((step) => step + 1);
           } else {
-            track("transaction", { hash, status: "failed", connector: connectorName });
+            trackEvent("transaction", { hash, status: "failed", connector: connectorName });
             setFlowState("failed");
             return;
           }
@@ -162,7 +180,7 @@ export function ActionFlowProvider({
         const errorMessage = error instanceof Error ? error.message : String(error);
         setError(errorMessage);
         setFlowState("review");
-        track("transaction-flow-error", {
+        trackEvent("transaction-flow-error", {
           accountAddress: client.account.address,
           connector: connectorName,
           error: errorMessage,

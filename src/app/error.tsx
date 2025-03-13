@@ -2,11 +2,11 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useEffect } from "react";
-import { track } from "@vercel/analytics";
+import { trackEvent } from "@/data/trackEvent";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    track("app-error", { message: error.message });
+    trackEvent("app-error", { message: error.message });
     console.error(error);
   }, [error]);
 

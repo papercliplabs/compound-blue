@@ -26,6 +26,7 @@ const cspHeader = `
     connect-src 'self' 
       https://*.alchemy.com
       https://*.infura.io
+      https://*.quiknode.pro
       https://*.walletconnect.com 
       https://*.walletconnect.org
       wss://*.walletconnect.com
