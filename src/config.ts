@@ -6,6 +6,7 @@ export const CHAIN = polygon;
 export const TRANSPORTS = fallback([
   http(process.env.NEXT_PUBLIC_RPC_URL_1!),
   http(process.env.NEXT_PUBLIC_RPC_URL_2!),
+  http(process.env.NEXT_PUBLIC_RPC_URL_3!),
 ]);
 export const CHAIN_ID = CHAIN.id;
 export const BLOCK_EXPLORER_BASE_URL = CHAIN.blockExplorers.default.url;
