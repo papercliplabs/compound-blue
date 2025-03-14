@@ -4,6 +4,7 @@ import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } fr
 import { CHAIN_ID } from "@/config";
 import { InputBundlerOperation } from "@morpho-org/bundler-sdk-viem";
 import { maxUint256 } from "viem";
+import { getIsSmartAccount } from "@/data/getIsSmartAccount";
 
 const { morpho } = addresses[CHAIN_ID];
 
@@ -31,14 +32,19 @@ export async function prepareMarketRepayWithdrawCollateralAction({
   withdrawCollateralAmount,
   accountAddress,
   marketId,
+  publicClient,
   ...params
 }: PrepareMarketRepayWithdrawCollateralActionParameters): Promise<PrepareMarketRepayWithdrawCollateralActionReturnType> {
-  const simulationState = await getSimulationState({
-    actionType: "market-repay-withdraw-collateral",
-    accountAddress,
-    marketId,
-    ...params,
-  });
+  const [simulationState, isSmartAccount] = await Promise.all([
+    getSimulationState({
+      actionType: "market-repay-withdraw-collateral",
+      accountAddress,
+      marketId,
+      publicClient,
+      ...params,
+    }),
+    getIsSmartAccount(publicClient, accountAddress),
+  ]);
 
   const isMaxRepay = repayAmount == maxUint256;
   const isMaxWithdrawCollateral = withdrawCollateralAmount == maxUint256;
@@ -93,6 +99,7 @@ export async function prepareMarketRepayWithdrawCollateralAction({
         : []),
     ],
     accountAddress,
+    isSmartAccount,
     simulationState,
     `Confirm ${isRepay ? "Repay" : ""}${isRepay && isWithdraw ? " & " : ""}${isWithdraw ? "Withdraw" : ""}`
   );

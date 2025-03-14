@@ -2,6 +2,7 @@ import { getSimulationState, GetSimulationStateVaultSupplyParameters } from "@/d
 import { DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
 import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } from "./helpers";
 import { maxUint256 } from "viem";
+import { getIsSmartAccount } from "@/data/getIsSmartAccount";
 
 type PrepareVaultSupplyActionParameters = Omit<GetSimulationStateVaultSupplyParameters, "actionType"> & {
   supplyAmount: bigint; // Max uint256 for entire account balanace
@@ -20,14 +21,19 @@ export async function prepareVaultSupplyBundle({
   supplyAmount,
   accountAddress,
   vaultAddress,
+  publicClient,
   ...params
 }: PrepareVaultSupplyActionParameters): Promise<PrepareVaultSupplyActionReturnType> {
-  const simulationState = await getSimulationState({
-    actionType: "vault-supply",
-    accountAddress,
-    vaultAddress,
-    ...params,
-  });
+  const [simulationState, isSmartAccount] = await Promise.all([
+    getSimulationState({
+      actionType: "vault-supply",
+      accountAddress,
+      vaultAddress,
+      publicClient,
+      ...params,
+    }),
+    getIsSmartAccount(publicClient, accountAddress),
+  ]);
 
   const vault = simulationState.vaults?.[vaultAddress];
   const userAssetBalance = simulationState.holdings?.[accountAddress]?.[vault?.asset ?? "0x"]?.balance;
@@ -56,6 +62,7 @@ export async function prepareVaultSupplyBundle({
       },
     ],
     accountAddress,
+    isSmartAccount,
     simulationState,
     "Confirm Supply"
   );

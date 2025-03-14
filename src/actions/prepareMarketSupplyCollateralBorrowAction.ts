@@ -4,6 +4,7 @@ import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } fr
 import { CHAIN_ID } from "@/config";
 import { InputBundlerOperation } from "@morpho-org/bundler-sdk-viem";
 import { maxUint256 } from "viem";
+import { getIsSmartAccount } from "@/data/getIsSmartAccount";
 
 const { morpho } = addresses[CHAIN_ID];
 
@@ -31,14 +32,19 @@ export async function prepareMarketSupplyCollateralBorrowAction({
   borrowAmount,
   accountAddress,
   marketId,
+  publicClient,
   ...params
 }: PrepareMarketSupplyCollateralBorrowActionParameters): Promise<PrepareMarketSupplyCollateralBorrowActionReturnType> {
-  const simulationState = await getSimulationState({
-    actionType: "market-supply-collateral-borrow",
-    accountAddress,
-    marketId,
-    ...params,
-  });
+  const [simulationState, isSmartAccount] = await Promise.all([
+    getSimulationState({
+      actionType: "market-supply-collateral-borrow",
+      accountAddress,
+      marketId,
+      publicClient,
+      ...params,
+    }),
+    getIsSmartAccount(publicClient, accountAddress),
+  ]);
 
   const market = simulationState.markets?.[marketId];
   const userCollateralBalance =
@@ -91,6 +97,7 @@ export async function prepareMarketSupplyCollateralBorrowAction({
         : []),
     ],
     accountAddress,
+    isSmartAccount,
     simulationState,
     `Confirm ${isSupply ? "Supply" : ""}${isSupply && isBorrow ? " & " : ""}${isBorrow ? "Borrow" : ""}`
   );
