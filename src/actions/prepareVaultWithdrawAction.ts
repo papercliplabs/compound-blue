@@ -2,6 +2,7 @@ import { getSimulationState, GetSimulationStateVaultSupplyParameters } from "@/d
 import { DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
 import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } from "./helpers";
 import { maxUint256 } from "viem";
+import { getIsSmartAccount } from "@/data/getIsSmartAccount";
 
 type PrepareVaultWithdrawBundleParameters = Omit<GetSimulationStateVaultSupplyParameters, "actionType"> & {
   withdrawAmount: bigint; // Max uint256 for entire position balanace
@@ -20,14 +21,19 @@ export async function prepareVaultWithdrawBundle({
   withdrawAmount,
   accountAddress,
   vaultAddress,
+  publicClient,
   ...params
 }: PrepareVaultWithdrawBundleParameters): Promise<PrepareVaultWithdrawActionReturnType> {
-  const simulationState = await getSimulationState({
-    actionType: "vault-withdraw",
-    accountAddress,
-    vaultAddress,
-    ...params,
-  });
+  const [simulationState, isSmartAccount] = await Promise.all([
+    getSimulationState({
+      actionType: "vault-withdraw",
+      accountAddress,
+      vaultAddress,
+      publicClient,
+      ...params,
+    }),
+    getIsSmartAccount(publicClient, accountAddress),
+  ]);
 
   const userShareBalance = simulationState.holdings?.[accountAddress]?.[vaultAddress]?.balance;
   const isMaxWithdraw = withdrawAmount == maxUint256;
@@ -55,6 +61,7 @@ export async function prepareVaultWithdrawBundle({
       },
     ],
     accountAddress,
+    isSmartAccount,
     simulationState,
     "Confirm Withdraw"
   );

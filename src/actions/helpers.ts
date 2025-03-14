@@ -75,6 +75,7 @@ function getTransactionRequirementDescription(
 export function prepareBundle(
   inputOps: InputBundlerOperation[],
   accountAddress: Address,
+  isSmartAccount: boolean,
   simulationState: SimulationState,
   executeBundleName: string
 ): PrepareMorphoActionReturnType {
@@ -86,7 +87,7 @@ export function prepareBundle(
       },
     });
     operations = finalizeBundle(operations, simulationState, accountAddress);
-    const bundle = encodeBundle(operations, simulationState);
+    const bundle = encodeBundle(operations, simulationState, !isSmartAccount); // Don't support sigantures for smart accounts
 
     const signatureRequests = bundle.requirements.signatures.map((sig) => ({
       sign: sig.sign,
