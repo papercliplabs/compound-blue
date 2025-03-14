@@ -1,14 +1,16 @@
 "use client";
-import { useTheme } from "next-themes";
+import { useTheme as useNextTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export function ModeToggle() {
-  const { setTheme } = useTheme();
+  const { theme } = useTheme();
+  const { setTheme } = useNextTheme();
 
   return (
     <Button
-      onClick={() => setTheme((theme) => (theme === "light" ? "dark" : "light"))}
+      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
       variant="ghost"
       size="icon"
       className="h-fit w-fit"

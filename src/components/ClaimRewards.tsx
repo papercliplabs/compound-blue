@@ -11,12 +11,12 @@ import { ActionFlowSummary } from "./ActionFlowDialog/ActionFlowSummary";
 import { ActionFlowDialog } from "./ActionFlowDialog";
 import { Address, getAddress, Hex } from "viem";
 import { prepareMerklClaimAction } from "@/actions/prepareMerklClaimAction";
-import { useTheme } from "next-themes";
 import Image from "next/image";
 import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover";
 import LinkExternal from "./LinkExternal";
 import { useAccountRewards } from "@/hooks/useAccountRewards";
 import NumberFlow from "./ui/NumberFlow";
+import { useTheme } from "@/hooks/useTheme";
 
 export default function ClaimRewards() {
   const [claimFlowOpen, setClaimFlowOpen] = useState(false);
@@ -74,7 +74,7 @@ export default function ClaimRewards() {
         </PopoverContent>
       </Popover>
 
-      {data && !claimed && preparedAction?.status === "success" && (
+      {data && preparedAction?.status === "success" && (
         <ActionFlowDialog
           open={claimFlowOpen}
           onOpenChange={setClaimFlowOpen}
