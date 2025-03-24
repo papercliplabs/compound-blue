@@ -57,6 +57,14 @@ const nextConfig: NextConfig = {
             key: "Reporting-Endpoints",
             value: `csp-report-endpoint="${process.env.NEXT_PUBLIC_URL!}/api/csp-report"`,
           },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
         ],
       },
     ];

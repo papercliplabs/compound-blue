@@ -57,7 +57,7 @@ export function AccountMarketPosition({ market }: MarketPositionProps) {
       label: "APY",
       description:
         "The current borrow APY of your position including rewards. This will equal the market's borrow APY.",
-      value: <Apy type="supply" apy={market.borrowApy} className="gap-1" />,
+      value: <Apy type="borrow" apy={market.borrowApy} className="gap-1" />,
     },
   ];
 
@@ -95,7 +95,7 @@ export function AccountMarketPositionHighlight({ marketId }: { marketId: Hex }) 
           <NumberFlow value={marketPosition.borrowAssetsUsd} format={{ currency: "USD" }} />
         </span>
       </Metric>
-      <div className="label-sm flex items-center gap-1 text-content-secondary">
+      <div className="flex items-center gap-1 text-content-secondary label-sm">
         {marketPosition.market.loanAsset.icon && (
           <Image
             src={marketPosition.market.loanAsset.icon}
