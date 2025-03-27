@@ -3,7 +3,6 @@ import {
   ActionFlowButton,
   ActionFlowDialog,
   ActionFlowReview,
-  ActionFlowReviewItem,
   ActionFlowSummary,
   ActionFlowSummaryAssetItem,
 } from "@/components/ActionFlowDialog";
@@ -22,6 +21,7 @@ import { VaultActionsProps } from ".";
 import { PrepareVaultWithdrawActionReturnType, prepareVaultWithdrawBundle } from "@/actions/prepareVaultWithdrawAction";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
+import { MetricChange } from "../MetricChange";
 
 export default function VaultWithdraw({
   vault,
@@ -124,7 +124,7 @@ export default function VaultWithdraw({
 
               <div className="flex min-w-0 flex-col gap-2">
                 <Button type="submit" className="w-full" disabled={simulatingBundle || !form.formState.isValid}>
-                  {withdrawAmount == 0 ? "Enter an Amount" : simulatingBundle ? "Simulating..." : "Review Withdraw"}
+                  {withdrawAmount == 0 ? "Enter Amount" : simulatingBundle ? "Simulating..." : "Review Withdraw"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
@@ -160,14 +160,14 @@ export default function VaultWithdraw({
             />
           </ActionFlowSummary>
           <ActionFlowReview>
-            <ActionFlowReviewItem
+            <MetricChange
               name={`Position (${vault.asset.symbol})`}
-              valueBefore={formatNumber(
+              initialValue={formatNumber(
                 descaleBigIntToNumber(preparedAction.positionBalanceChange.before, vault.decimals) *
                   vault.asset.priceUsd,
                 { currency: "USD" }
               )}
-              valueAfter={formatNumber(
+              finalValue={formatNumber(
                 descaleBigIntToNumber(preparedAction.positionBalanceChange.after, vault.decimals) *
                   vault.asset.priceUsd,
                 { currency: "USD" }

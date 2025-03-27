@@ -84,7 +84,7 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
           <Card>
             <CardHeader>Vault Allocation</CardHeader>
             <CardContent className="p-0">
-              <Suspense fallback={<Skeleton className="m-4 h-[400px]" />}>
+              <Suspense fallback={<Skeleton className="m-8 h-[400px]" />}>
                 <VaultAllocationTableWrapper marketId={marketId} />
               </Suspense>
             </CardContent>
@@ -181,7 +181,7 @@ async function MarketState({ marketId }: { marketId: Hex }) {
     {
       label: "Available Liquidity",
       description:
-        "The total amount of assets available to borrow, including liquidity that can be reallocated from other markets through the public allocator.",
+        "The total amount of assets available for borrowing, including liquidity that can be reallocated from other markets through the public allocator.",
       value: (
         <MarketAvailableLiquidity
           liquidityAssetUsd={market.liquidityAssetsUsd}

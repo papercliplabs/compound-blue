@@ -11,6 +11,7 @@ import { useResponsiveContext } from "@/providers/ResponsiveProvider";
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
+import VaultMigrationCallout from "../VaultMigrationCallout";
 
 export interface VaultActionsProps {
   vault: Vault;
@@ -68,12 +69,15 @@ function VaultActionsDesktop({ vault, hasSupplyPosition }: { hasSupplyPosition: 
         </div>
       )}
 
-      <Card>
-        <CardContent>
-          {selection == "supply" && <VaultSupply vault={vault} />}
-          {selection == "withdraw" && <VaultWithdraw vault={vault} />}
-        </CardContent>
-      </Card>
+      <div className="rounded-[12px] bg-button-supply-muted">
+        <VaultMigrationCallout vault={vault} />
+        <Card>
+          <CardContent>
+            {selection == "supply" && <VaultSupply vault={vault} />}
+            {selection == "withdraw" && <VaultWithdraw vault={vault} />}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -90,6 +94,9 @@ function VaultActionsMobile({ vault, hasSupplyPosition }: { hasSupplyPosition: b
             <Button className="w-full">Supply</Button>
           </DrawerTrigger>
           <DrawerContent>
+            <div className="flex rounded-[12px] bg-button-supply-muted">
+              <VaultMigrationCallout vault={vault} />
+            </div>
             <VisuallyHidden>
               <DrawerTitle>Supply to vault</DrawerTitle>
             </VisuallyHidden>

@@ -13,7 +13,6 @@ import { HTMLAttributes, useEffect, useRef, useState } from "react";
 import { flexRender } from "@tanstack/react-table";
 import { ScrollSync, ScrollSyncPane } from "react-scroll-sync";
 import SortIcon from "../ui/icons/Sort";
-import { HEADER_HEIGHT } from "../Header";
 import "@tanstack/react-table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
@@ -25,31 +24,53 @@ declare module "@tanstack/react-table" {
   }
 }
 
-export function TableRow({ href, className, children }: HTMLAttributes<HTMLDivElement> & { href?: string }) {
-  if (!href) {
+type TableRowAction =
+  | {
+      type: "link";
+      href: string;
+    }
+  | {
+      type: "callback";
+      callback: () => void;
+    };
+
+export function TableRow({
+  action,
+  className,
+  children,
+}: HTMLAttributes<HTMLDivElement> & { action?: TableRowAction }) {
+  if (action?.type == "link") {
     return (
       // Annoying hack for the scroll sync to work
       <div className="w-fit min-w-full px-4">
-        <div className={cn("flex w-full min-w-fit items-center rounded-[8px] transition-colors", className)}>
+        <Link
+          href={action.href}
+          className={cn(
+            "flex w-full min-w-fit items-center rounded-[8px] transition-colors hover:bg-background-inverse",
+            className
+          )}
+        >
+          {children}
+        </Link>
+      </div>
+    );
+  } else {
+    return (
+      // Annoying hack for the scroll sync to work
+      <div className="w-fit min-w-full px-4">
+        <div
+          className={cn(
+            "flex w-full min-w-fit items-center rounded-[8px] transition-colors",
+            action?.type == "callback" && "hover:cursor-pointer hover:bg-background-inverse",
+            className
+          )}
+          onClick={action?.type == "callback" ? action.callback : undefined}
+        >
           {children}
         </div>
       </div>
     );
   }
-  return (
-    // Annoying hack for the scroll sync to work
-    <div className="w-fit min-w-full px-4">
-      <Link
-        href={href}
-        className={cn(
-          "flex w-full min-w-fit items-center rounded-[8px] transition-colors hover:bg-background-inverse",
-          className
-        )}
-      >
-        {children}
-      </Link>
-    </div>
-  );
 }
 
 export interface TableCellProps extends HTMLAttributes<HTMLDivElement> {
@@ -77,10 +98,10 @@ interface TableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   initialSortKey?: string;
-  rowLink: (row: TData) => string | null;
+  rowAction: (row: TData) => TableRowAction | null;
 }
 
-export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }: TableProps<TData, TValue>) {
+export function Table<TData, TValue>({ columns, data, initialSortKey, rowAction }: TableProps<TData, TValue>) {
   const tableRef = useRef<HTMLDivElement>(null);
   const [sorting, setSorting] = useState<SortingState>([
     ...(initialSortKey
@@ -96,8 +117,9 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
   // Scroll to top of the table on sort change if its above the header
   useEffect(() => {
     const tableTop = (tableRef.current?.getBoundingClientRect().top ?? 0) + 18; // Accounts for top padding and small overlap
-    if (tableTop < HEADER_HEIGHT) {
-      window.scrollTo({ top: window.scrollY + (tableTop - HEADER_HEIGHT), behavior: "smooth" });
+    const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--header-height"));
+    if (tableTop < headerHeight) {
+      window.scrollTo({ top: window.scrollY + (tableTop - headerHeight), behavior: "smooth" });
     }
   }, [sorting]);
 
@@ -119,16 +141,18 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
         <div className="absolute bottom-0 left-0 top-0 z-[10] w-8 rounded-bl-[12px] bg-gradient-to-r from-background-secondary to-transparent md:hidden" />
         <div className="absolute bottom-0 right-0 top-0 z-[10] w-8 rounded-br-[12px] bg-gradient-to-l from-background-secondary to-transparent md:hidden" />
 
-        <div className="sticky z-[5] min-w-full" style={{ top: HEADER_HEIGHT - 2 }}>
+        <div className="sticky top-[calc(var(--header-height)-2px)] z-[5] min-w-full">
           <ScrollSyncPane>
             <div className="overflow-auto overscroll-x-none bg-background-secondary scrollbar-none">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="label-sm h-12 text-content-secondary">
+                <TableRow key={headerGroup.id} className="h-12 text-content-secondary label-sm">
                   {headerGroup.headers.map((header) => {
                     const cellContent = (
                       <div className="flex h-12 select-none items-center hover:cursor-pointer">
                         {flexRender(header.column.columnDef.header, header.getContext())}
-                        <SortIcon state={header.column.getIsSorted()} />
+                        {header.column.columnDef.enableSorting == false ? null : (
+                          <SortIcon state={header.column.getIsSorted()} />
+                        )}
                       </div>
                     );
 
@@ -161,7 +185,7 @@ export function Table<TData, TValue>({ columns, data, initialSortKey, rowLink }:
           <div className="flex w-full flex-col overflow-x-auto overscroll-x-none pb-4 scrollbar-none paragraph-lg">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow href={rowLink(row.original) ?? undefined} className="group h-[72px] gap-0" key={row.id}>
+                <TableRow action={rowAction(row.original) ?? undefined} className="group h-[72px] gap-0" key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell minWidth={cell.column.columnDef.minSize} key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

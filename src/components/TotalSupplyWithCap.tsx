@@ -35,7 +35,7 @@ export default function TotalSupplyWithCap({ totalSupplyUsd, supplyCapUsd }: Tot
           <PercentRing percent={percentOfCap} />
         </TooltipTrigger>
         <TooltipContent className="flex w-[320px] flex-col gap-4">
-          <div className="label-md flex gap-2">
+          <div className="flex gap-2 label-md">
             <span>Total Supply</span>
             <span className="text-content-secondary">•</span>
             <span className="flex gap-2 text-content-secondary">
@@ -55,7 +55,7 @@ export default function TotalSupplyWithCap({ totalSupplyUsd, supplyCapUsd }: Tot
             ))}
           </div>
           <div className="h-[1px] w-full bg-border-primary" />
-          <div className="label-md flex items-center justify-between">
+          <div className="flex items-center justify-between label-md">
             <span>Remaining Capacity</span>
             <span>{supplyCapUsd == null ? "∞" : formatNumber(remainingCapacityUsd, { currency: "USD" })}</span>
           </div>
