@@ -8,6 +8,9 @@ export default {
       screens: {
         lg: "1080px",
       },
+      spacing: {
+        header: "var(--header-height)",
+      },
       fontFamily: {
         inter: ["var(--font-inter)"],
       },

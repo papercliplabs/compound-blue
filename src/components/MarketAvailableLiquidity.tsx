@@ -35,7 +35,7 @@ export default function MarketAvailableLiquidity({
       <TooltipPopoverContent className="flex w-[320px] flex-col gap-4">
         <span className="label-md">Market Liquidity</span>
         <p className="text-content-secondary paragraph-sm">
-          The total amount of assets available to be borrowed, including liquidity that can be reallocated from other
+          The total amount of assets available for borrowing, including liquidity that can be reallocated from other
           markets through the public allocator.
         </p>
         <div className="flex flex-col gap-2 paragraph-sm">
@@ -47,7 +47,7 @@ export default function MarketAvailableLiquidity({
           ))}
         </div>
         <div className="h-[1px] w-full bg-border-primary" />
-        <div className="label-md flex items-center justify-between">
+        <div className="flex items-center justify-between label-md">
           <span>Total Available Liquidity</span>
           <span>{formatNumber(total, { currency: "USD" })}</span>
         </div>

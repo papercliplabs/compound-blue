@@ -2,7 +2,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Table } from "./Table";
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
-import Image from "next/image";
 import { formatNumber } from "@/utils/format";
 import Apy from "../Apy";
 import RowIcons from "../RowIcons";
@@ -10,6 +9,7 @@ import { useMemo } from "react";
 import { getAddress } from "viem";
 import NumberFlow from "../ui/NumberFlow";
 import { useAccountVaultPositions } from "@/hooks/useAccountVaultPosition";
+import { VaultIdentifier } from "../VaultIdentifier";
 
 interface TableProps {
   vaultSummaries: VaultSummary[];
@@ -21,30 +21,7 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
     header: "Vault Name",
     cell: ({ row }) => {
       const vault = row.original;
-
-      return (
-        <div className="flex min-w-0 items-center gap-3">
-          <Image
-            src={vault.metadata?.image ?? vault.asset.icon ?? ""}
-            width={36}
-            height={36}
-            className="shrink-0 rounded-full border"
-            alt={vault.name}
-          />
-          <div className="flex flex-col justify-between">
-            <span className="label-lg">{vault.name}</span>
-            <div className="flex">
-              <span className="text-content-secondary label-sm">{vault.asset.symbol}</span>
-              {vault.metadata?.riskTier && (
-                <span className="inline whitespace-pre-wrap text-content-secondary label-sm">
-                  {" "}
-                  • {vault.metadata.riskTier.slice(0, 1).toUpperCase() + vault.metadata.riskTier.slice(1)}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      );
+      return <VaultIdentifier name={vault.name} metadata={vault.metadata} asset={vault.asset} />;
     },
     minSize: 240,
   },
@@ -126,7 +103,7 @@ export default function EarnTable({ vaultSummaries }: TableProps) {
       columns={columns}
       data={vaultSummariesWithUserPositions}
       initialSortKey="supplyAssetsUsd"
-      rowLink={(row) => `/${row.vaultAddress}`}
+      rowAction={(row) => ({ type: "link", href: `/${row.vaultAddress}` })}
     />
   );
 }

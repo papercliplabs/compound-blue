@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from "react";
+import { ReactNode, createContext, useCallback, useContext, useState } from "react";
 import { SignatureRequirementFunction } from "@morpho-org/bundler-sdk-viem";
 import { Address, Hex, TransactionRequest as ViemTransactionRequest } from "viem";
 import { useAccount, useConnectorClient, usePublicClient, useSwitchChain } from "wagmi";
@@ -39,11 +39,6 @@ const ActionFlowContext = createContext<ActionFlowContextType | undefined>(undef
 
 interface ActionMetadata {
   name: string;
-  //   iconSrc: string;
-  learnMore?: {
-    label: string;
-    href: string;
-  };
 }
 
 export interface SignatureRequest extends ActionMetadata {
@@ -76,6 +71,7 @@ export function ActionFlowProvider({
   const [lastTransactionHash, setLastTransactionHash] = useState<Hex | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const { triggerFastPolling } = useAccountDataPollingContext();
   const { chainId } = useAccount();
   const { data: client } = useConnectorClient();
   const { connector } = useAccount();
@@ -148,12 +144,13 @@ export function ActionFlowProvider({
               accountAddress: client.account.address,
               connector: connectorName,
               error: errorMessage,
+              stepName: step.name,
             });
           }
 
           const hash = await sendTransaction(client, { ...txReq, gas: gasEstimateWithBuffer });
           setLastTransactionHash(hash);
-          trackEvent("transaction", { hash, status: "pending", connector: connectorName });
+          trackEvent("transaction", { hash, status: "pending", connector: connectorName, name: step.name });
 
           // Uses public client instead so polling happens through our RPC provider
           // Not the users wallet provider, which may be unreliable
@@ -167,10 +164,10 @@ export function ActionFlowProvider({
           });
 
           if (receipt.status == "success") {
-            trackEvent("transaction", { hash, status: "success", connector: connectorName });
+            trackEvent("transaction", { hash, status: "success", connector: connectorName, name: step.name });
             setActiveStep((step) => step + 1);
           } else {
-            trackEvent("transaction", { hash, status: "failed", connector: connectorName });
+            trackEvent("transaction", { hash, status: "failed", connector: connectorName, name: step.name });
             setFlowState("failed");
             return;
           }
@@ -188,11 +185,12 @@ export function ActionFlowProvider({
         return;
       }
 
-      flowCompletionCb?.();
-      setFlowState("success");
-
-      // Re-fetch dynamic pages next visit since state has updated (default 60s revalidation)
+      // Trigger data refetches
       revalidateDynamicPages();
+      triggerFastPolling();
+
+      setFlowState("success");
+      flowCompletionCb?.();
     }
   }, [
     flowState,
@@ -212,15 +210,8 @@ export function ActionFlowProvider({
     switchChainAsync,
     isOfacSanctioned,
     connector,
+    triggerFastPolling,
   ]);
-
-  // Trigger polling of user position once the flow is successful
-  const { triggerFastPolling } = useAccountDataPollingContext();
-  useEffect(() => {
-    if (flowState == "success") {
-      triggerFastPolling();
-    }
-  }, [flowState, triggerFastPolling]);
 
   return (
     <ActionFlowContext.Provider

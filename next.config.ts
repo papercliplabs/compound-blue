@@ -5,7 +5,8 @@ const cspHeader = `
     script-src 'self' 'unsafe-eval' 'unsafe-inline'
         https://va.vercel-scripts.com/v1/script.debug.js
         https://*.walletconnect.com
-        https://*.walletconnect.org;
+        https://*.walletconnect.org
+        https://plausible.paperclip.xyz;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' data: blob: 
         https://*.walletconnect.org 
@@ -33,7 +34,8 @@ const cspHeader = `
       wss://*.walletconnect.org
       wss://www.walletlink.org
       https://chain-proxy.wallet.coinbase.com
-      https://va.vercel-scripts.com/v1/script.debug.js;
+      https://va.vercel-scripts.com/v1/script.debug.js
+      https://plausible.paperclip.xyz;
     frame-src 'self' 
         https://verify.walletconnect.com 
         https://verify.walletconnect.org 
