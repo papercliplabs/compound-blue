@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, createContext, useCallback, useContext, useEffect, useState } from "react";
+import { ReactNode, createContext, useCallback, useContext, useState } from "react";
 import { SignatureRequirementFunction } from "@morpho-org/bundler-sdk-viem";
 import { Address, Hex, TransactionRequest as ViemTransactionRequest } from "viem";
 import { useAccount, useConnectorClient, usePublicClient, useSwitchChain } from "wagmi";
@@ -39,11 +39,6 @@ const ActionFlowContext = createContext<ActionFlowContextType | undefined>(undef
 
 interface ActionMetadata {
   name: string;
-  //   iconSrc: string;
-  learnMore?: {
-    label: string;
-    href: string;
-  };
 }
 
 export interface SignatureRequest extends ActionMetadata {
@@ -76,6 +71,7 @@ export function ActionFlowProvider({
   const [lastTransactionHash, setLastTransactionHash] = useState<Hex | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const { triggerFastPolling } = useAccountDataPollingContext();
   const { chainId } = useAccount();
   const { data: client } = useConnectorClient();
   const { connector } = useAccount();
@@ -188,11 +184,12 @@ export function ActionFlowProvider({
         return;
       }
 
-      flowCompletionCb?.();
-      setFlowState("success");
-
-      // Re-fetch dynamic pages next visit since state has updated (default 60s revalidation)
+      // Trigger data refetches
       revalidateDynamicPages();
+      triggerFastPolling();
+
+      setFlowState("success");
+      flowCompletionCb?.();
     }
   }, [
     flowState,
@@ -212,15 +209,8 @@ export function ActionFlowProvider({
     switchChainAsync,
     isOfacSanctioned,
     connector,
+    triggerFastPolling,
   ]);
-
-  // Trigger polling of user position once the flow is successful
-  const { triggerFastPolling } = useAccountDataPollingContext();
-  useEffect(() => {
-    if (flowState == "success") {
-      triggerFastPolling();
-    }
-  }, [flowState, triggerFastPolling]);
 
   return (
     <ActionFlowContext.Provider

@@ -46,3 +46,4 @@ export const getAccountVaultPositions = cacheAndCatch(async (accountAddress: Add
 }, "getAccountVaultPositions");
 
 export type AccountVaultPositions = NonNullable<Awaited<ReturnType<typeof getAccountVaultPositions>>>;
+export type AccountVaultPosition = AccountVaultPositions[number];

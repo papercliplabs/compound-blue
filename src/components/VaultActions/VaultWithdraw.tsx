@@ -3,7 +3,6 @@ import {
   ActionFlowButton,
   ActionFlowDialog,
   ActionFlowReview,
-  ActionFlowReviewItem,
   ActionFlowSummary,
   ActionFlowSummaryAssetItem,
 } from "@/components/ActionFlowDialog";
@@ -22,6 +21,7 @@ import { VaultActionsProps } from ".";
 import { PrepareVaultWithdrawActionReturnType, prepareVaultWithdrawBundle } from "@/actions/prepareVaultWithdrawAction";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
+import { MetricChange } from "../MetricChange";
 
 export default function VaultWithdraw({
   vault,
@@ -160,14 +160,14 @@ export default function VaultWithdraw({
             />
           </ActionFlowSummary>
           <ActionFlowReview>
-            <ActionFlowReviewItem
+            <MetricChange
               name={`Position (${vault.asset.symbol})`}
-              valueBefore={formatNumber(
+              initialValue={formatNumber(
                 descaleBigIntToNumber(preparedAction.positionBalanceChange.before, vault.decimals) *
                   vault.asset.priceUsd,
                 { currency: "USD" }
               )}
-              valueAfter={formatNumber(
+              finalValue={formatNumber(
                 descaleBigIntToNumber(preparedAction.positionBalanceChange.after, vault.decimals) *
                   vault.asset.priceUsd,
                 { currency: "USD" }

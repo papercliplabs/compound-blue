@@ -3,7 +3,6 @@ import {
   ActionFlowButton,
   ActionFlowDialog,
   ActionFlowReview,
-  ActionFlowReviewItem,
   ActionFlowSummary,
   ActionFlowSummaryAssetItem,
 } from "@/components/ActionFlowDialog";
@@ -31,6 +30,7 @@ import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
 import { WAD } from "@/utils/constants";
 import { ArrowRight } from "lucide-react";
+import { MetricChange } from "../MetricChange";
 
 export default function MarketSupplyCollateralBorrow({
   market,
@@ -244,16 +244,16 @@ export default function MarketSupplyCollateralBorrow({
           </ActionFlowSummary>
           <ActionFlowReview className="flex flex-col gap-4">
             {supplyCollateralAmount > 0 && (
-              <ActionFlowReviewItem
+              <MetricChange
                 name={`Collateral (${market.collateralAsset.symbol})`}
-                valueBefore={formatNumber(
+                initialValue={formatNumber(
                   descaleBigIntToNumber(
                     preparedAction.positionCollateralChange.before,
                     market.collateralAsset.decimals
                   ) * (market.collateralAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
-                valueAfter={formatNumber(
+                finalValue={formatNumber(
                   descaleBigIntToNumber(
                     preparedAction.positionCollateralChange.after,
                     market.collateralAsset.decimals
@@ -263,14 +263,14 @@ export default function MarketSupplyCollateralBorrow({
               />
             )}
             {borrowAmount > 0 && (
-              <ActionFlowReviewItem
+              <MetricChange
                 name={`Loan (${market.loanAsset.symbol})`}
-                valueBefore={formatNumber(
+                initialValue={formatNumber(
                   descaleBigIntToNumber(preparedAction.positionLoanChange.before, market.loanAsset.decimals) *
                     (market.loanAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
-                valueAfter={formatNumber(
+                finalValue={formatNumber(
                   descaleBigIntToNumber(preparedAction.positionLoanChange.after, market.loanAsset.decimals) *
                     (market.loanAsset.priceUsd ?? 0),
                   { currency: "USD" }

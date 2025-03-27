@@ -1,10 +1,5 @@
 "use client";
-import {
-  ActionFlowButton,
-  ActionFlowDialog,
-  ActionFlowReview,
-  ActionFlowReviewItem,
-} from "@/components/ActionFlowDialog";
+import { ActionFlowButton, ActionFlowDialog, ActionFlowReview } from "@/components/ActionFlowDialog";
 import { useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
@@ -23,6 +18,7 @@ import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { VAULT_ASSET_CALLOUT } from "@/config";
 import { Info } from "lucide-react";
+import { MetricChange } from "../MetricChange";
 
 export default function VaultSupply({
   vault,
@@ -169,14 +165,14 @@ export default function VaultSupply({
             />
           </ActionFlowSummary>
           <ActionFlowReview>
-            <ActionFlowReviewItem
+            <MetricChange
               name={`Position (${vault.asset.symbol})`}
-              valueBefore={formatNumber(
+              initialValue={formatNumber(
                 descaleBigIntToNumber(preparedAction.positionBalanceChange.before, vault.decimals) *
                   vault.asset.priceUsd,
                 { currency: "USD" }
               )}
-              valueAfter={formatNumber(
+              finalValue={formatNumber(
                 descaleBigIntToNumber(preparedAction.positionBalanceChange.after, vault.decimals) *
                   vault.asset.priceUsd,
                 { currency: "USD" }
