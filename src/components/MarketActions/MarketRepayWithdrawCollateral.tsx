@@ -3,7 +3,6 @@ import {
   ActionFlowButton,
   ActionFlowDialog,
   ActionFlowReview,
-  ActionFlowReviewItem,
   ActionFlowSummary,
   ActionFlowSummaryAssetItem,
 } from "@/components/ActionFlowDialog";
@@ -30,6 +29,7 @@ import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
 import { ArrowRight } from "lucide-react";
+import { MetricChange } from "../MetricChange";
 
 export default function MarketRepayWithdrawCollateral({
   market,
@@ -201,10 +201,10 @@ export default function MarketRepayWithdrawCollateral({
                   disabled={simulatingBundle || (repayAmount == 0 && withdrawCollateralAmount == 0)}
                 >
                   {repayAmount == 0 && withdrawCollateralAmount == 0
-                    ? "Enter an Amount"
+                    ? "Enter Amount"
                     : simulatingBundle
                       ? "Simulating..."
-                      : "Review "}
+                      : "Review"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
@@ -251,16 +251,16 @@ export default function MarketRepayWithdrawCollateral({
           </ActionFlowSummary>
           <ActionFlowReview className="flex flex-col gap-4">
             {withdrawCollateralAmount > 0 && (
-              <ActionFlowReviewItem
+              <MetricChange
                 name={`Collateral (${market.collateralAsset.symbol})`}
-                valueBefore={formatNumber(
+                initialValue={formatNumber(
                   descaleBigIntToNumber(
                     preparedAction.positionCollateralChange.before,
                     market.collateralAsset.decimals
                   ) * (market.collateralAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
-                valueAfter={formatNumber(
+                finalValue={formatNumber(
                   descaleBigIntToNumber(
                     preparedAction.positionCollateralChange.after,
                     market.collateralAsset.decimals
@@ -270,14 +270,14 @@ export default function MarketRepayWithdrawCollateral({
               />
             )}
             {repayAmount > 0 && (
-              <ActionFlowReviewItem
+              <MetricChange
                 name={`Loan (${market.loanAsset.symbol})`}
-                valueBefore={formatNumber(
+                initialValue={formatNumber(
                   descaleBigIntToNumber(preparedAction.positionLoanChange.before, market.loanAsset.decimals) *
                     (market.loanAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
-                valueAfter={formatNumber(
+                finalValue={formatNumber(
                   descaleBigIntToNumber(preparedAction.positionLoanChange.after, market.loanAsset.decimals) *
                     (market.loanAsset.priceUsd ?? 0),
                   { currency: "USD" }
@@ -303,7 +303,7 @@ export default function MarketRepayWithdrawCollateral({
           </ActionFlowReview>
           <ActionFlowButton className="bg-accent-ternary">
             {repayAmount > 0 && "Repay"}
-            {repayAmount > 0 && withdrawCollateralAmount > 0 && " and "}
+            {repayAmount > 0 && withdrawCollateralAmount > 0 && " & "}
             {withdrawCollateralAmount > 0 && "Withdraw Collateral"}
           </ActionFlowButton>
         </ActionFlowDialog>

@@ -142,7 +142,7 @@ export default function BorrowTableClient({ marketSummaries }: TableProps) {
       columns={columns}
       data={marketSummariesWithUserPositions}
       initialSortKey="liquidityAssetsUsd"
-      rowLink={(row) => `/borrow/${row.marketId}`}
+      rowAction={(row) => ({ type: "link", href: `/borrow/${row.marketId}` })}
     />
   );
 }

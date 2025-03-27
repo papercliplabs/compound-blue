@@ -27,6 +27,7 @@ interface ActionFlowSummaryAssetItemProps extends HTMLAttributes<HTMLDivElement>
   actionName: string; // Ex. Supply
   descaledAmount: number;
   amountUsd?: number;
+  protocolName?: string;
 }
 
 export function ActionFlowSummaryAssetItem({
@@ -34,21 +35,25 @@ export function ActionFlowSummaryAssetItem({
   actionName,
   descaledAmount,
   amountUsd,
+  protocolName,
   className,
   ...props
 }: ActionFlowSummaryAssetItemProps) {
   return (
-    <div className={cn("label-md flex w-full items-center justify-between gap-3", className)} {...props}>
+    <div className={cn("flex w-full items-center justify-between gap-3 label-md", className)} {...props}>
       <div className="flex items-center gap-2">
         {asset.icon && <Image src={asset.icon} width={32} height={32} alt={asset.symbol} className="rounded-full" />}
-        <span>
-          {actionName} {asset.symbol}
-        </span>
+        <div className="flex flex-col justify-between">
+          <span>
+            {actionName} {asset.symbol}
+          </span>
+          {protocolName && <span className="text-content-secondary label-sm">{protocolName}</span>}
+        </div>
       </div>
       <div className="flex flex-col items-end">
         <span>{formatNumber(descaledAmount)}</span>
         {amountUsd && (
-          <span className="label-sm text-content-secondary">{formatNumber(amountUsd, { currency: "USD" })}</span>
+          <span className="text-content-secondary label-sm">{formatNumber(amountUsd, { currency: "USD" })}</span>
         )}
       </div>
     </div>

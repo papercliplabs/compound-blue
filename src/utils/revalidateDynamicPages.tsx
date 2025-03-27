@@ -6,4 +6,5 @@ export async function revalidateDynamicPages() {
   revalidatePath("/borrow/[marketId]", "page");
   revalidatePath("/supply", "page");
   revalidatePath("/supply/[vaultAddress]", "page");
+  revalidatePath("/migrate", "page");
 }

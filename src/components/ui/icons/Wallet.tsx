@@ -1,15 +1,15 @@
 import { cn } from "@/utils/shadcn";
-import { HTMLAttributes } from "react";
+import { SVGProps } from "react";
 
-export default function Wallet({ className, ...props }: HTMLAttributes<SVGElement>) {
+export default function Wallet({ className, ...props }: SVGProps<SVGSVGElement>) {
   return (
     <svg
-      width="16"
-      height="16"
       viewBox="0 0 16 16"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={cn("fill-white", className)}
+      width={16}
+      height={16}
       {...props}
     >
       <g id="Wallet">
