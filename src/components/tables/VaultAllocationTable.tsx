@@ -3,10 +3,10 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Table } from "./Table";
 import { formatAddress } from "@/utils/format";
 import { Market } from "@/data/whisk/getMarket";
-import Image from "next/image";
 import { getAddress } from "viem";
 import TotalSupplyWithCap from "../TotalSupplyWithCap";
 import NumberFlow from "../ui/NumberFlow";
+import { VaultIdentifier } from "../VaultIdentifier";
 
 interface TableProps {
   allocations: Market["vaultAllocations"];
@@ -18,21 +18,7 @@ export const columns: ColumnDef<Market["vaultAllocations"][number]>[] = [
     header: "Vault",
     cell: ({ row }) => {
       const vault = row.original.vault;
-      return (
-        <div className="flex min-w-0 items-center gap-3">
-          <Image
-            src={vault.metadata?.image ?? vault.asset.icon ?? ""}
-            width={36}
-            height={36}
-            className="shrink-0 rounded-full border"
-            alt={vault.name}
-          />
-          <div className="flex flex-col justify-between">
-            <span className="label-lg">{vault.name}</span>
-            <span className="text-content-secondary label-sm">{vault.asset.symbol}</span>
-          </div>
-        </div>
-      );
+      return <VaultIdentifier name={vault.name} metadata={vault.metadata} asset={vault.asset} />;
     },
     minSize: 280,
   },
@@ -84,7 +70,7 @@ export default function VaultAllocationTable({ allocations }: TableProps) {
       columns={columns}
       data={allocations}
       initialSortKey="marketSupplyShare"
-      rowLink={(row) => `/${row.vault.vaultAddress}`}
+      rowAction={(row) => ({ type: "link", href: `/${row.vault.vaultAddress}` })}
     />
   );
 }

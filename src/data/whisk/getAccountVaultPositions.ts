@@ -10,6 +10,7 @@ const query = graphql(`
     morphoVaultPosition(chainId: $chainId, vaultAddress: $vaultAddress, accountAddress: $accountAddress) {
       vaultAddress
       asset {
+        address
         symbol
         icon
         decimals
@@ -46,3 +47,4 @@ export const getAccountVaultPositions = cacheAndCatch(async (accountAddress: Add
 }, "getAccountVaultPositions");
 
 export type AccountVaultPositions = NonNullable<Awaited<ReturnType<typeof getAccountVaultPositions>>>;
+export type AccountVaultPosition = AccountVaultPositions[number];

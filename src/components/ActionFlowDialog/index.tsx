@@ -89,7 +89,7 @@ function ActionFlowDialogContent({
       {...dialogContentProps}
     >
       <DialogDrawerTitle>{TITLE_MAP[flowState]}</DialogDrawerTitle>
-      <div className="absolute right-10 top-10">
+      <div className="absolute right-6 top-6 lg:right-10 lg:top-10">
         <Popover open={popoverOpen}>
           <PopoverTrigger />
           <PopoverContent className="flex max-w-[256px] flex-col gap-4 text-center" side="top">
@@ -207,7 +207,6 @@ function ActionFlowSteps() {
   const metadatas = useMemo(() => {
     return [...signatureRequests, ...transactionRequests].map((request, i) => ({
       name: request.name,
-      learnMore: request.learnMore,
       type: i < signatureRequests.length ? "signature" : "transaction",
     }));
   }, [signatureRequests, transactionRequests]);

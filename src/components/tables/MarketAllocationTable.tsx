@@ -24,7 +24,7 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
           <MarketIcon loanAssetInfo={market.loanAsset} collateralAssetInfo={market.collateralAsset ?? undefined} />
           <div className={clsx("flex items-center gap-2", !market.collateralAsset?.icon && "pl-[32px]")}>
             <span className="label-lg">{market.name}</span>
-            <div className="label-sm rounded-[4px] bg-button-neutral px-1 text-content-secondary">
+            <div className="rounded-[4px] bg-button-neutral px-1 text-content-secondary label-sm">
               {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 0 })}
             </div>
           </div>
@@ -80,7 +80,7 @@ export default function MarketAllocationTable({ allocations }: TableProps) {
       columns={columns}
       data={allocations}
       initialSortKey="vaultSupplyShare"
-      rowLink={(row) => (row.market.isIdle ? null : `/borrow/${row.market.marketId}`)} // No link for idle markets
+      rowAction={(row) => (row.market.isIdle ? null : { type: "link", href: `/borrow/${row.market.marketId}` })} // No link for idle markets
     />
   );
 }
