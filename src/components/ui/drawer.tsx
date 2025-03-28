@@ -44,7 +44,7 @@ const DrawerContent = React.forwardRef<
       aria-describedby={undefined}
       {...props}
     >
-      <div className="w-full overflow-y-auto bg-background-inverse px-6 py-10">
+      <div className="w-full overflow-y-auto bg-background-inverse px-6 py-6">
         <div className={cn("flex flex-1 flex-col gap-6", className)}>{children}</div>
       </div>
     </DrawerPrimitive.Content>
