@@ -7,9 +7,9 @@ import { CHAIN_ID } from "@/config";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { estimateGas, sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
-import { useAccountIsOfacSanctioned } from "@/hooks/useAccountIsOfacSanctioned";
 import { revalidateDynamicPages } from "@/utils/revalidateDynamicPages";
 import { trackEvent } from "@/data/trackEvent";
+import { safeFetch } from "@/utils/fetch";
 
 export type ActionFlowState = "review" | "active" | "success" | "failed";
 export type ActionState = "pending-wallet" | "pending-transaction";
@@ -79,7 +79,6 @@ export function ActionFlowProvider({
   const { openChainModal } = useChainModal();
   const publicClient = usePublicClient();
   const { switchChainAsync } = useSwitchChain();
-  const { data: isOfacSanctioned = true } = useAccountIsOfacSanctioned(); // Default to true while fetching...
 
   const startFlow = useCallback(async () => {
     // Must be connected
@@ -104,12 +103,6 @@ export function ActionFlowProvider({
     }
 
     if (flowState == "review") {
-      // Don't allow any actions if the account is OFAC sanctioned
-      if (isOfacSanctioned) {
-        setError("This action is not available to OFAC sanctioned accounts.");
-        return;
-      }
-
       // For tracking purposes to determine if we are seeing issues with a specific connector
       const connectorName = connector?.name ?? "unknown";
 
@@ -119,6 +112,13 @@ export function ActionFlowProvider({
       setActionState("pending-wallet");
       setLastTransactionHash(null);
       setError(null);
+
+      const isOfacSanctioned = await safeFetch<boolean>(`/api/account/${client.account.address}/is-ofac-sanctioned`);
+      if (isOfacSanctioned) {
+        setError("This action is not available to OFAC sanctioned accounts.");
+        setFlowState("review");
+        return;
+      }
 
       try {
         for (const step of signatureRequests) {
@@ -208,7 +208,6 @@ export function ActionFlowProvider({
     openConnectModal,
     flowCompletionCb,
     switchChainAsync,
-    isOfacSanctioned,
     connector,
     triggerFastPolling,
   ]);

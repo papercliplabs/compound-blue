@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Image from "next/image";
 import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
 import MigratePageContent from "@/components/MigratePageContent";
-
+import { Info } from "lucide-react";
 export const metadata: Metadata = {
   title: "Compound Blue | Migrate",
 };
@@ -20,7 +20,17 @@ export default function MigratePage() {
         </div>
       </section>
 
-      <MigrateContentWrapper />
+      <div className="flex flex-col gap-5">
+        <div className="flex items-start gap-[10px] rounded-[7px] bg-accent-primary/20 p-4 text-accent-primary">
+          <Info size={16} className="mt-[2px] shrink-0 stroke-accent-primary" />
+          <p>
+            You can migrate USDC, USDT, and ETH from Aave v3 that aren&apos;t being used as collateral. Don&apos;t see
+            your assets? They may be used as collateral.
+          </p>
+        </div>
+
+        <MigrateContentWrapper />
+      </div>
     </>
   );
 }
