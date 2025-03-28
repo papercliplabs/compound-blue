@@ -15,6 +15,8 @@ import {
 import { Skeleton } from "./ui/skeleton";
 import EarnEducationalSummary from "./EducationalSummary/EarnEducationalSummary";
 import BorrowEducationalSummary from "./EducationalSummary/BorrowEducationalSummary";
+import Link from "next/link";
+import NumberFlow from "./ui/NumberFlow";
 
 interface MigrateContentProps {
   vaultSummaries: VaultSummary[];
@@ -39,12 +41,23 @@ export default function MigratePageContent({ vaultSummaries }: MigrateContentPro
   }
 
   return (
-    <Card>
-      <CardHeader>Earn</CardHeader>
-      <CardContent className="p-0">
-        <VaultMigrationTableWrapper vaultSummaries={vaultSummaries} />
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>Earn</CardHeader>
+        <CardContent className="p-0">
+          <VaultMigrationTableWrapper vaultSummaries={vaultSummaries} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>Borrow</CardHeader>
+        <CardContent className="p-0">
+          <p className="flex w-full items-center justify-center px-8 py-12 text-center text-content-secondary title-5">
+            Borrow migration is coming soon!
+          </p>
+        </CardContent>
+      </Card>
+    </>
   );
 }
 
@@ -54,17 +67,31 @@ function VaultMigrationTableWrapper({ vaultSummaries }: MigrateContentProps) {
 
   const { data: migratableVaultPositions, isLoading } = useMigratableAaveV3SupplyPositions();
 
+  const maxEarnApy = vaultSummaries.reduce((max, vault) => {
+    return Math.max(max, vault.supplyApy.total);
+  }, 0);
+
   if (isLoading) {
     return <Skeleton className="m-8 h-[336px]" />;
   }
 
   if (migratableVaultPositions?.length == 0) {
     return (
-      <div className="flex flex-col items-center p-8 text-center">
-        <p className="text-content-secondary label-lg">You don&apos;t have any migratable positions.</p>
-        <div className="flex w-full flex-col justify-center gap-6 pt-9 md:flex-row">
-          <EarnEducationalSummary showLink={true} />
-          <BorrowEducationalSummary showLink={true} />
+      <div className="flex flex-col items-center gap-6 p-8 text-center">
+        <div className="flex flex-col gap-4">
+          <p className="text-content-secondary title-5">You don&apos;t have any migratable positions.</p>
+          <p className="text-content-ternary paragraph-lg">
+            You can explore the vaults on Compound Blue and{" "}
+            <span className="text-accent-secondary">
+              earn up to <NumberFlow value={maxEarnApy} format={{ style: "percent" }} />
+            </span>{" "}
+            APY.
+          </p>
+        </div>
+        <div className="flex w-full flex-col justify-center gap-6 md:flex-row">
+          <Link href="/">
+            <Button>Go to Earn</Button>
+          </Link>
         </div>
       </div>
     );
