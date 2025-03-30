@@ -6,7 +6,7 @@ import PoweredByMorpho from "./ui/icons/PoweredByMorpho";
 export default function Footer() {
   return (
     <footer className="flex w-full items-center justify-center justify-self-end text-content-secondary label-sm">
-      <div className="mx-6 flex h-full w-full max-w-screen-xl flex-col gap-5 border-t pb-20 pt-6 md:pb-4 md:pt-4">
+      <div className="mx-6 flex h-full w-full max-w-screen-xl flex-col gap-5 border-t pb-20 pt-6 lg:pb-4 lg:pt-4">
         <div className="flex w-full justify-between">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-6">
             <LinkExternal href="https://morpho.org/" keepReferrer hideArrow>
