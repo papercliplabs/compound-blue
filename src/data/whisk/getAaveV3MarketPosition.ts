@@ -26,10 +26,16 @@ const query = graphql(`
           supplyApy {
             total
           }
+          borrowApy {
+            total
+          }
+          lltv
         }
         isUsageAsCollateralEnabled
         aTokenAssets
         aTokenAssetsUsd
+        borrowAssets
+        borrowAssetsUsd
       }
     }
   }

@@ -70,6 +70,7 @@ export default function MarketSupplyCollateralBorrow({
               .max(descaledCollateralTokenBalance ?? Number.MAX_VALUE, { message: "Amount exceeds wallet balance." })
               .optional()
           ),
+        isMaxSupply: z.boolean(),
         borrowAmount: z.string().optional().pipe(z.coerce.number().nonnegative().optional()),
       })
       .refine(
@@ -90,6 +91,9 @@ export default function MarketSupplyCollateralBorrow({
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      isMaxSupply: false,
+    },
   });
 
   // Clear the form on flow completion
@@ -122,13 +126,13 @@ export default function MarketSupplyCollateralBorrow({
         throw new Error("Missing pulic client");
       }
 
-      const { supplyCollateralAmount = 0, borrowAmount = 0 } = values;
+      const { supplyCollateralAmount = 0, borrowAmount = 0, isMaxSupply } = values;
 
       setSimulatingBundle(true);
 
       // uint256 max for entire collateral balance
       const supplyCollateralAmountBigInt =
-        supplyCollateralAmount > 0 && supplyCollateralAmount == descaledCollateralTokenBalance
+        supplyCollateralAmount > 0 && isMaxSupply
           ? maxUint256
           : parseUnits(numberToString(supplyCollateralAmount), market.collateralAsset.decimals);
 
@@ -159,7 +163,7 @@ export default function MarketSupplyCollateralBorrow({
 
       setSimulatingBundle(false);
     },
-    [publicClient, address, market, openConnectModal, descaledCollateralTokenBalance]
+    [publicClient, address, market, openConnectModal]
   );
 
   return (
@@ -174,6 +178,9 @@ export default function MarketSupplyCollateralBorrow({
                 actionName="Add"
                 asset={market.collateralAsset}
                 descaledAvailableBalance={descaledCollateralTokenBalance}
+                setIsMax={(isMax) => {
+                  form.setValue("isMaxSupply", isMax);
+                }}
               />
               <div className="h-[1px] w-full bg-border-primary" />
               <div className="[&_label]:text-accent-ternary">

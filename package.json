@@ -7,13 +7,14 @@
     "build": "bun codegen && next build",
     "start": "next start",
     "lint": "next lint",
-    "codegen": "graphql-codegen --config codegen.ts"
+    "codegen": "graphql-codegen --config codegen.ts",
+    "test": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.2",
     "@morpho-org/blue-sdk": "^3.0.0-next.4",
     "@morpho-org/blue-sdk-viem": "^3.0.0-next.1",
-    "@morpho-org/bundler-sdk-viem": "3.0.0-next.3",
+    "@morpho-org/bundler-sdk-viem": "3.0.0-next.7",
     "@morpho-org/morpho-ts": "^2.0.2-next.0",
     "@morpho-org/simulation-sdk": "^3.0.0-next.3",
     "@number-flow/react": "^0.5.5",
@@ -56,14 +57,21 @@
     "@eslint/eslintrc": "^3",
     "@graphql-codegen/cli": "^5.0.5",
     "@graphql-codegen/schema-ast": "^4.1.0",
+    "@morpho-org/morpho-test": "^2.2.1",
+    "@morpho-org/test": "2.0.7-next.0",
     "@parcel/watcher": "^2.5.1",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-scroll-sync": "^0.9.0",
+    "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
+    "jsdom": "^26.0.0",
     "pino-pretty": "^13.0.0",
     "postcss": "^8",
     "prettier": "^3.5.1",
@@ -71,7 +79,9 @@
     "tailwind-scrollbar": "^4.0.1",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
-    "typescript-graphql-request": "^4.4.6"
+    "typescript-graphql-request": "^4.4.6",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "2"
   },
   "overrides": {
     "react-is": "^19.0.0-rc-69d4b800-20241021"

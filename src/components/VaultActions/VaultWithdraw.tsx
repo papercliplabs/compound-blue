@@ -53,12 +53,16 @@ export default function VaultWithdraw({
             .positive({ message: "Amount must be greater than zero." })
             .max(decaledPositionBalance ?? Number.MAX_VALUE, { message: "Amount exceeds position balance." })
         ),
+      isMaxWithdraw: z.boolean(),
     });
   }, [decaledPositionBalance]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      isMaxWithdraw: false,
+    },
   });
 
   const onSubmit = useCallback(
@@ -76,11 +80,10 @@ export default function VaultWithdraw({
       setSimulatingBundle(true);
 
       // Uint256 max if the user wants to withdraw their entire balance
-      const { withdrawAmount } = values;
-      const withdrawAmountBigInt =
-        withdrawAmount === decaledPositionBalance
-          ? maxUint256
-          : parseUnits(numberToString(withdrawAmount), vault.asset.decimals);
+      const { withdrawAmount, isMaxWithdraw } = values;
+      const withdrawAmountBigInt = isMaxWithdraw
+        ? maxUint256
+        : parseUnits(numberToString(withdrawAmount), vault.asset.decimals);
 
       const preparedAction = await prepareVaultWithdrawBundle({
         publicClient,
@@ -97,7 +100,7 @@ export default function VaultWithdraw({
 
       setSimulatingBundle(false);
     },
-    [publicClient, address, vault.vaultAddress, vault.asset.decimals, openConnectModal, decaledPositionBalance]
+    [publicClient, address, vault.vaultAddress, vault.asset.decimals, openConnectModal]
   );
 
   // Clear the form on flow completion
@@ -120,6 +123,9 @@ export default function VaultWithdraw({
                 actionName="Withdraw"
                 asset={vault.asset}
                 descaledAvailableBalance={decaledPositionBalance}
+                setIsMax={(isMax) => {
+                  form.setValue("isMaxWithdraw", isMax);
+                }}
               />
 
               <div className="flex min-w-0 flex-col gap-2">

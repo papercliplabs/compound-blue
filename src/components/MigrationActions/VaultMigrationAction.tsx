@@ -7,12 +7,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { descaleBigIntToNumber, numberToString } from "@/utils/format";
 import { zodResolver } from "@hookform/resolvers/zod";
-import AssetFormField from "../AssetFormField";
+import AssetFormField, { AssetFormFieldViewOnly } from "../AssetFormField";
 import { useAccount } from "wagmi";
 import { usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { getAddress, maxUint256, parseUnits } from "viem";
-import { prepareVaultMigrationBundle } from "@/actions/prepareAaveV3VaultMigrationAction";
+import { prepareAaveV3VaultMigrationAction } from "@/actions/prepareAaveV3VaultMigrationAction";
 import { PrepareActionReturnType } from "@/actions/helpers";
 import { ActionFlowButton, ActionFlowReview, ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog";
 import { ActionFlowDialog } from "../ActionFlowDialog";
@@ -59,7 +59,9 @@ export default function VaultMigrationAction({
         .string()
         .nonempty("Amount is required")
         .refine((val) => Number(val) <= descaledATokenBalance, "Amount exceeds wallet balance.")
+        .refine((val) => Number(val) > 0, "Amount must be greater than 0.")
         .transform((val) => Number(val)),
+      isMaxMigrate: z.boolean(),
     });
   }, [descaledATokenBalance]);
 
@@ -68,6 +70,7 @@ export default function VaultMigrationAction({
     resolver: zodResolver(formSchema),
     defaultValues: {
       migrateAmount: descaledATokenBalance,
+      isMaxMigrate: true,
     },
   });
 
@@ -86,18 +89,17 @@ export default function VaultMigrationAction({
       setSimulatingBundle(true);
 
       // Uint256 max if the user wants to supply their entire balance
-      const { migrateAmount } = values;
-      const migrateAmountBigInt =
-        migrateAmount === descaledATokenBalance
-          ? maxUint256
-          : parseUnits(numberToString(migrateAmount), aaveV3ReservePosition.reserve.aToken.decimals);
+      const { migrateAmount, isMaxMigrate } = values;
 
-      const preparedAction = await prepareVaultMigrationBundle({
+      const migrateAmountBigInt = isMaxMigrate
+        ? maxUint256
+        : parseUnits(numberToString(migrateAmount), aaveV3ReservePosition.reserve.aToken.decimals);
+
+      const preparedAction = await prepareAaveV3VaultMigrationAction({
         publicClient,
         accountAddress: address,
         vaultAddress: getAddress(destinationVaultPosition.vaultAddress),
-        aTokenAddress: getAddress(aaveV3ReservePosition.reserve.aToken.address),
-        aTokenAmount: migrateAmountBigInt,
+        amount: migrateAmountBigInt,
       });
 
       setPreparedAction(preparedAction);
@@ -109,21 +111,14 @@ export default function VaultMigrationAction({
 
       setSimulatingBundle(false);
     },
-    [
-      address,
-      openConnectModal,
-      publicClient,
-      destinationVaultPosition,
-      aaveV3ReservePosition,
-      descaledATokenBalance,
-      onOpenChange,
-    ]
+    [address, openConnectModal, publicClient, destinationVaultPosition, aaveV3ReservePosition, onOpenChange]
   );
 
   // Reset form on new vaultReservePositionPairing
   useEffect(() => {
     form.reset({
       migrateAmount: descaledATokenBalance,
+      isMaxMigrate: true,
     });
   }, [destinationVaultPosition, aaveV3ReservePosition, descaledATokenBalance, form]);
 
@@ -193,6 +188,9 @@ export default function VaultMigrationAction({
                           actionName="Remove"
                           asset={aaveV3ReservePosition.reserve.underlyingAsset}
                           descaledAvailableBalance={descaledATokenBalance}
+                          setIsMax={(isMax) => {
+                            form.setValue("isMaxMigrate", isMax);
+                          }}
                         />
                       </div>
                     </div>
@@ -201,22 +199,13 @@ export default function VaultMigrationAction({
 
                     <div className="flex w-full flex-1 flex-col gap-4">
                       <VaultIdentifier name={vault.name} metadata={vault.metadata} asset={vault.asset} />
-                      <div className="flex flex-col gap-2 rounded-[12px] bg-background-secondary p-6">
-                        <span className="text-accent-secondary label-sm">
-                          Supply {aaveV3ReservePosition.reserve.underlyingAsset.symbol}
-                        </span>
-                        <div className="flex flex-col">
-                          <NumberFlow
-                            value={migrateAmount}
-                            className="!font-medium title-2"
-                            format={{ maximumFractionDigits: 6 }}
-                          />
-                          <NumberFlow
-                            value={migrateAmountUsd}
-                            format={{ currency: "USD" }}
-                            className="text-content-secondary label-sm"
-                          />
-                        </div>
+                      <div className="rounded-[12px] bg-background-secondary p-6">
+                        <AssetFormFieldViewOnly
+                          actionName="Supply"
+                          asset={aaveV3ReservePosition.reserve.underlyingAsset}
+                          amount={migrateAmount}
+                          amountUsd={migrateAmountUsd}
+                        />
                       </div>
                     </div>
                   </div>

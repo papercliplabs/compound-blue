@@ -7,6 +7,7 @@ const query = graphql(`
   query getMarketSummary($chainId: Number!, $marketId: String!) {
     morphoMarket(chainId: $chainId, marketId: $marketId) {
       marketId
+      name
       isIdle
       collateralAsset {
         symbol
@@ -28,11 +29,18 @@ const query = graphql(`
           apr
         }
       }
+      supplyAssets
       supplyAssetsUsd
       liquidityAssetsUsd
       publicAllocatorSharedLiquidityAssetsUsd
+      borrowAssets
       borrowAssetsUsd
       utilization
+      vaultAllocations {
+        vault {
+          vaultAddress
+        }
+      }
     }
   }
 `);

@@ -115,15 +115,19 @@ export async function prepareMarketSupplyCollateralBorrowAction({
     const positionLoanAfter = marketAfter?.toBorrowAssets(positionAfter?.borrowShares ?? BigInt(0)) ?? BigInt(0);
 
     const ltvBefore =
-      marketBefore?.getLtv({
-        collateral: positionCollateralBefore,
-        borrowShares: positionBefore?.borrowShares ?? BigInt(0),
-      }) ?? BigInt(0);
+      positionBefore?.borrowShares == BigInt(0)
+        ? BigInt(0)
+        : (marketBefore?.getLtv({
+            collateral: positionCollateralBefore,
+            borrowShares: positionBefore?.borrowShares ?? BigInt(0),
+          }) ?? BigInt(0));
     const ltvAfter =
-      marketAfter?.getLtv({
-        collateral: positionCollateralAfter,
-        borrowShares: positionAfter?.borrowShares ?? BigInt(0),
-      }) ?? BigInt(0);
+      positionAfter?.borrowShares == BigInt(0)
+        ? BigInt(0)
+        : (marketAfter?.getLtv({
+            collateral: positionCollateralAfter,
+            borrowShares: positionAfter?.borrowShares ?? BigInt(0),
+          }) ?? BigInt(0));
 
     return {
       ...preparedAction,

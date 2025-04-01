@@ -2,11 +2,9 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Vault } from "@/data/whisk/getVault";
 import { Table } from "./Table";
-import { formatNumber } from "@/utils/format";
-import clsx from "clsx";
-import MarketIcon from "../MarketIcon";
 import TotalSupplyWithCap from "../TotalSupplyWithCap";
 import NumberFlow from "../ui/NumberFlow";
+import { MarketIdentifier } from "../MarketIdentifier";
 
 interface TableProps {
   allocations: Vault["marketAllocations"];
@@ -18,18 +16,7 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
     header: "Market",
     cell: ({ row }) => {
       const market = row.original.market;
-
-      return (
-        <div className="flex items-center gap-3">
-          <MarketIcon loanAssetInfo={market.loanAsset} collateralAssetInfo={market.collateralAsset ?? undefined} />
-          <div className={clsx("flex items-center gap-2", !market.collateralAsset?.icon && "pl-[32px]")}>
-            <span className="label-lg">{market.name}</span>
-            <div className="rounded-[4px] bg-button-neutral px-1 text-content-secondary label-sm">
-              {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 0 })}
-            </div>
-          </div>
-        </div>
-      );
+      return <MarketIdentifier {...market} />;
     },
     minSize: 280,
   },

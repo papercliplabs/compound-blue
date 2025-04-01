@@ -23,6 +23,9 @@ export default {
           secondary: "rgb(var(--background-secondary))",
           inverse: "rgb(var(--background-inverse))",
           accent: "rgb(var(--background-accent))",
+          warning: "rgb(var(--background-warning))",
+          negative: "rgb(var(--background-negative))",
+          positive: "rgb(var(--background-positive))",
         },
         border: {
           primary: "rgb(var(--border-primary))",

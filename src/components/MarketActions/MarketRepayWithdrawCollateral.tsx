@@ -79,6 +79,7 @@ export default function MarketRepayWithdrawCollateral({
               .max(descaledLoanAssetBalance ?? Number.MAX_VALUE, { message: "Amount exceeds wallet balance." })
               .optional()
           ),
+        isMaxRepay: z.boolean(),
         withdrawCollateralAmount: z.string().optional().pipe(z.coerce.number().nonnegative().optional()),
       })
       .refine(
@@ -99,6 +100,9 @@ export default function MarketRepayWithdrawCollateral({
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onTouched",
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      isMaxRepay: false,
+    },
   });
 
   // Clear the form on flow completion
@@ -137,17 +141,17 @@ export default function MarketRepayWithdrawCollateral({
         throw new Error("Missing pulic client");
       }
 
-      const { repayAmount = 0, withdrawCollateralAmount = 0 } = values;
+      const { repayAmount = 0, withdrawCollateralAmount = 0, isMaxRepay } = values;
       setSimulatingBundle(true);
 
       // Max is closing full position
       const repayAmountBigInt =
-        repayAmount > 0 && repayAmount == descaledLoanAmount
+        repayAmount > 0 && isMaxRepay
           ? maxUint256
           : parseUnits(numberToString(repayAmount), market.loanAsset.decimals ?? 18);
 
       const withdrawCollateralAmountBigInt =
-        withdrawCollateralAmount > 0 && withdrawCollateralAmount == descaledPositionCollateralAmount
+        withdrawCollateralAmount > 0 && withdrawCollateralAmount == descaledPositionCollateralAmount // Collateral doesn't earn interest, so this is safe to do
           ? maxUint256
           : parseUnits(numberToString(withdrawCollateralAmount), market.collateralAsset.decimals);
 
@@ -167,7 +171,7 @@ export default function MarketRepayWithdrawCollateral({
 
       setSimulatingBundle(false);
     },
-    [publicClient, address, market, openConnectModal, descaledPositionCollateralAmount, descaledLoanAmount]
+    [publicClient, address, market, openConnectModal, descaledPositionCollateralAmount]
   );
 
   return (
@@ -183,6 +187,9 @@ export default function MarketRepayWithdrawCollateral({
                   actionName="Repay"
                   asset={market.loanAsset}
                   descaledAvailableBalance={availableRepayAmount}
+                  setIsMax={(isMax) => {
+                    form.setValue("isMaxRepay", isMax);
+                  }}
                 />
               </div>
               <div className="h-[1px] w-full bg-border-primary" />
