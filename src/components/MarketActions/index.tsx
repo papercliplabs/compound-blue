@@ -11,6 +11,7 @@ import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
+import MarketMigrationCallout from "../MarketMigrationCallout";
 
 export interface MarketActionsProps {
   market: MarketNonIdle;
@@ -71,12 +72,15 @@ function MarketActionsDesktop({ market, canRepayAndWithdraw }: MarketActionsProp
         </div>
       )}
 
-      <Card>
-        <CardContent>
-          {selection == "supply-borrow" && <MarketSupplyCollateralBorrow market={market} />}
-          {selection == "repay-withdraw" && <MarketRepayWithdrawCollateral market={market} />}
-        </CardContent>
-      </Card>
+      <div className="rounded-[12px] bg-[#3B2870]">
+        <MarketMigrationCallout market={market} />
+        <Card>
+          <CardContent>
+            {selection == "supply-borrow" && <MarketSupplyCollateralBorrow market={market} />}
+            {selection == "repay-withdraw" && <MarketRepayWithdrawCollateral market={market} />}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -93,6 +97,9 @@ function MarketActionsMobile({ market, canRepayAndWithdraw }: MarketActionsProps
             <Button className="w-full bg-accent-ternary">Borrow</Button>
           </DrawerTrigger>
           <DrawerContent>
+            <div className="flex rounded-[12px] bg-[#3B2870]">
+              <MarketMigrationCallout market={market} />
+            </div>
             <VisuallyHidden>
               <DrawerTitle>Add collateral and borrow from market</DrawerTitle>
             </VisuallyHidden>

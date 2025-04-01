@@ -49,7 +49,7 @@ export async function prepareMarketRepayWithdrawCollateralAction({
   const isMaxRepay = repayAmount == maxUint256;
   const isMaxWithdrawCollateral = withdrawCollateralAmount == maxUint256;
 
-  const userPosition = simulationState.positions?.[accountAddress]?.[marketId];
+  const userPosition = simulationState.getPosition(accountAddress, marketId);
   if ((isMaxRepay || isMaxWithdrawCollateral) && !userPosition) {
     return {
       status: "error",
@@ -76,7 +76,7 @@ export async function prepareMarketRepayWithdrawCollateralAction({
                 id: marketId,
                 onBehalf: accountAddress,
                 // Use shares if a max repay to ensure fully closed position
-                ...(isMaxRepay ? { shares: userPosition!.borrowShares } : { assets: repayAmount }),
+                ...(isMaxRepay ? { shares: userPosition.borrowShares } : { assets: repayAmount }),
                 slippage: DEFAULT_SLIPPAGE_TOLERANCE,
               },
             } as InputBundlerOperation,
@@ -117,15 +117,19 @@ export async function prepareMarketRepayWithdrawCollateralAction({
     const positionLoanAfter = marketAfter?.toBorrowAssets(positionAfter?.borrowShares ?? BigInt(0)) ?? BigInt(0);
 
     const ltvBefore =
-      marketBefore?.getLtv({
-        collateral: positionCollateralBefore,
-        borrowShares: positionBefore?.borrowShares ?? BigInt(0),
-      }) ?? BigInt(0);
+      positionBefore?.borrowShares == BigInt(0)
+        ? BigInt(0)
+        : (marketBefore?.getLtv({
+            collateral: positionCollateralBefore,
+            borrowShares: positionBefore?.borrowShares ?? BigInt(0),
+          }) ?? BigInt(0));
     const ltvAfter =
-      marketAfter?.getLtv({
-        collateral: positionCollateralAfter,
-        borrowShares: positionAfter?.borrowShares ?? BigInt(0),
-      }) ?? BigInt(0);
+      positionAfter?.borrowShares == BigInt(0)
+        ? BigInt(0)
+        : (marketAfter?.getLtv({
+            collateral: positionCollateralAfter,
+            borrowShares: positionAfter?.borrowShares ?? BigInt(0),
+          }) ?? BigInt(0));
 
     return {
       ...preparedAction,

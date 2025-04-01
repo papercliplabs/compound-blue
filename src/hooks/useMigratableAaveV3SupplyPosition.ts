@@ -1,28 +1,12 @@
 "use client";
-import { AaveV3MarketPosition, AaveV3ReservePosition } from "@/data/whisk/getAaveV3MarketPosition";
+import { AaveV3ReservePosition } from "@/data/whisk/getAaveV3MarketPosition";
 import { AccountVaultPosition } from "@/data/whisk/getAccountVaultPositions";
-import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
-import { safeFetch } from "@/utils/fetch";
-import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { useAccountVaultPositions } from "./useAccountVaultPosition";
 import { useEffect, useMemo, useState } from "react";
 import { isAddressEqual, getAddress, Address } from "viem";
 import { trackEvent } from "@/data/trackEvent";
-
-function useAaveV3MarketPosition() {
-  const { pollingInterval, revalidateSignal } = useAccountDataPollingContext();
-  const { address } = useAccount();
-  const query = useQuery({
-    queryKey: ["user-aave-v3-market-position", address, revalidateSignal],
-    queryFn: async () => safeFetch<AaveV3MarketPosition>(`/api/account/${address}/aave-v3-market-position`),
-    enabled: !!address,
-    refetchInterval: pollingInterval,
-    placeholderData: (prev) => prev,
-  });
-
-  return query;
-}
+import { useAaveV3MarketPosition } from "./useAaveV3MarketPosition";
 
 export interface MigratableAaveV3SupplyPosition {
   aaveV3ReservePosition: AaveV3ReservePosition;

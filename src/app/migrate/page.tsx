@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Image from "next/image";
 import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
 import MigratePageContent from "@/components/MigratePageContent";
-import { Info } from "lucide-react";
+import { getMarketSummaries } from "@/data/whisk/getMarketSummaries";
 export const metadata: Metadata = {
   title: "Compound Blue | Migrate",
 };
@@ -21,14 +21,6 @@ export default function MigratePage() {
       </section>
 
       <div className="flex flex-col gap-5">
-        <div className="flex items-start gap-[10px] rounded-[7px] bg-accent-primary/20 p-4 text-accent-primary">
-          <Info size={16} className="mt-[2px] shrink-0 stroke-accent-primary" />
-          <p>
-            You can migrate USDC, USDT, and ETH from Aave v3 that aren&apos;t being used as collateral. Don&apos;t see
-            your assets? They may be used as collateral.
-          </p>
-        </div>
-
         <MigrateContentWrapper />
       </div>
     </>
@@ -36,14 +28,14 @@ export default function MigratePage() {
 }
 
 async function MigrateContentWrapper() {
-  const vaultSummaries = await getVaultSummaries();
+  const [vaultSummaries, marketSummaries] = await Promise.all([getVaultSummaries(), getMarketSummaries()]);
 
-  if (!vaultSummaries) {
+  if (!vaultSummaries || !marketSummaries) {
     // Should never get here, if we do it means the getVaultSummaries call failed, and we will see it in logs
-    console.error("MigrateContentWrapper: No vault summaries found");
+    console.error("MigrateContentWrapper: No summaries found");
     return null;
   }
-  return <MigratePageContent vaultSummaries={vaultSummaries} />;
+  return <MigratePageContent vaultSummaries={vaultSummaries} marketSummaries={marketSummaries} />;
 }
 
 export const dynamic = "force-static";

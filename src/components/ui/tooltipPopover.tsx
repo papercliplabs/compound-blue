@@ -2,7 +2,7 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { useResponsiveContext } from "@/providers/ResponsiveProvider";
-import { HTMLAttributes } from "react";
+import { ButtonHTMLAttributes, HTMLAttributes } from "react";
 
 export function TooltipPopover({ children }: { children: React.ReactNode }) {
   const { isDesktop } = useResponsiveContext();
@@ -16,9 +16,9 @@ export function TooltipPopover({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function TooltipPopoverTrigger(props: HTMLAttributes<HTMLButtonElement>) {
+export function TooltipPopoverTrigger(props: ButtonHTMLAttributes<HTMLButtonElement>) {
   const { isDesktop } = useResponsiveContext();
-  return isDesktop ? <TooltipTrigger {...props} /> : <PopoverTrigger {...props} />;
+  return isDesktop ? <TooltipTrigger type="button" {...props} /> : <PopoverTrigger type="button" {...props} />;
 }
 
 export function TooltipPopoverContent(props: HTMLAttributes<HTMLDivElement>) {

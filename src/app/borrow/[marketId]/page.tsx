@@ -4,7 +4,6 @@ import { getAddress, Hex, isHex } from "viem";
 import { ArrowLeft } from "lucide-react";
 import { ReactNode, Suspense } from "react";
 import { Skeleton, Skeletons } from "@/components/ui/skeleton";
-import MarketIcon from "@/components/MarketIcon";
 import { formatNumber } from "@/utils/format";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Apy from "@/components/Apy";
@@ -21,6 +20,7 @@ import BackButton from "@/components/BackButton";
 import { AccountMarketPosition, AccountMarketPositionHighlight } from "@/components/AccountMarketPosition";
 import MarketAvailableLiquidity from "@/components/MarketAvailableLiquidity";
 import NumberFlow from "@/components/ui/NumberFlow";
+import { MarketIcon } from "@/components/MarketIdentifier";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Market",
