@@ -66,3 +66,7 @@ export function numberToString(value: number) {
     minimumFractionDigits: 0,
   }).format(value);
 }
+
+export function capitalizeFirstLetter(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}

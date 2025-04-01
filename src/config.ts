@@ -75,3 +75,5 @@ export const KNOWN_ADDRESSES: Record<Address, { name: string; iconSrc?: string }
     iconSrc: "/identity/compound.png",
   },
 };
+
+export const AAVE_V3_POOL_ADDRESS = getAddress("0x794a61358D6845594F94dc1DB02A252b5b4814aD");

@@ -10,7 +10,11 @@ const query = graphql(`
     aaveV3MarketPosition(marketIdentifier: $marketIdentifier, accountAddress: $accountAddress) {
       healthFactor
       totalBorrowBalanceUsd
+      totalCollateralBalanceUsd
+      lltv
+      ltv
       reservePositions {
+        lltvEffective
         reserve {
           underlyingAsset {
             icon
@@ -26,10 +30,16 @@ const query = graphql(`
           supplyApy {
             total
           }
+          borrowApy {
+            total
+          }
+          lltv
         }
         isUsageAsCollateralEnabled
         aTokenAssets
         aTokenAssetsUsd
+        borrowAssets
+        borrowAssetsUsd
       }
     }
   }

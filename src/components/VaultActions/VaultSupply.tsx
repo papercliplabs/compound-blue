@@ -50,12 +50,16 @@ export default function VaultSupply({
             .positive("Amount must be greater than zero.")
             .max(decaledWalletBalance ?? Number.MAX_VALUE, { message: "Amount exceeds wallet balance." })
         ),
+      isMaxSupply: z.boolean(),
     });
   }, [decaledWalletBalance]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      isMaxSupply: false,
+    },
   });
 
   const onSubmit = useCallback(
@@ -73,11 +77,10 @@ export default function VaultSupply({
       setSimulatingBundle(true);
 
       // Uint256 max if the user wants to supply their entire balance
-      const { supplyAmount } = values;
-      const supplyAmountBigInt =
-        supplyAmount === decaledWalletBalance
-          ? maxUint256
-          : parseUnits(numberToString(supplyAmount), vault.asset.decimals);
+      const { supplyAmount, isMaxSupply } = values;
+      const supplyAmountBigInt = isMaxSupply
+        ? maxUint256
+        : parseUnits(numberToString(supplyAmount), vault.asset.decimals);
 
       const preparedAction = await prepareVaultSupplyBundle({
         publicClient,
@@ -94,7 +97,7 @@ export default function VaultSupply({
 
       setSimulatingBundle(false);
     },
-    [publicClient, address, vault.vaultAddress, vault.asset.decimals, openConnectModal, decaledWalletBalance]
+    [publicClient, address, vault.vaultAddress, vault.asset.decimals, openConnectModal]
   );
 
   // Clear the form on flow completion
@@ -125,6 +128,9 @@ export default function VaultSupply({
                 actionName="Supply"
                 asset={vault.asset}
                 descaledAvailableBalance={decaledWalletBalance}
+                setIsMax={(isMax) => {
+                  form.setValue("isMaxSupply", isMax);
+                }}
               />
 
               <div className="flex min-w-0 flex-col gap-2">

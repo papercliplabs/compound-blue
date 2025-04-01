@@ -35,7 +35,7 @@ export interface SimulatedValueChange<T> {
   after: T;
 }
 
-function getSignatureRequirementDescription(
+export function getSignatureRequirementDescription(
   requirement: Omit<SignatureRequirement, "sign">,
   simulationState: SimulationState
 ): string {
@@ -58,7 +58,7 @@ function getSignatureRequirementDescription(
   }
 }
 
-function getTransactionRequirementDescription(
+export function getTransactionRequirementDescription(
   requirement: Omit<TransactionRequirement, "tx">,
   simulationState: SimulationState
 ): string {
@@ -90,14 +90,14 @@ export function prepareBundle(
     const bundle = encodeBundle(operations, simulationState, !isSmartAccount); // Don't support sigantures for smart accounts
 
     const signatureRequests = bundle.requirements.signatures.map((sig) => ({
-      sign: sig.sign,
+      sign: sig.sign.bind(bundle),
       name: getSignatureRequirementDescription(sig, simulationState),
     }));
     const transactionRequests = bundle.requirements.txs
       .map((tx) => ({ tx: () => tx.tx, name: getTransactionRequirementDescription(tx, simulationState) }))
       .concat([
         {
-          tx: bundle.tx,
+          tx: bundle.tx.bind(bundle),
           name: executeBundleName,
         },
       ]);

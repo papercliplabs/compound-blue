@@ -18,6 +18,7 @@ interface AssetFormFieldProps<TFieldValues extends Record<string, any>>
     icon?: string | null;
     priceUsd?: number | null;
   };
+  setIsMax?: (isMax: boolean) => void;
   descaledAvailableBalance?: number;
 }
 
@@ -26,6 +27,7 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
   actionName,
   asset,
   descaledAvailableBalance,
+  setIsMax,
   ...props
 }: AssetFormFieldProps<TFieldValues>) {
   const { address } = useAccount();
@@ -35,7 +37,7 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
     <FormField
       {...props}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="flex flex-col gap-4 space-y-0">
           <div className="flex items-center gap-2">
             <FormLabel className="text-accent-secondary">
               {actionName} {asset.symbol}
@@ -54,6 +56,7 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
                     const value = e.target.value;
                     if (/^0*(\d+)?(\.\d*)?$/.test(value)) {
                       field.onChange(value);
+                      setIsMax?.(false);
                     }
                   }}
                   value={field.value ?? ""}
@@ -71,6 +74,7 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
                       openConnectModal?.();
                     } else {
                       field.onChange(numberToString(descaledAvailableBalance));
+                      setIsMax?.(true);
                     }
                   }}
                 >
@@ -94,5 +98,30 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
         </FormItem>
       )}
     />
+  );
+}
+
+interface AssetFormFieldViewOnlyProps {
+  actionName: string;
+  asset: {
+    symbol: string;
+    icon?: string | null;
+    priceUsd?: number | null;
+  };
+  amount: number;
+  amountUsd: number;
+}
+
+export function AssetFormFieldViewOnly({ actionName, asset, amount, amountUsd }: AssetFormFieldViewOnlyProps) {
+  return (
+    <div className="flex flex-col gap-4 rounded-[12px]">
+      <label className="text-accent-secondary label-sm">
+        {actionName} {asset.symbol}
+      </label>
+      <div className="flex flex-col">
+        <NumberFlow value={amount} className="h-[44px] !font-medium title-2" format={{ maximumFractionDigits: 6 }} />
+        <NumberFlow value={amountUsd} format={{ currency: "USD" }} className="text-content-secondary label-sm" />
+      </div>
+    </div>
   );
 }

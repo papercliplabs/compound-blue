@@ -15,11 +15,14 @@ const query = graphql(`
         collateralAsset {
           symbol
           decimals
+          address
+          icon
         }
         loanAsset {
           symbol
           decimals
           icon
+          address
         }
         borrowApy {
           base
@@ -59,3 +62,4 @@ export const getAccountMarketPositions = cacheAndCatch(async (accountAddress: Ad
 }, "getUserMarketPositions");
 
 export type AccountMarketPositions = NonNullable<Awaited<ReturnType<typeof getAccountMarketPositions>>>;
+export type AccountMarketPosition = AccountMarketPositions[number];
