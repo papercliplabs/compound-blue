@@ -6,8 +6,9 @@ import { safeFetch } from "@/utils/fetch";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { useAccountVaultPositions } from "./useAccountVaultPosition";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isAddressEqual, getAddress, Address } from "viem";
+import { trackEvent } from "@/data/trackEvent";
 
 function useAaveV3MarketPosition() {
   const { pollingInterval, revalidateSignal } = useAccountDataPollingContext();
@@ -75,6 +76,23 @@ export function useMigratableAaveV3SupplyPositions(): {
 
     return migratableAaveV3SupplyPositions;
   }, [aaveV3MarketPosition, vaultPositions]);
+
+  // Event to better understand how many users have migratable positions
+  const { address } = useAccount();
+  const [hasLoggedEvent, setHasLoggedEvent] = useState(false);
+  useEffect(() => {
+    if (migratableAaveV3SupplyPositions && migratableAaveV3SupplyPositions.length > 0 && !hasLoggedEvent && address) {
+      trackEvent("found-migratable-vault-positions", {
+        address,
+        numPositions: migratableAaveV3SupplyPositions.length,
+        totalValueUsd: migratableAaveV3SupplyPositions.reduce(
+          (acc, p) => acc + p.aaveV3ReservePosition.aTokenAssetsUsd,
+          0
+        ),
+      });
+      setHasLoggedEvent(true);
+    }
+  }, [migratableAaveV3SupplyPositions, hasLoggedEvent, setHasLoggedEvent, address]);
 
   return {
     data: migratableAaveV3SupplyPositions,
