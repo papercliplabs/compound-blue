@@ -12,6 +12,7 @@
     --background-primary: 240 242 245;
     --background-secondary: 255 255 255;
     --background-inverse: 249 250 251;
+    --background-accent: 206 232 245;
 
     --border-primary: 13 19 26 / 0.15;
 
@@ -41,6 +42,7 @@
     --background-primary: 13 19 26;
     --background-secondary: 29 40 51;
     --background-inverse: 23 33 43;
+    --background-accent: 6 50 71;
 
     --border-primary: 249 250 251 / 0.15;
 

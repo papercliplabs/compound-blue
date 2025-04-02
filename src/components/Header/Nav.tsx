@@ -2,17 +2,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
+import { ReactNode } from "react";
+import BarChart from "../ui/icons/BarChart";
+import CirclePlus from "../ui/icons/CirclePlus";
+import ArrowFatLineDown from "../ui/icons/ArrowFatLineDown";
 
-const NAV_ITEMS: { href: string; name: string }[] = [
-  { href: "/", name: "Earn" },
-  { href: "/borrow", name: "Borrow" },
-  { href: "/migrate", name: "Migrate" },
+const NAV_ITEMS: { href: string; name: string; icon?: ReactNode; isNew?: boolean }[] = [
+  { href: "/", name: "Earn", icon: <BarChart className="fill-content-secondary" /> },
+  { href: "/borrow", name: "Borrow", icon: <CirclePlus className="fill-content-secondary" /> },
+  { href: "/migrate", name: "Migrate", icon: <ArrowFatLineDown className="fill-content-secondary" />, isNew: true },
 ];
 
 export default function Nav() {
   const pathname = usePathname();
   return (
-    <div className="flex items-center gap-5 md:gap-2">
+    <div className="flex w-full items-center gap-2 overflow-x-auto">
       {NAV_ITEMS.map((item) => (
         <Link key={item.href} href={item.href}>
           <Button
@@ -24,9 +28,13 @@ export default function Nav() {
                 : "ghost"
             }
             size="md"
-            className="h-7 px-4"
+            className="h-8 gap-[6px] px-4"
           >
+            {item.icon && item.icon}
             {item.name}
+            {item.isNew && (
+              <span className="bg-background-accent h-4 rounded-[4px] px-1 text-xs text-accent-primary">New</span>
+            )}
           </Button>
         </Link>
       ))}
