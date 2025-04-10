@@ -33,7 +33,6 @@ export async function prepareMarketRepayWithdrawCollateralAction({
   accountAddress,
   marketId,
   publicClient,
-  ...params
 }: PrepareMarketRepayWithdrawCollateralActionParameters): Promise<PrepareMarketRepayWithdrawCollateralActionReturnType> {
   const [simulationState, isSmartAccount] = await Promise.all([
     getSimulationState({
@@ -41,7 +40,6 @@ export async function prepareMarketRepayWithdrawCollateralAction({
       accountAddress,
       marketId,
       publicClient,
-      ...params,
     }),
     getIsSmartAccount(publicClient, accountAddress),
   ]);
@@ -105,10 +103,10 @@ export async function prepareMarketRepayWithdrawCollateralAction({
   );
 
   if (preparedAction.status == "success") {
-    const positionBefore = preparedAction.initialSimulationState?.positions?.[accountAddress]?.[marketId];
-    const positionAfter = preparedAction.finalSimulationState?.positions?.[accountAddress]?.[marketId];
-    const marketBefore = preparedAction.initialSimulationState?.markets?.[marketId];
-    const marketAfter = preparedAction.finalSimulationState?.markets?.[marketId];
+    const positionBefore = preparedAction.initialSimulationState?.getPosition(accountAddress, marketId);
+    const positionAfter = preparedAction.finalSimulationState?.getPosition(accountAddress, marketId);
+    const marketBefore = preparedAction.initialSimulationState?.getMarket(marketId);
+    const marketAfter = preparedAction.finalSimulationState?.getMarket(marketId);
 
     const positionCollateralBefore = positionBefore?.collateral ?? BigInt(0);
     const positionCollateralAfter = positionAfter?.collateral ?? BigInt(0);

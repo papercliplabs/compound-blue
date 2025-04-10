@@ -1,42 +1,25 @@
-import {
-  addresses,
-  ChainId,
-  DEFAULT_SLIPPAGE_TOLERANCE,
-  InputMarketParams,
-  MarketId,
-  MathLib,
-} from "@morpho-org/blue-sdk";
+import { addresses, DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib } from "@morpho-org/blue-sdk";
 import {
   getSignatureRequirementDescription,
   getTransactionRequirementDescription,
   PrepareActionReturnType,
 } from "./helpers";
-import {
-  Address,
-  Client,
-  encodeAbiParameters,
-  encodeFunctionData,
-  erc20Abi,
-  keccak256,
-  maxUint256,
-  zeroHash,
-} from "viem";
+import { Address, Client, encodeFunctionData, erc20Abi, maxUint256 } from "viem";
 import {
   ActionBundle,
   BundlerAction,
   BundlerCall,
   encodeBundle,
-  generalAdapter1Abi,
   populateSubBundle,
 } from "@morpho-org/bundler-sdk-viem";
 import { AAVE_V3_POOL_ADDRESS, CHAIN_ID } from "@/config";
 import { TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 import { getSimulationState } from "@/data/getSimulationState";
 import { readContract } from "viem/actions";
-import { bundler3Abi } from "@/abis/bundler3Abi";
 import { aaveV3PoolAbi } from "@/abis/aaveV3PoolAbi";
 import { getIsSmartAccount } from "@/data/getIsSmartAccount";
 import { bigIntMin } from "@/utils/bigint";
+import { createBundle, morphoSupplyCollateral } from "./bundler3";
 
 const { morpho: morphoBlueAddress, bundler3 } = addresses[CHAIN_ID];
 
@@ -268,16 +251,7 @@ export async function prepareAaveV3MarketMigrationAction({
         : []),
     ].flat();
 
-    const bundle = {
-      to: bundler3.bundler3,
-      value: BigInt(0),
-      data: encodeFunctionData({
-        abi: bundler3Abi,
-        functionName: "multicall",
-        args: [bundlerCalls],
-      }),
-    };
-
+    const bundle = createBundle(bundlerCalls);
     return bundle;
   }
 
@@ -306,34 +280,4 @@ export async function prepareAaveV3MarketMigrationAction({
       },
     ],
   };
-}
-
-const reenterAbiInputs = bundler3Abi.find((item) => item.name === "reenter")!.inputs;
-
-// https://github.com/morpho-org/sdks/blob/next/packages/bundler-sdk-viem/src/BundlerAction.ts#L1049
-// Not using Morpho's SDK here since it doesn't give control over skipRevert which we use for the sweep
-export function morphoSupplyCollateral(
-  _chainId: ChainId, // To conform to SDK to plug back out later
-  market: InputMarketParams,
-  assets: bigint,
-  onBehalf: Address,
-  callbackCalls: BundlerCall[],
-  skipRevert: boolean = false
-): BundlerCall[] {
-  const reenter = callbackCalls.length > 0;
-  const reenterData = reenter ? encodeAbiParameters(reenterAbiInputs, [callbackCalls]) : "0x";
-
-  return [
-    {
-      to: bundler3.generalAdapter1,
-      data: encodeFunctionData({
-        abi: generalAdapter1Abi,
-        functionName: "morphoSupplyCollateral",
-        args: [market, assets, onBehalf, reenterData],
-      }),
-      value: BigInt(0),
-      skipRevert,
-      callbackHash: reenter ? keccak256(reenterData) : zeroHash,
-    },
-  ];
 }

@@ -103,6 +103,8 @@ export default function ClaimRewards() {
                   key={i}
                   asset={reward.token}
                   actionName="Claim"
+                  side="supply"
+                  isIncreasing={true}
                   descaledAmount={descaleBigIntToNumber(reward.unclaimedAmount, reward.token.decimals)}
                   amountUsd={reward.unclaimedAmountUsd}
                 />

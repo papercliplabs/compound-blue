@@ -247,6 +247,8 @@ export default function VaultMigrationAction({
             <ActionFlowSummaryAssetItem
               asset={destinationVaultPosition.asset}
               actionName="Remove"
+              side="supply"
+              isIncreasing={false}
               descaledAmount={migrateAmount}
               amountUsd={migrateAmountUsd}
               protocolName="Aave v3"
@@ -254,6 +256,8 @@ export default function VaultMigrationAction({
             <ActionFlowSummaryAssetItem
               asset={destinationVaultPosition.asset}
               actionName="Supply"
+              side="supply"
+              isIncreasing={true}
               descaledAmount={migrateAmount}
               amountUsd={migrateAmountUsd}
               protocolName="Compound Blue"

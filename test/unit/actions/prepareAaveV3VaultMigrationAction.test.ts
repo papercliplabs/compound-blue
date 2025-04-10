@@ -8,17 +8,12 @@ import { executeAction } from "../../helpers/actions";
 import { getMorphoVaultAccountBalance } from "../../helpers/morpho";
 import { AnvilTestClient } from "@morpho-org/test";
 import { expectZeroErc20Balances } from "../../helpers/erc20";
-import { addresses } from "@morpho-org/blue-sdk";
-import { CHAIN_ID } from "@/config";
+import { AAVE_V3_CORE_MIGRATION_ADAPTER_ADDRESS, BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
 
 const USDC_VAULT_ADDRESS = "0x781FB7F6d845E3bE129289833b04d43Aa8558c42";
 
 const REBASEING_MARGIN = BigInt(100030);
 const REBASEING_MARGIN_SCALE = BigInt(100000);
-
-const {
-  bundler3: { bundler3, aaveV3CoreMigrationAdapter, generalAdapter1 },
-} = addresses[CHAIN_ID];
 
 interface RunVaultMigrationTestParameters {
   client: AnvilTestClient;
@@ -77,7 +72,11 @@ async function runVaultMigrationTest({
   );
 
   // Check no leftover balances
-  await expectZeroErc20Balances(client, [bundler3, aaveV3CoreMigrationAdapter!, generalAdapter1], assetAddress);
+  await expectZeroErc20Balances(
+    client,
+    [BUNDLER3_ADDRESS, AAVE_V3_CORE_MIGRATION_ADAPTER_ADDRESS!, GENERAL_ADAPTER_1_ADDRESS!],
+    assetAddress
+  );
 }
 
 describe("prepareAaveV3VaultMigrationAction", () => {

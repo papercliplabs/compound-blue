@@ -77,3 +77,6 @@ export const KNOWN_ADDRESSES: Record<Address, { name: string; iconSrc?: string }
 };
 
 export const AAVE_V3_POOL_ADDRESS = getAddress("0x794a61358D6845594F94dc1DB02A252b5b4814aD");
+
+export const PARASWAP_PARTNER_NAME = "compound-blue";
+export const PARASWAP_PARTNER_ADDRESS = getAddress("0xCC3E7c85Bb0EE4f09380e041fee95a0caeDD4a02"); // Compoound DAO

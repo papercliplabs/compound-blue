@@ -407,6 +407,8 @@ export default function MarketMigrationAction({
             <ActionFlowSummaryAssetItem
               asset={destinationMarketPosition.market!.loanAsset}
               actionName="Migrate"
+              side="borrow"
+              isIncreasing={true}
               descaledAmount={collateralMigrateAmount}
               amountUsd={collateralMigrateAmountUsd}
               protocolName="Compound Blue"
@@ -414,6 +416,8 @@ export default function MarketMigrationAction({
             <ActionFlowSummaryAssetItem
               asset={destinationMarketPosition.market!.collateralAsset!}
               actionName="Borrow"
+              side="supply"
+              isIncreasing={true}
               descaledAmount={loanMigrateAmount}
               amountUsd={loanMigrateAmountUsd}
               protocolName="Compound Blue"
