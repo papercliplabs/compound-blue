@@ -21,8 +21,8 @@ export async function executeAction(client: AnvilTestClient, action: PrepareActi
         const tx = step.tx();
         await sendTransaction(client, { ...tx, account: client.account.address });
       }
-    } catch {
-      throw Error("tx failed");
+    } catch (e) {
+      throw Error("tx failed", { cause: e });
     }
   }
 }

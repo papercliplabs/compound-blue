@@ -29,7 +29,7 @@ export async function expectZeroErc20Balances(
     allowFailure: false,
   });
 
-  balances.forEach((balance) => {
+  balances.forEach((balance, i) => {
     expect(balance).toEqual(BigInt(0));
   });
 }

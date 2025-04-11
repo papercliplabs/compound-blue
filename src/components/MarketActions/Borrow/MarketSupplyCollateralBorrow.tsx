@@ -7,7 +7,7 @@ import {
   ActionFlowSummaryAssetItem,
 } from "@/components/ActionFlowDialog";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
 import { getAddress, maxUint256, parseUnits } from "viem";
 import { z } from "zod";
@@ -16,26 +16,29 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import AssetFormField from "../AssetFormField";
-import { MarketActionsProps } from ".";
+import AssetFormField from "../../AssetFormField";
 import {
   prepareMarketSupplyCollateralBorrowAction,
   PrepareMarketSupplyCollateralBorrowActionReturnType,
 } from "@/actions/prepareMarketSupplyCollateralBorrowAction";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { MAX_BORROW_LTV_MARGIN, PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION } from "@/config";
-import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
+import PoweredByMorpho from "../../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
 import { WAD } from "@/utils/constants";
 import { ArrowRight } from "lucide-react";
-import { MetricChange } from "../MetricChange";
+import { MetricChange } from "../../MetricChange";
+import { MarketNonIdle } from "@/data/whisk/getMarket";
 
 export default function MarketSupplyCollateralBorrow({
   market,
   onCloseAfterSuccess,
-}: MarketActionsProps & { onCloseAfterSuccess?: () => void }) {
+}: {
+  market: MarketNonIdle;
+  onCloseAfterSuccess?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [preparedAction, setPreparedAction] = useState<PrepareMarketSupplyCollateralBorrowActionReturnType | undefined>(
@@ -236,6 +239,8 @@ export default function MarketSupplyCollateralBorrow({
               <ActionFlowSummaryAssetItem
                 asset={market.collateralAsset}
                 actionName="Add"
+                side="supply"
+                isIncreasing={true}
                 descaledAmount={supplyCollateralAmount}
                 amountUsd={supplyCollateralAmount * (market.collateralAsset.priceUsd ?? 0)}
               />
@@ -244,6 +249,8 @@ export default function MarketSupplyCollateralBorrow({
               <ActionFlowSummaryAssetItem
                 asset={market.loanAsset}
                 actionName="Borrow"
+                side="borrow"
+                isIncreasing={true}
                 descaledAmount={borrowAmount}
                 amountUsd={borrowAmount * (market.loanAsset.priceUsd ?? 0)}
               />

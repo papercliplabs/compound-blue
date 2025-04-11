@@ -338,7 +338,6 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
 
 async function MarketActionsWrapper({ marketId }: { marketId: Hex }) {
   const market = await getMarket(marketId);
-
   if (!isNonIdleMarket(market)) {
     return null;
   }

@@ -14,9 +14,8 @@ import { getMorphoMarketAccountBalances } from "../../helpers/morpho";
 import { expectZeroErc20Balances } from "../../helpers/erc20";
 import { CHAIN_ID } from "@/config";
 import { AnvilTestClient } from "@morpho-org/test";
-import { WETH_ADDRESS, USDC_ADDRESS, USDT_ADDRESS } from "../../helpers/constants";
+import { WETH_ADDRESS, USDC_ADDRESS, USDT_ADDRESS, WETH_USDC_MARKET_ID } from "../../helpers/constants";
 
-const WETH_USDC_MARKET_ID = "0xa5b7ae7654d5041c28cb621ee93397394c7aee6c6e16c7e0fd030128d87ee1a3" as MarketId;
 const ALLOCATING_VAULT_ADDRESS: Address[] = ["0x781FB7F6d845E3bE129289833b04d43Aa8558c42"];
 
 const REBASEING_MARGIN = BigInt(100030);

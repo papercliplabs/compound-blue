@@ -35,7 +35,8 @@ const cspHeader = `
       wss://www.walletlink.org
       https://chain-proxy.wallet.coinbase.com
       https://va.vercel-scripts.com/v1/script.debug.js
-      https://plausible.paperclip.xyz;
+      https://plausible.paperclip.xyz
+      https://api.paraswap.io;
     frame-src 'self' 
         https://verify.walletconnect.com 
         https://verify.walletconnect.org 

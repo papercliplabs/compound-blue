@@ -41,6 +41,9 @@ export const createViemTest = <chain extends Chain>(chain: chain, parameters: An
 
       await client.setBlockTimestampInterval({ interval: 2 });
 
+      // Uncomment for debugging
+      // client.transport.tracer.all = true; // If you want to trace all submitted transactions, failing or not.
+
       // eslint-disable-next-line react-hooks/rules-of-hooks
       await use(client);
 
@@ -51,5 +54,6 @@ export const createViemTest = <chain extends Chain>(chain: chain, parameters: An
 
 export const test = createViemTest(polygon, {
   forkUrl: process.env.NEXT_PUBLIC_RPC_URL_1!,
-  forkBlockNumber: 69817278,
+  forkBlockNumber: 70144589,
+  hardfork: "Latest",
 });
