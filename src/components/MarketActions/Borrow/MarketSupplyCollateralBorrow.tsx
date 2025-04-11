@@ -18,16 +18,15 @@ import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/for
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import AssetFormField from "../../AssetFormField";
 import {
-  prepareMarketSupplyCollateralBorrowAction,
-  PrepareMarketSupplyCollateralBorrowActionReturnType,
-} from "@/actions/prepareMarketSupplyCollateralBorrowAction";
+  prepareMarketSupplyCollateralAndBorrowAction,
+  PrepareMarketSupplyCollateralAndBorrowActionReturnType,
+} from "@/actions/prepareMarketSupplyCollateralAndBorrowAction";
 import { MarketId } from "@morpho-org/blue-sdk";
-import { MAX_BORROW_LTV_MARGIN, PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION } from "@/config";
+import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import PoweredByMorpho from "../../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
-import { WAD } from "@/utils/constants";
 import { ArrowRight } from "lucide-react";
 import { MetricChange } from "../../MetricChange";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
@@ -41,9 +40,9 @@ export default function MarketSupplyCollateralBorrow({
 }) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
-  const [preparedAction, setPreparedAction] = useState<PrepareMarketSupplyCollateralBorrowActionReturnType | undefined>(
-    undefined
-  );
+  const [preparedAction, setPreparedAction] = useState<
+    PrepareMarketSupplyCollateralAndBorrowActionReturnType | undefined
+  >(undefined);
   const [success, setSuccess] = useState(false);
 
   const { openConnectModal } = useConnectModal();
@@ -141,21 +140,15 @@ export default function MarketSupplyCollateralBorrow({
 
       const borrowAmountBigInt = parseUnits(numberToString(borrowAmount), market.loanAsset.decimals);
 
-      const supplyAssets = BigInt(market.supplyAssets);
-      const newBorrowAssets = BigInt(market.borrowAssets) + borrowAmountBigInt;
-      const newUtilization = supplyAssets > BigInt(0) ? (newBorrowAssets * WAD) / supplyAssets : BigInt(0);
-
-      const preparedAction = await prepareMarketSupplyCollateralBorrowAction({
+      const preparedAction = await prepareMarketSupplyCollateralAndBorrowAction({
         publicClient,
-        accountAddress: address,
         marketId: market.marketId as MarketId,
+        accountAddress: address,
         allocatingVaultAddresses: market.vaultAllocations.map((allocation) =>
           getAddress(allocation.vault.vaultAddress)
         ),
-        supplyCollateralAmount: supplyCollateralAmountBigInt,
+        collateralAmount: supplyCollateralAmountBigInt,
         borrowAmount: borrowAmountBigInt,
-        // This is just a hint for the simulator to assemble the entire vault + market state for a reallocation
-        requiresReallocation: newUtilization > PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION,
       });
 
       setPreparedAction(preparedAction);

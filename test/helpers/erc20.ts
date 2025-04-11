@@ -3,7 +3,7 @@ import { Address, erc20Abi } from "viem";
 import { multicall } from "viem/actions";
 import { expect } from "vitest";
 
-export async function getErc20BalanceOf(client: AnvilTestClient, address: Address, tokenAddress: Address) {
+export async function getErc20BalanceOf(client: AnvilTestClient, tokenAddress: Address, address: Address) {
   const balance = await client.readContract({
     address: tokenAddress,
     abi: erc20Abi,
@@ -29,7 +29,7 @@ export async function expectZeroErc20Balances(
     allowFailure: false,
   });
 
-  balances.forEach((balance, i) => {
+  balances.forEach((balance) => {
     expect(balance).toEqual(BigInt(0));
   });
 }

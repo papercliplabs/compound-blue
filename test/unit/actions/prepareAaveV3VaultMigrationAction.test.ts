@@ -4,11 +4,11 @@ import { Address, maxUint256, parseUnits } from "viem";
 import { dealAndSupplyToAaveV3, getAaveV3SupplyBalance } from "../../helpers/aaveV3";
 import { USDC_ADDRESS } from "../../helpers/constants";
 import { prepareAaveV3VaultMigrationAction } from "@/actions/prepareAaveV3VaultMigrationAction";
-import { executeAction } from "../../helpers/actions";
-import { getMorphoVaultAccountBalance } from "../../helpers/morpho";
+import { executeAction } from "../../helpers/executeAction";
 import { AnvilTestClient } from "@morpho-org/test";
 import { expectZeroErc20Balances } from "../../helpers/erc20";
-import { AAVE_V3_CORE_MIGRATION_ADAPTER_ADDRESS, BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
+import { AAVE_V3_MIGRATION_ADAPTER_ADDRESS, BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
+import { getMorphoVaultPosition } from "../../helpers/morpho";
 
 const USDC_VAULT_ADDRESS = "0x781FB7F6d845E3bE129289833b04d43Aa8558c42";
 
@@ -65,7 +65,7 @@ async function runVaultMigrationTest({
   );
 
   // Check morpho balances
-  const morphoBalanceFinal = await getMorphoVaultAccountBalance(client, vaultAddress);
+  const morphoBalanceFinal = await getMorphoVaultPosition(client, vaultAddress);
   expect(morphoBalanceFinal).toBeWithinRange(
     checks.vaultPositionBalanceFinalLimits.min,
     checks.vaultPositionBalanceFinalLimits.max
@@ -74,7 +74,7 @@ async function runVaultMigrationTest({
   // Check no leftover balances
   await expectZeroErc20Balances(
     client,
-    [BUNDLER3_ADDRESS, AAVE_V3_CORE_MIGRATION_ADAPTER_ADDRESS!, GENERAL_ADAPTER_1_ADDRESS!],
+    [BUNDLER3_ADDRESS, AAVE_V3_MIGRATION_ADAPTER_ADDRESS!, GENERAL_ADAPTER_1_ADDRESS!],
     assetAddress
   );
 }
