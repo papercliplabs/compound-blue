@@ -1,117 +1,202 @@
-import { describe, expect } from "vitest";
-import { test } from "../../setup";
-import { maxUint256, parseEther, parseUnits } from "viem";
-import { WETH_USDC_MARKET_ID } from "../../helpers/constants";
-import { dealAndBorrowFromMorphoMarket, getMorphoMarketAccountBalances } from "../../helpers/morpho";
+import { dealAndBorrowFromMorphoMarket, getMorphoMarketPosition } from "../../helpers/morpho";
 import { prepareMarketRepayWithCollateralAction } from "@/actions/prepareMarketRepayWithCollateralAction";
-import { executeAction } from "../../helpers/actions";
 import { AnvilTestClient } from "@morpho-org/test";
-import { MarketId } from "@morpho-org/blue-sdk";
+import { MarketId, MathLib, ORACLE_PRICE_SCALE } from "@morpho-org/blue-sdk";
+import { fetchMarket } from "@morpho-org/blue-sdk-viem";
+import { expectOnlyAllowedApprovals } from "../../helpers/logs";
+import { BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
+import { expectZeroErc20Balances, getErc20BalanceOf } from "../../helpers/erc20";
+import { describe, expect, vi } from "vitest";
+import { maxUint256, parseEther, parseUnits } from "viem";
+import { test } from "../../setup";
+import { WETH_USDC_MARKET_ID } from "../../helpers/constants";
+import { executeAction } from "../../helpers/executeAction";
+import { GetParaswapReturnType } from "@/data/paraswap/common";
+import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 
-interface RunMarketRepayWithCollateralTestParameters {
+const BORROW_ACCURAL_MARGIN = 1000n;
+
+vi.mock("@/data/paraswap/getParaswapExactBuy");
+
+interface MarketRepayWithCollateralTestParameters {
   client: AnvilTestClient;
   marketId: MarketId;
-  initialCollateralAmount: bigint;
-  initialLoanAmount: bigint;
+
+  initialPositionCollateralAmount: bigint;
+  initialPositionLoanAmount: bigint;
+
   loanRepayAmount: bigint;
   maxSlippageTolerance: number; // (0,1)
-  delayBlocks: number;
-  checks: {
-    collateralBalanceFinalLimits: {
-      min: bigint;
-      max: bigint;
-    };
-    loanBalanceFinalLimits: {
-      min: bigint;
-      max: bigint;
-    };
-  };
+  beforeExecutionCb?: (client: AnvilTestClient) => Promise<void>;
+  callerType?: "eoa" | "contract";
+  blockNumber: bigint;
+  mockParaswapQuote: GetParaswapReturnType;
 }
 
 async function runMarketRepayWithCollateralTest({
   client,
   marketId,
-  initialCollateralAmount,
-  initialLoanAmount,
+  initialPositionCollateralAmount,
+  initialPositionLoanAmount,
   loanRepayAmount,
   maxSlippageTolerance,
-  checks,
-}: RunMarketRepayWithCollateralTestParameters) {
+  beforeExecutionCb,
+  callerType = "eoa",
+  blockNumber,
+  mockParaswapQuote,
+}: MarketRepayWithCollateralTestParameters) {
   // Arrange
-  await dealAndBorrowFromMorphoMarket(client, marketId, initialCollateralAmount, initialLoanAmount);
+  const market = await fetchMarket(marketId, client);
+  const { loanToken: loanTokenAddrress, collateralToken: collateralTokenAddress } = market.params;
+
+  if (callerType === "contract") {
+    await client.setCode({ address: client.account.address, bytecode: "0x60006000fd" });
+  }
+
+  await client.reset({ blockNumber });
+
+  await dealAndBorrowFromMorphoMarket(client, marketId, initialPositionCollateralAmount, initialPositionLoanAmount);
+
+  vi.mocked(getParaswapExactBuy).mockReturnValue(new Promise((resolve) => resolve(mockParaswapQuote)));
 
   // Act
   const action = await prepareMarketRepayWithCollateralAction({
     publicClient: client,
+    marketId,
     accountAddress: client.account.address,
-    marketId: marketId,
-    loanRepayAmount: loanRepayAmount,
+    loanRepayAmount,
     maxSlippageTolerance,
   });
-  await executeAction(client, action);
+  await beforeExecutionCb?.(client);
+  const logs = await executeAction(client, action);
 
   // Assert
-  const { collateralBalance, loanBalance } = await getMorphoMarketAccountBalances(client, WETH_USDC_MARKET_ID);
-  expect(collateralBalance).toBeWithinRange(
-    checks.collateralBalanceFinalLimits.min,
-    checks.collateralBalanceFinalLimits.max
+  await expectOnlyAllowedApprovals(logs, client.account.address); // Make sure doesn't approve or permit anything unexpected
+  await expectZeroErc20Balances(
+    client,
+    [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, PARASWAP_ADAPTER_ADDRESS!],
+    collateralTokenAddress
+  ); // Make sure no funds left in bundler or used adapters
+  await expectZeroErc20Balances(
+    client,
+    [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, PARASWAP_ADAPTER_ADDRESS!],
+    loanTokenAddrress
+  ); // Make sure no funds left in bundler or used adapters
+
+  const { collateralBalance: positionCollateralBalance, loanBalance: positionLoanBalance } =
+    await getMorphoMarketPosition(client, marketId, client.account.address);
+  const walletCollateralBalance = await getErc20BalanceOf(client, collateralTokenAddress, client.account.address);
+  const price = market.price!;
+
+  const loanRepaymentAmountInternal = loanRepayAmount == maxUint256 ? initialPositionLoanAmount : loanRepayAmount;
+  const loanRepaymentAmountInCollateral = MathLib.mulDivDown(loanRepaymentAmountInternal, ORACLE_PRICE_SCALE, price);
+  const maxCollateralUsedForLoanRepayment = MathLib.mulDivUp(
+    loanRepaymentAmountInCollateral,
+    BigInt((1 + maxSlippageTolerance) * 100000),
+    100000n
   );
-  expect(loanBalance).toBeWithinRange(checks.loanBalanceFinalLimits.min, checks.loanBalanceFinalLimits.max);
+
+  if (loanRepayAmount === maxUint256) {
+    expect(positionLoanBalance).toBe(0n);
+    expect(positionCollateralBalance).toBe(0n);
+    expect(walletCollateralBalance).toBeGreaterThan(
+      initialPositionCollateralAmount - maxCollateralUsedForLoanRepayment
+    );
+  } else {
+    expect(positionLoanBalance).toBeLessThan(initialPositionLoanAmount - loanRepayAmount + BORROW_ACCURAL_MARGIN);
+    expect(positionCollateralBalance).toBeGreaterThan(
+      initialPositionCollateralAmount - maxCollateralUsedForLoanRepayment
+    );
+  }
 }
 
-describe("prepareMarketRepayWithCollateralAction", () => {
-  test("partial repayment with collateral", async ({ client }) => {
-    const marketId = WETH_USDC_MARKET_ID;
-    const initialCollateralAmount = parseEther("10");
-    const initialLoanAmount = parseUnits("10000", 6);
-    const loanRepayAmount = initialLoanAmount / BigInt(2);
+const successTestCases: ({ name: string } & Omit<MarketRepayWithCollateralTestParameters, "client">)[] = [
+  {
+    name: "partial repayment",
+    marketId: WETH_USDC_MARKET_ID,
+    initialPositionCollateralAmount: parseEther("10"),
+    initialPositionLoanAmount: parseUnits("10000", 6),
+    loanRepayAmount: parseUnits("1000", 6),
+    maxSlippageTolerance: 0.03,
+    blockNumber: 70277936n, // When the quote was generated
+    mockParaswapQuote: {
+      augustus: "0x6A000F20005980200259B80c5102003040001068",
+      calldata:
+        "0x7f457675000000000000000000000000a0f408a000017007015e0f00320e470d00090a5b0000000000000000000000007ceb23fd6bc0add59e62ac25578270cff1b9f6190000000000000000000000003c499c542cef5e3811e1192ce70d8cc03d5c335900000000000000000000000000000000000000000000000008910adde8facbfe000000000000000000000000000000000000000000000000000000003b9aca00000000000000000000000000000000000000000000000000087cdaf21f8590de3c6b47c860324260bfd21e1055767f4000000000000000000000000004305b4f0000000000000000000000000000000000000000000000000000000000000000cc3e7c85bb0ee4f09380e041fee95a0caedd4a029400000000000000000000000000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ac000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000ae00000040000000000000000000000018c000000000000016c00000000000019c8d315a9c38ec871068fec378e4ce78af528c7629303e003c503c50000000100030000000000000000000000000000000000000000000000000000000052bbbe2900000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000a0f408a000017007015e0f00320e470d00090a5b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000006a000f20005980200259b80c5102003040001068000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000067fc92d910386ac4e294773a94f26b32df836e193ec6724c00020000000000000000000800000000000000000000000000000000000000000000000000000000000000010000000000000000000000007ceb23fd6bc0add59e62ac25578270cff1b9f6190000000000000000000000003c499c542cef5e3811e1192ce70d8cc03d5c335900000000000000000000000000000000000000000000000000000000275759a000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000180000000000000000000000000000000000000000000000000000632b51de2f2db0000000000000000000000000000000000000000000000000000000067fc92d900000000000000000000000000000000000000000000000000000000000000e00000000000000000000000005f2617f12d1fdd1e43e72cb80c92dfce8124db8d00000000000000000000000000000000000000000000000000005af3107a4000000000000000000000022c3c980c78b1000000000000002423701d6ddf6c800000000000000000007b181f4b62c3c90900000000000004d26b18739454bc0000000000000000000000000000000000000000000000010849557090f9ea33076e00000000000000004563918244f400000000000000000000006a94d74f43000000000000000000000000000067fc929d0000000000000000000058acfcdd9800000000000000000000000000000000000000000000000000000000000000004166e3faf2c139fdccb37ac8d8837c0eb507a4461906e0688599de1be618bd107363a7ecd113995706ceb54ae673ba57a67fdf03dec1b6cca1d67bfefc7f6dad881c0000000000000000000000000000000000000000000000000000000000000000000160000000000000000000000120000000000000013700000000000004b0e592427a0aece92de3edee1f18e0157c0586156401400125012500000000000300000000000000000000000000000000000000000000000000000000f28c0498000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000006a000f20005980200259b80c5102003040001068000000000000000000000000000000000000000000000000000000006805cd1d00000000000000000000000000000000000000000000000000000000072681600000000000000000000000000000000000000000000000000104c0adc6d0c2e8000000000000000000000000000000000000000000000000000000000000002b3c499c542cef5e3811e1192ce70d8cc03d5c33590001f47ceb23fd6bc0add59e62ac25578270cff1b9f61900000000000000000000000000000000000000000000000180000000000000000000000120000000000000014e0000000000000190e592427a0aece92de3edee1f18e0157c058615640160008400a400000000000300000000000000000000000000000000000000000000000000000000f28c0498000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000006a000f20005980200259b80c5102003040001068000000000000000000000000000000000000000000000000000000006805cd1d0000000000000000000000000000000000000000000000000000000002625a000000000000000000000000000000000000000000000000000056eb925dc9531900000000000000000000000000000000000000000000000000000000000000423c499c542cef5e3811e1192ce70d8cc03d5c33590000642791bca1f2de4661ed88a30c99a7a9449aa841740001f47ceb23fd6bc0add59e62ac25578270cff1b9f61900000000000000000000000000000000000000000000000000000000000000000180000000000000000000000120000000000000014e00000000000004b0e592427a0aece92de3edee1f18e0157c058615640160008400a400000000000300000000000000000000000000000000000000000000000000000000f28c0498000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000006a000f20005980200259b80c5102003040001068000000000000000000000000000000000000000000000000000000006805cd1d0000000000000000000000000000000000000000000000000000000007270e000000000000000000000000000000000000000000000000000104bfcb63333bbc00000000000000000000000000000000000000000000000000000000000000423c499c542cef5e3811e1192ce70d8cc03d5c33590001f41bfd67037b42cf73acf2047067bd4f2c47d9bfd60001f47ceb23fd6bc0add59e62ac25578270cff1b9f61900000000000000000000000000000000000000000000000000000000000000000180000000000000000000000120000000000000014e0000000000000258e592427a0aece92de3edee1f18e0157c058615640160008400a400000000000300000000000000000000000000000000000000000000000000000000f28c0498000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000006a000f20005980200259b80c5102003040001068000000000000000000000000000000000000000000000000000000006805cd1d000000000000000000000000000000000000000000000000000000000393870000000000000000000000000000000000000000000000000000825f5b8db4f9b500000000000000000000000000000000000000000000000000000000000000423c499c542cef5e3811e1192ce70d8cc03d5c3359000064c2132d05d31c914a87c6611c10748aeb04b58e8f0001f47ceb23fd6bc0add59e62ac25578270cff1b9f619000000000000000000000000000000000000000000000000000000000000",
+      offsets: { exactAmount: 132n, limitAmount: 100n, quotedAmount: 164n },
+    },
+    beforeExecutionCb: async (client) => {
+      await client.mine({ blocks: 10 });
+    },
+  },
+  {
+    name: "full repayment",
+    marketId: WETH_USDC_MARKET_ID,
+    initialPositionCollateralAmount: parseEther("1"),
+    initialPositionLoanAmount: parseUnits("100", 6),
+    loanRepayAmount: maxUint256,
+    maxSlippageTolerance: 0.03,
+    blockNumber: 70280107n, // When the quote was generated
+    mockParaswapQuote: {
+      augustus: "0x6A000F20005980200259B80c5102003040001068",
+      calldata:
+        "0x7f457675000000000000000000000000a0f408a000017007015e0f00320e470d00090a5b0000000000000000000000007ceb23fd6bc0add59e62ac25578270cff1b9f6190000000000000000000000003c499c542cef5e3811e1192ce70d8cc03d5c335900000000000000000000000000000000000000000000000000e19860f82a90610000000000000000000000000000000000000000000000000000000005f6563100000000000000000000000000000000000000000000000000db126e194be7bc97f514d8185d4800b128691bcee35078000000000000000000000000043063ba0000000000000000000000000000000000000000000000000000000000000000cc3e7c85bb0ee4f09380e041fee95a0caedd4a0294000000000000000000000000000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000180000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001e00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000020000000180000000000000000000000120000000000000014e0000000000002710e592427a0aece92de3edee1f18e0157c058615640160008400a400000000000300000000000000000000000000000000000000000000000000000000f28c0498000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000006a000f20005980200259b80c5102003040001068000000000000000000000000000000000000000000000000000000006805df1f0000000000000000000000000000000000000000000000000000000005f6563100000000000000000000000000000000000000000000000000db126e194be7bc00000000000000000000000000000000000000000000000000000000000000423c499c542cef5e3811e1192ce70d8cc03d5c33590001f41bfd67037b42cf73acf2047067bd4f2c47d9bfd60001f47ceb23fd6bc0add59e62ac25578270cff1b9f619000000000000000000000000000000000000000000000000000000000000",
+      offsets: { exactAmount: 132n, limitAmount: 100n, quotedAmount: 164n },
+    },
+  },
+];
 
-    await runMarketRepayWithCollateralTest({
-      client,
-      marketId,
-      initialCollateralAmount,
-      initialLoanAmount,
-      loanRepayAmount,
-      maxSlippageTolerance: 0.01,
-      delayBlocks: 0,
-      checks: {
-        // TODO: set this...
-        collateralBalanceFinalLimits: {
-          min: BigInt(0),
-          max: maxUint256,
-        },
-        loanBalanceFinalLimits: {
-          min: initialLoanAmount - loanRepayAmount,
-          max: initialLoanAmount - loanRepayAmount + BigInt(1),
-        },
-      },
+describe("prepareMarketRepayWithCollateralAction", () => {
+  describe("happy path", () => {
+    successTestCases.map((testCase) => {
+      test.concurrent(testCase.name + " - eoa caller", async ({ client }) => {
+        await runMarketRepayWithCollateralTest({
+          client,
+          ...testCase,
+          callerType: "eoa",
+        });
+      });
+    });
+
+    successTestCases.map((testCase) => {
+      test.concurrent(testCase.name + " - contract caller", async ({ client }) => {
+        await runMarketRepayWithCollateralTest({
+          client,
+          ...testCase,
+          callerType: "contract",
+        });
+      });
     });
   });
 
-  test.only("full repayment with collateral", async ({ client }) => {
-    const marketId = WETH_USDC_MARKET_ID;
-    const initialCollateralAmount = parseEther("10");
-    const initialLoanAmount = parseUnits("10000", 6);
-    const loanRepayAmount = maxUint256;
-
-    await runMarketRepayWithCollateralTest({
-      client,
-      marketId,
-      initialCollateralAmount,
-      initialLoanAmount,
-      loanRepayAmount,
-      maxSlippageTolerance: 0.01,
-      delayBlocks: 0,
-      checks: {
-        collateralBalanceFinalLimits: {
-          min: BigInt(0),
-          max: maxUint256,
-        },
-        loanBalanceFinalLimits: {
-          min: BigInt(0),
-          max: BigInt(0),
-        },
-      },
+  describe("sad path", () => {
+    test.concurrent("throws error when market doesn't exist", async ({ client }) => {
+      await expect(
+        prepareMarketRepayWithCollateralAction({
+          publicClient: client,
+          marketId: "0x0000000000000000000000000000000000000000000000000000000000000001" as MarketId,
+          accountAddress: client.account.address,
+          loanRepayAmount: parseUnits("100", 6),
+          maxSlippageTolerance: 0.01,
+        })
+      ).rejects;
     });
+
+    test.concurrent("prepare error if loanRepayAmount is 0", async ({ client }) => {
+      await expect(
+        prepareMarketRepayWithCollateralAction({
+          publicClient: client,
+          marketId: WETH_USDC_MARKET_ID,
+          accountAddress: client.account.address,
+          loanRepayAmount: 0n,
+          maxSlippageTolerance: 0.01,
+        })
+      ).rejects;
+    });
+
+    // This is hard to test, would need to hook into the paraswap contract somehow
+    // This is inforced at the adapter contract level, so just need to make sure the offsets are correct (see paraswapOffsetLookup.test.ts)
+    // test.concurrent("tx reverts if slippage tolerance is exceeded", async ({ client }) => {
+    // });
   });
 });

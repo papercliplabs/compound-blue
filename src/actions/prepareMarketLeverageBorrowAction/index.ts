@@ -1,39 +1,36 @@
-import { addresses, DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib } from "@morpho-org/blue-sdk";
+import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib } from "@morpho-org/blue-sdk";
 import {
+  getMarketSimulationStateAccountingForPublicReallocation,
   getSignatureRequirementDescription,
   getTransactionRequirementDescription,
   PrepareActionReturnType,
   SimulatedValueChange,
 } from "../helpers";
 import { Address, Client, encodeFunctionData, erc20Abi, maxUint256 } from "viem";
-import { getSimulationState } from "@/data/getSimulationState";
 import { getIsSmartAccount } from "@/data/getIsSmartAccount";
 import { computeLeverageValues } from "./computeLeverageValues";
 import { BundlerCall, BundlerAction, encodeBundle } from "@morpho-org/bundler-sdk-viem";
 import { ActionBundle, populateSubBundle } from "@morpho-org/bundler-sdk-viem";
-import { CHAIN_ID, PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION } from "@/config";
+import { CHAIN_ID } from "@/config";
 import { readContract } from "viem/actions";
 import { TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 import { createBundle, morphoRepay, paraswapBuy } from "../bundler3";
 import { trackEvent } from "@/data/trackEvent";
 import { GetParaswapReturnType } from "@/data/paraswap/common";
-import { WAD } from "@/utils/constants";
-
-const DEFAULT_MAX_SLIPPAGE_TOLERANCE = 0.03;
-const { morpho: morphoBlueAddress, bundler3: bundler3Addresses } = addresses[CHAIN_ID];
+import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
+import { fetchMarket } from "@morpho-org/blue-sdk-viem";
 
 interface PrepareMarketLeveragedBorrowActionParameters {
   publicClient: Client;
-  accountAddress: Address;
   marketId: MarketId;
+  allocatingVaultAddresses: Address[];
+
+  accountAddress: Address;
 
   initialCollateralAmount: bigint; // a.k.a margin, uint256 max for entire wallet balance
   leverageFactor: number; // (1, 1/(1-LLTV * (1-maxSlippageTolerance))]
-
   maxSlippageTolerance: number; // (0,1)
-
-  allocatingVaultAddresses: Address[];
 }
 
 export type PrepareMarketLeveragedBorrowActionReturnType =
@@ -49,36 +46,23 @@ export type PrepareMarketLeveragedBorrowActionReturnType =
 
 export async function prepareMarketLeveragedBorrowAction({
   publicClient,
-  accountAddress,
   marketId,
+  allocatingVaultAddresses,
+
+  accountAddress,
 
   initialCollateralAmount,
   leverageFactor,
-
-  maxSlippageTolerance = DEFAULT_MAX_SLIPPAGE_TOLERANCE,
-
-  allocatingVaultAddresses,
+  maxSlippageTolerance,
 }: PrepareMarketLeveragedBorrowActionParameters): Promise<PrepareMarketLeveragedBorrowActionReturnType> {
-  const { paraswapAdapter: paraswapAdapterAddress, generalAdapter1: generalAdapter1Address } = bundler3Addresses;
-  if (!paraswapAdapterAddress) {
+  if (!PARASWAP_ADAPTER_ADDRESS) {
     return {
       status: "error",
       message: "Leverage is not supported (missing adapter).",
     };
   }
 
-  const isSmartAccount = await getIsSmartAccount(publicClient, accountAddress);
-  let simulationState = await getSimulationState({
-    actionType: "market-supply-collateral-borrow",
-    accountAddress,
-    marketId,
-    publicClient,
-    allocatingVaultAddresses,
-    requiresReallocation: false, // First time around, we figure this out internally below
-  });
-
-  let market = simulationState.getMarket(marketId);
-
+  let market = await fetchMarket(marketId, publicClient);
   const { collateralToken: collateralTokenAddress, loanToken: loanTokenAddress } = market.params;
 
   const [accountCollateralBalance, allowance] = await Promise.all([
@@ -92,7 +76,7 @@ export async function prepareMarketLeveragedBorrowAction({
       abi: erc20Abi,
       address: collateralTokenAddress,
       functionName: "allowance",
-      args: [accountAddress, bundler3Addresses.generalAdapter1],
+      args: [accountAddress, GENERAL_ADAPTER_1_ADDRESS],
     }),
   ]);
 
@@ -112,22 +96,17 @@ export async function prepareMarketLeveragedBorrowAction({
     };
   }
 
-  // Check if we need public reallocation to fulfill the request
-  const supplyAssets = market.totalSupplyAssets;
-  const borrowAssets = market.totalBorrowAssets + loanAmount;
-  const utilization = supplyAssets > BigInt(0) ? (borrowAssets * WAD) / supplyAssets : BigInt(0);
-  const requiresPublicReallocation = utilization > PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION;
-  if (requiresPublicReallocation) {
-    simulationState = await getSimulationState({
-      actionType: "market-supply-collateral-borrow",
+  const [simulationState, isSmartAccount] = await Promise.all([
+    getMarketSimulationStateAccountingForPublicReallocation({
       accountAddress,
       marketId,
       publicClient,
       allocatingVaultAddresses,
-      requiresReallocation: true,
-    });
-    market = simulationState.getMarket(marketId);
-  }
+      requestedBorrowAmount: loanAmount,
+    }),
+    getIsSmartAccount(publicClient, accountAddress),
+  ]);
+  market = simulationState.getMarket(marketId);
 
   const accountPosition = simulationState.getPosition(accountAddress, marketId);
 
@@ -143,7 +122,7 @@ export async function prepareMarketLeveragedBorrowAction({
     data: encodeFunctionData({
       abi: erc20Abi,
       functionName: "approve",
-      args: [bundler3Addresses.generalAdapter1, initialCollateralAmountInternal],
+      args: [GENERAL_ADAPTER_1_ADDRESS, initialCollateralAmountInternal],
     }),
     value: BigInt(0),
   };
@@ -158,11 +137,11 @@ export async function prepareMarketLeveragedBorrowAction({
       {
         type: "Blue_Borrow",
         sender: accountAddress,
-        address: morphoBlueAddress,
+        address: MORPHO_BLUE_ADDRESS,
         args: {
           id: marketId,
           onBehalf: accountAddress,
-          receiver: paraswapAdapterAddress,
+          receiver: PARASWAP_ADAPTER_ADDRESS,
           assets: loanAmount,
           slippage: DEFAULT_SLIPPAGE_TOLERANCE, // On share price, diff from swap slippage
         },
@@ -189,7 +168,7 @@ export async function prepareMarketLeveragedBorrowAction({
   try {
     paraswapQuote = await getParaswapExactBuy({
       publicClient: publicClient,
-      accountAddress: paraswapAdapterAddress, // User is the paraswap adapter...
+      accountAddress: PARASWAP_ADAPTER_ADDRESS, // User is the paraswap adapter...
       srcTokenAddress: loanTokenAddress,
       destTokenAddress: collateralTokenAddress,
       maxSrcTokenAmount: loanAmount,
@@ -214,7 +193,7 @@ export async function prepareMarketLeveragedBorrowAction({
         CHAIN_ID,
         collateralTokenAddress,
         initialCollateralAmount,
-        generalAdapter1Address
+        GENERAL_ADAPTER_1_ADDRESS
       ),
       BundlerAction.morphoSupplyCollateral(
         CHAIN_ID,
@@ -232,15 +211,15 @@ export async function prepareMarketLeveragedBorrowAction({
             loanTokenAddress,
             collateralTokenAddress,
             paraswapQuote.offsets,
-            generalAdapter1Address
+            GENERAL_ADAPTER_1_ADDRESS
           ),
           // Sweep any remaing loan tokens from Paraswap adapter back to GA1
           BundlerAction.erc20Transfer(
             CHAIN_ID,
             loanTokenAddress,
-            generalAdapter1Address,
+            GENERAL_ADAPTER_1_ADDRESS,
             maxUint256,
-            paraswapAdapterAddress
+            PARASWAP_ADAPTER_ADDRESS
           ),
         ].flat()
       ),

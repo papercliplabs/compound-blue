@@ -1,4 +1,4 @@
-import { addresses, DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib, ORACLE_PRICE_SCALE } from "@morpho-org/blue-sdk";
+import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib, ORACLE_PRICE_SCALE } from "@morpho-org/blue-sdk";
 import {
   getSignatureRequirementDescription,
   getTransactionRequirementDescription,
@@ -20,6 +20,7 @@ import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 import { createBundle, morphoSupplyCollateral, paraswapBuy } from "./bundler3";
 import { trackEvent } from "@/data/trackEvent";
 import { GetParaswapReturnType } from "@/data/paraswap/common";
+import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
 
 // 0.03% buffer on full loan repayments to account for accrued interest between now and execution.
 // This gives ~1 day grace period for execution for markets with 10% APY which is useful for multisigs.
@@ -27,12 +28,10 @@ import { GetParaswapReturnType } from "@/data/paraswap/common";
 const FACTOR_SCALE = 100000;
 const REBASEING_MARGIN = BigInt(100030);
 
-const { morpho: morphoBlueAddress, bundler3: bundler3Addresses } = addresses[CHAIN_ID];
-
 interface PrepareMarketRepayWithCollateralActionParameters {
   publicClient: Client;
-  accountAddress: Address;
   marketId: MarketId;
+  accountAddress: Address;
   loanRepayAmount: bigint; // max uint256 for entire position
   maxSlippageTolerance: number; // (0,1)
 }
@@ -50,25 +49,32 @@ export type PrepareMarketRepayWithCollateralActionReturnType =
 
 export async function prepareMarketRepayWithCollateralAction({
   publicClient,
-  accountAddress,
   marketId,
+  accountAddress,
   loanRepayAmount,
   maxSlippageTolerance,
 }: PrepareMarketRepayWithCollateralActionParameters): Promise<PrepareMarketRepayWithCollateralActionReturnType> {
-  const { paraswapAdapter: paraswapAdapterAddress, generalAdapter1: generalAdapter1Address } = bundler3Addresses;
-  if (!paraswapAdapterAddress) {
+  if (!PARASWAP_ADAPTER_ADDRESS) {
     return {
       status: "error",
       message: "Repay with collateral not supported (missing adapter).",
     };
   }
 
+  if (loanRepayAmount == 0n) {
+    return {
+      status: "error",
+      message: "Loan repay amount cannot be 0.",
+    };
+  }
+
   const [simulationState, isSmartAccount] = await Promise.all([
     getSimulationState({
-      actionType: "market-repay-withdraw-collateral",
+      actionType: "market",
       accountAddress,
       marketId,
       publicClient,
+      requiresPublicReallocation: false,
     }),
     getIsSmartAccount(publicClient, accountAddress),
   ]);
@@ -106,6 +112,7 @@ export async function prepareMarketRepayWithCollateralAction({
     (loanSwapAmount * BigInt(Math.floor(slippageMultiplier * FACTOR_SCALE))) / BigInt(FACTOR_SCALE);
   const maxCollateralSwapAmount = MathLib.mulDivDown(loanSwapAmountWithSlippage, ORACLE_PRICE_SCALE, market.price);
 
+  // Need to move worst case collateral into adapter, so must exist
   if (maxCollateralSwapAmount > positionCollateralBefore) {
     return {
       status: "error",
@@ -118,7 +125,7 @@ export async function prepareMarketRepayWithCollateralAction({
     // Exact buy of loan assets
     paraswapQuote = await getParaswapExactBuy({
       publicClient: publicClient,
-      accountAddress: paraswapAdapterAddress, // User is the paraswap adapter
+      accountAddress: PARASWAP_ADAPTER_ADDRESS, // User is the paraswap adapter
       srcTokenAddress: collateralTokenAddress,
       destTokenAddress: loanTokenAddress,
       maxSrcTokenAmount: maxCollateralSwapAmount,
@@ -146,11 +153,11 @@ export async function prepareMarketRepayWithCollateralAction({
       {
         type: "Blue_WithdrawCollateral",
         sender: accountAddress,
-        address: morphoBlueAddress,
+        address: MORPHO_BLUE_ADDRESS,
         args: {
           id: marketId,
           onBehalf: accountAddress,
-          receiver: paraswapAdapterAddress,
+          receiver: PARASWAP_ADAPTER_ADDRESS,
           assets: closingPosition ? accountPosition.collateral : maxCollateralSwapAmount, // Full collateral withdraw if closing position - bundler SDK has issues with maxUint256, but this works the same
         },
       },
@@ -164,7 +171,6 @@ export async function prepareMarketRepayWithCollateralAction({
 
     collateralWithdrawSubBundleEncoded = encodeBundle(collateralWithdrawSubBundle, simulationState, !isSmartAccount);
   } catch (e) {
-    console.log("ERROR", e);
     return {
       status: "error",
       message: `Simulation Error: ${(e instanceof Error ? e.message : JSON.stringify(e)).split("0x")[0]}`,
@@ -199,15 +205,15 @@ export async function prepareMarketRepayWithCollateralAction({
             collateralTokenAddress,
             loanTokenAddress,
             paraswapQuote.offsets,
-            generalAdapter1Address
+            GENERAL_ADAPTER_1_ADDRESS
           ),
           // Sweep any leftover collateral assets from paraswap adapter to GA1
           BundlerAction.erc20Transfer(
             CHAIN_ID,
             collateralTokenAddress,
-            generalAdapter1Address,
+            GENERAL_ADAPTER_1_ADDRESS,
             maxUint256,
-            paraswapAdapterAddress
+            PARASWAP_ADAPTER_ADDRESS
           ),
         ].flat()
       ),
@@ -251,6 +257,7 @@ export async function prepareMarketRepayWithCollateralAction({
         tx: getBundleTx,
       },
     ],
+    // TODO: get sim state before and after and use the helper to compute this change
     positionCollateralChange: {
       before: positionCollateralBefore,
       after: userPositionAfter?.collateral ?? BigInt(0),

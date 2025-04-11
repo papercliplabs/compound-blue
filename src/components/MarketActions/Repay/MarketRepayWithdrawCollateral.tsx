@@ -19,9 +19,9 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import AssetFormField from "../../AssetFormField";
 import { MarketId } from "@morpho-org/blue-sdk";
 import {
-  prepareMarketRepayWithdrawCollateralAction,
-  PrepareMarketRepayWithdrawCollateralActionReturnType,
-} from "@/actions/prepareMarketRepayWithdrawCollateralAction";
+  prepareMarketRepayAndWithdrawCollateralAction,
+  PrepareMarketRepayAndWithdrawCollateralActionReturnType,
+} from "@/actions/prepareMarketRepayAndWithdrawCollateralAction";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import PoweredByMorpho from "../../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
@@ -41,7 +41,7 @@ export default function MarketRepayWithdrawCollateral({
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [preparedAction, setPreparedAction] = useState<
-    PrepareMarketRepayWithdrawCollateralActionReturnType | undefined
+    PrepareMarketRepayAndWithdrawCollateralActionReturnType | undefined
   >(undefined);
   const [success, setSuccess] = useState(false);
 
@@ -159,7 +159,7 @@ export default function MarketRepayWithdrawCollateral({
           ? maxUint256
           : parseUnits(numberToString(withdrawCollateralAmount), market.collateralAsset.decimals);
 
-      const preparedAction = await prepareMarketRepayWithdrawCollateralAction({
+      const preparedAction = await prepareMarketRepayAndWithdrawCollateralAction({
         publicClient,
         accountAddress: address,
         marketId: market.marketId as MarketId,

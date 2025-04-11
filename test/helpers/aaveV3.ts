@@ -1,4 +1,4 @@
-import { Address, erc20Abi, isAddressEqual, maxUint256, zeroAddress } from "viem";
+import { Address, erc20Abi, maxUint256 } from "viem";
 import { writeContract, readContract } from "viem/actions";
 import { aaveV3PoolAbi } from "@/abis/aaveV3PoolAbi";
 import { AAVE_V3_POOL_ADDRESS } from "@/config";
