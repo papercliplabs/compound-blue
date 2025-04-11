@@ -1,5 +1,6 @@
-import { addresses, DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib } from "@morpho-org/blue-sdk";
+import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib } from "@morpho-org/blue-sdk";
 import {
+  getMarketSimulationStateAccountingForPublicReallocation,
   getSignatureRequirementDescription,
   getTransactionRequirementDescription,
   PrepareActionReturnType,
@@ -14,14 +15,13 @@ import {
 } from "@morpho-org/bundler-sdk-viem";
 import { AAVE_V3_POOL_ADDRESS, CHAIN_ID } from "@/config";
 import { TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
-import { getSimulationState } from "@/data/getSimulationState";
 import { readContract } from "viem/actions";
 import { aaveV3PoolAbi } from "@/abis/aaveV3PoolAbi";
 import { getIsSmartAccount } from "@/data/getIsSmartAccount";
 import { bigIntMin } from "@/utils/bigint";
 import { createBundle, morphoSupplyCollateral } from "./bundler3";
-
-const { morpho: morphoBlueAddress, bundler3 } = addresses[CHAIN_ID];
+import { AAVE_V3_MIGRATION_ADAPTER_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS } from "@/utils/constants";
+import { fetchMarket } from "@morpho-org/blue-sdk-viem";
 
 // 0.03% buffer on full balance transfers to account for accrued interest between now and execution (both on aTokens/collateral and the vTokens/loan).
 // This gives ~1 day grace period for execution for markets with 10% APY which is useful for multisigs.
@@ -40,7 +40,6 @@ interface PrepareAaveV3MarketMigrationActionParameters {
   marketId: MarketId;
   collateralTokenAmount: bigint; // Max uint256 for entire AAVE collateral balance (note: aTokens and their underlying have same decimals)
   loanTokenAmount: bigint; // Max uint256 for entire AAVE loan amount
-  requiresPublicReallocation: boolean;
   allocatingVaultAddresses: Address[];
 }
 
@@ -50,13 +49,9 @@ export async function prepareAaveV3MarketMigrationAction({
   marketId,
   collateralTokenAmount,
   loanTokenAmount,
-  requiresPublicReallocation,
   allocatingVaultAddresses,
 }: PrepareAaveV3MarketMigrationActionParameters): Promise<PrepareActionReturnType> {
-  const { aaveV3CoreMigrationAdapter: aaveV3MigrationAdapterAddress, paraswapAdapter: paraswapAdapterAddress } =
-    bundler3;
-
-  if (!aaveV3MigrationAdapterAddress || !paraswapAdapterAddress) {
+  if (!AAVE_V3_MIGRATION_ADAPTER_ADDRESS) {
     return {
       status: "error",
       message: "Aave V3 Migrations are not currently supported (missing adapter(s)).",
@@ -70,27 +65,8 @@ export async function prepareAaveV3MarketMigrationAction({
     };
   }
 
-  const [simulationState, isSmartAccount] = await Promise.all([
-    getSimulationState({
-      actionType: "market-supply-collateral-borrow",
-      accountAddress,
-      marketId,
-      publicClient,
-      allocatingVaultAddresses,
-      requiresReallocation: requiresPublicReallocation,
-    }),
-    getIsSmartAccount(publicClient, accountAddress),
-  ]);
-
-  const market = simulationState.getMarket(marketId);
-  const { collateralToken: collateralTokenAddress, loanToken: loanTokenAddress } = market.params;
-
-  if (!market.price) {
-    return {
-      status: "error",
-      message: "Error fetching market oracle price.",
-    };
-  }
+  const marketOnly = await fetchMarket(marketId, publicClient);
+  const { collateralToken: collateralTokenAddress, loanToken: loanTokenAddress } = marketOnly.params;
 
   const [aTokenAddress, variableDebtTokenAddress] = await Promise.all([
     readContract(publicClient, {
@@ -125,7 +101,7 @@ export async function prepareAaveV3MarketMigrationAction({
       abi: erc20Abi,
       address: aTokenAddress,
       functionName: "allowance",
-      args: [accountAddress, bundler3.generalAdapter1],
+      args: [accountAddress, GENERAL_ADAPTER_1_ADDRESS],
     }),
   ]);
 
@@ -141,6 +117,18 @@ export async function prepareAaveV3MarketMigrationAction({
     ? (accountVTokenBalance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE
     : loanTokenAmount;
 
+  const [simulationState, isSmartAccount] = await Promise.all([
+    getMarketSimulationStateAccountingForPublicReallocation({
+      accountAddress,
+      marketId,
+      publicClient,
+      allocatingVaultAddresses,
+      requestedBorrowAmount: initialBorrowAmount,
+    }),
+    getIsSmartAccount(publicClient, accountAddress),
+  ]);
+  const market = simulationState.getMarket(marketId);
+
   // Could use permit2, but AAVE doesn't use permit2, and the assumption is the user likely will only do this once, so direct approval is actually more user friendly (2 steps instead of 3).
   // aTokens do support permit, which would be best, but keeping simple for now.
   const aTokenApproveTx: ReturnType<TransactionRequest["tx"]> = {
@@ -148,10 +136,17 @@ export async function prepareAaveV3MarketMigrationAction({
     data: encodeFunctionData({
       abi: erc20Abi,
       functionName: "approve",
-      args: [bundler3.generalAdapter1, requiredATokenAllowance],
+      args: [GENERAL_ADAPTER_1_ADDRESS, requiredATokenAllowance],
     }),
     value: BigInt(0),
   };
+
+  if (!market.price) {
+    return {
+      status: "error",
+      message: "Error fetching market oracle price.",
+    };
+  }
 
   // Override simulation state for actions not supported by the simulation SDK
   const position = simulationState.getPosition(accountAddress, marketId);
@@ -164,11 +159,11 @@ export async function prepareAaveV3MarketMigrationAction({
       {
         type: "Blue_Borrow",
         sender: accountAddress,
-        address: morphoBlueAddress,
+        address: MORPHO_BLUE_ADDRESS,
         args: {
           id: marketId,
           onBehalf: accountAddress,
-          receiver: aaveV3MigrationAdapterAddress,
+          receiver: AAVE_V3_MIGRATION_ADAPTER_ADDRESS,
           assets: initialBorrowAmount,
           slippage: DEFAULT_SLIPPAGE_TOLERANCE,
         },
@@ -211,19 +206,19 @@ export async function prepareAaveV3MarketMigrationAction({
           BundlerAction.erc20Transfer(
             CHAIN_ID,
             loanTokenAddress,
-            bundler3.generalAdapter1,
+            GENERAL_ADAPTER_1_ADDRESS,
             maxUint256,
-            aaveV3MigrationAdapterAddress!
+            AAVE_V3_MIGRATION_ADAPTER_ADDRESS
           ),
           // Use GA1 to move aTokens into aaveV3MigrationAdapter, GA1 must have previously been approved to do so
           BundlerAction.erc20TransferFrom(
             CHAIN_ID,
             aTokenAddress,
             collateralTokenAmount, // aTokens and underlying have same number of decimals
-            bundler3.aaveV3CoreMigrationAdapter
+            AAVE_V3_MIGRATION_ADAPTER_ADDRESS
           ),
           // Use aaveV3MigrationAdapter to withdraw collateral to GA1 by redeem all aTokens in the contract
-          BundlerAction.aaveV3Withdraw(CHAIN_ID, collateralTokenAddress, maxUint256, bundler3.generalAdapter1),
+          BundlerAction.aaveV3Withdraw(CHAIN_ID, collateralTokenAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
         ].flat()
       ),
       // Collateral will be withdrawn from GA1 here to complete the supply collateral

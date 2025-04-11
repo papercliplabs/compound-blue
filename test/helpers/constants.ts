@@ -1,5 +1,4 @@
-import { CHAIN_ID } from "@/config";
-import { addresses, MarketId } from "@morpho-org/blue-sdk";
+import { MarketId } from "@morpho-org/blue-sdk";
 
 export const WETH_ADDRESS = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
 export const USDC_ADDRESS = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359";

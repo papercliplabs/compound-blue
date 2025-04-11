@@ -8,7 +8,7 @@ import { executeAction } from "../../helpers/actions";
 import { getMorphoVaultAccountBalance } from "../../helpers/morpho";
 import { AnvilTestClient } from "@morpho-org/test";
 import { expectZeroErc20Balances } from "../../helpers/erc20";
-import { AAVE_V3_CORE_MIGRATION_ADAPTER_ADDRESS, BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
+import { AAVE_V3_MIGRATION_ADAPTER_ADDRESS, BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
 
 const USDC_VAULT_ADDRESS = "0x781FB7F6d845E3bE129289833b04d43Aa8558c42";
 
@@ -74,7 +74,7 @@ async function runVaultMigrationTest({
   // Check no leftover balances
   await expectZeroErc20Balances(
     client,
-    [BUNDLER3_ADDRESS, AAVE_V3_CORE_MIGRATION_ADAPTER_ADDRESS!, GENERAL_ADAPTER_1_ADDRESS!],
+    [BUNDLER3_ADDRESS, AAVE_V3_MIGRATION_ADAPTER_ADDRESS!, GENERAL_ADAPTER_1_ADDRESS!],
     assetAddress
   );
 }

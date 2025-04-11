@@ -1,45 +1,46 @@
-import { getSimulationState, GetSimulationStateMarketRepayWithdrawParameters } from "@/data/getSimulationState";
-import { addresses, DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
-import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } from "./helpers";
-import { CHAIN_ID } from "@/config";
+import { getSimulationState } from "@/data/getSimulationState";
+import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId } from "@morpho-org/blue-sdk";
+import {
+  computeMarketPositionChange,
+  MarketPositionChange,
+  prepareBundle,
+  PrepareMorphoActionReturnType,
+} from "./helpers";
 import { InputBundlerOperation } from "@morpho-org/bundler-sdk-viem";
-import { maxUint256 } from "viem";
+import { Address, Client, maxUint256 } from "viem";
 import { getIsSmartAccount } from "@/data/getIsSmartAccount";
+import { MORPHO_BLUE_ADDRESS } from "@/utils/constants";
 
-const { morpho } = addresses[CHAIN_ID];
-
-type PrepareMarketRepayWithdrawCollateralActionParameters = Omit<
-  GetSimulationStateMarketRepayWithdrawParameters,
-  "actionType"
-> & {
+interface PrepareMarketRepayWithdrawCollateralActionParameters {
+  publicClient: Client;
+  marketId: MarketId;
+  accountAddress: Address;
   repayAmount: bigint; // Max uint256 for entire position balance
   withdrawCollateralAmount: bigint; // Max uint256 for entire position collateral balance
-};
+}
 
 export type PrepareMarketRepayWithdrawCollateralActionReturnType =
   | (Omit<
       Extract<PrepareMorphoActionReturnType, { status: "success" }>,
       "initialSimulationState" | "finalSimulationState"
-    > & {
-      positionCollateralChange: SimulatedValueChange<bigint>;
-      positionLoanChange: SimulatedValueChange<bigint>;
-      positionLtvChange: SimulatedValueChange<bigint>;
-    })
+    > &
+      MarketPositionChange)
   | Extract<PrepareMorphoActionReturnType, { status: "error" }>;
 
 export async function prepareMarketRepayWithdrawCollateralAction({
+  publicClient,
+  marketId,
+  accountAddress,
   repayAmount,
   withdrawCollateralAmount,
-  accountAddress,
-  marketId,
-  publicClient,
 }: PrepareMarketRepayWithdrawCollateralActionParameters): Promise<PrepareMarketRepayWithdrawCollateralActionReturnType> {
   const [simulationState, isSmartAccount] = await Promise.all([
     getSimulationState({
-      actionType: "market-repay-withdraw-collateral",
+      actionType: "market",
       accountAddress,
       marketId,
       publicClient,
+      requiresPublicReallocation: false,
     }),
     getIsSmartAccount(publicClient, accountAddress),
   ]);
@@ -48,15 +49,8 @@ export async function prepareMarketRepayWithdrawCollateralAction({
   const isMaxWithdrawCollateral = withdrawCollateralAmount == maxUint256;
 
   const userPosition = simulationState.getPosition(accountAddress, marketId);
-  if ((isMaxRepay || isMaxWithdrawCollateral) && !userPosition) {
-    return {
-      status: "error",
-      message: "Pre simulation error: Missing user position.",
-    };
-  }
-
   if (isMaxWithdrawCollateral) {
-    withdrawCollateralAmount = userPosition!.collateral;
+    withdrawCollateralAmount = userPosition.collateral;
   }
 
   const isRepay = repayAmount > BigInt(0);
@@ -69,7 +63,7 @@ export async function prepareMarketRepayWithdrawCollateralAction({
             {
               type: "Blue_Repay",
               sender: accountAddress,
-              address: morpho,
+              address: MORPHO_BLUE_ADDRESS,
               args: {
                 id: marketId,
                 onBehalf: accountAddress,
@@ -85,7 +79,7 @@ export async function prepareMarketRepayWithdrawCollateralAction({
             {
               type: "Blue_WithdrawCollateral",
               sender: accountAddress,
-              address: morpho,
+              address: MORPHO_BLUE_ADDRESS,
               args: {
                 id: marketId,
                 onBehalf: accountAddress,
@@ -103,46 +97,16 @@ export async function prepareMarketRepayWithdrawCollateralAction({
   );
 
   if (preparedAction.status == "success") {
-    const positionBefore = preparedAction.initialSimulationState?.getPosition(accountAddress, marketId);
-    const positionAfter = preparedAction.finalSimulationState?.getPosition(accountAddress, marketId);
-    const marketBefore = preparedAction.initialSimulationState?.getMarket(marketId);
-    const marketAfter = preparedAction.finalSimulationState?.getMarket(marketId);
-
-    const positionCollateralBefore = positionBefore?.collateral ?? BigInt(0);
-    const positionCollateralAfter = positionAfter?.collateral ?? BigInt(0);
-
-    const positionLoanBefore = marketBefore?.toBorrowAssets(positionBefore?.borrowShares ?? BigInt(0)) ?? BigInt(0);
-    const positionLoanAfter = marketAfter?.toBorrowAssets(positionAfter?.borrowShares ?? BigInt(0)) ?? BigInt(0);
-
-    const ltvBefore =
-      positionBefore?.borrowShares == BigInt(0)
-        ? BigInt(0)
-        : (marketBefore?.getLtv({
-            collateral: positionCollateralBefore,
-            borrowShares: positionBefore?.borrowShares ?? BigInt(0),
-          }) ?? BigInt(0));
-    const ltvAfter =
-      positionAfter?.borrowShares == BigInt(0)
-        ? BigInt(0)
-        : (marketAfter?.getLtv({
-            collateral: positionCollateralAfter,
-            borrowShares: positionAfter?.borrowShares ?? BigInt(0),
-          }) ?? BigInt(0));
+    const positionChange = computeMarketPositionChange(
+      marketId,
+      accountAddress,
+      preparedAction.initialSimulationState,
+      preparedAction.finalSimulationState
+    );
 
     return {
       ...preparedAction,
-      positionCollateralChange: {
-        before: positionCollateralBefore,
-        after: positionCollateralAfter,
-      },
-      positionLoanChange: {
-        before: positionLoanBefore,
-        after: positionLoanAfter,
-      },
-      positionLtvChange: {
-        before: ltvBefore,
-        after: ltvAfter,
-      },
+      ...positionChange,
     };
   } else {
     return preparedAction;

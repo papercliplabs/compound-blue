@@ -7,7 +7,8 @@ export const {
   morpho: MORPHO_BLUE_ADDRESS,
   bundler3: {
     bundler3: BUNDLER3_ADDRESS,
-    aaveV3CoreMigrationAdapter: AAVE_V3_CORE_MIGRATION_ADAPTER_ADDRESS,
+    aaveV3CoreMigrationAdapter: AAVE_V3_MIGRATION_ADAPTER_ADDRESS,
     generalAdapter1: GENERAL_ADAPTER_1_ADDRESS,
+    paraswapAdapter: PARASWAP_ADAPTER_ADDRESS,
   },
 } = addresses[CHAIN_ID];
