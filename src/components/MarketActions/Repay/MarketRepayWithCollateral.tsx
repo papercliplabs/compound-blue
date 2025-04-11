@@ -6,7 +6,6 @@ import { ActionFlowDialog, ActionFlowReview, ActionFlowSummary } from "../../Act
 import { usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
-import { MarketActionsProps } from "..";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../ui/form";
 import { z } from "zod";
@@ -25,13 +24,17 @@ import {
   PrepareMarketRepayWithCollateralActionReturnType,
 } from "@/actions/prepareMarketRepayWithCollateralAction";
 import { MetricChange } from "@/components/MetricChange";
+import { MarketNonIdle } from "@/data/whisk/getMarket";
 
 const MAX_SLIPPAGE_TOLERANCE_PCT = 15;
 
 export default function MarketRepayWithCollateral({
   market,
   onCloseAfterSuccess,
-}: MarketActionsProps & { onCloseAfterSuccess?: () => void }) {
+}: {
+  market: MarketNonIdle;
+  onCloseAfterSuccess?: () => void;
+}) {
   const [preparedAction, setPreparedAction] = useState<PrepareMarketRepayWithCollateralActionReturnType | undefined>(
     undefined
   );

@@ -10,7 +10,6 @@ import {
   prepareMarketLeveragedBorrowAction,
   PrepareMarketLeveragedBorrowActionReturnType,
 } from "@/actions/prepareMarketLeverageBorrowAction";
-import { MarketActionsProps } from "..";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../ui/form";
 import { z } from "zod";
@@ -28,6 +27,7 @@ import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "..
 import { computeMaxLeverageFactor } from "@/actions/prepareMarketLeverageBorrowAction/computeLeverageValues";
 import { MetricChange } from "../../MetricChange";
 import NumberFlow from "../../ui/NumberFlow";
+import { MarketNonIdle } from "@/data/whisk/getMarket";
 
 const MAX_SLIPPAGE_TOLERANCE_PCT = 15;
 const MIN_MULTIPLIER = 1.1;
@@ -43,7 +43,10 @@ function computeMaxMultiplier(lltv: number, maxSlippageTolerance: number) {
 export default function MarketLeverageBorrow({
   market,
   onCloseAfterSuccess,
-}: MarketActionsProps & { onCloseAfterSuccess?: () => void }) {
+}: {
+  market: MarketNonIdle;
+  onCloseAfterSuccess?: () => void;
+}) {
   const [preparedAction, setPreparedAction] = useState<PrepareMarketLeveragedBorrowActionReturnType | undefined>(
     undefined
   );
