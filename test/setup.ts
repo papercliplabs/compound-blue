@@ -54,6 +54,6 @@ export const createViemTest = <chain extends Chain>(chain: chain, parameters: An
 
 export const test = createViemTest(polygon, {
   forkUrl: process.env.NEXT_PUBLIC_RPC_URL_1!,
-  forkBlockNumber: 70144589,
+  forkBlockNumber: 70183752,
   hardfork: "Latest",
 });

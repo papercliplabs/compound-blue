@@ -1,5 +1,8 @@
 import { SignatureRequest, TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 import { PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION } from "@/config";
+import { getSimulationState } from "@/data/getSimulationState";
+import { WAD } from "@/utils/constants";
+import { MarketId } from "@morpho-org/blue-sdk";
 import {
   encodeBundle,
   finalizeBundle,
@@ -8,8 +11,8 @@ import {
   SignatureRequirement,
   TransactionRequirement,
 } from "@morpho-org/bundler-sdk-viem";
-import { SimulationResult, SimulationState } from "@morpho-org/simulation-sdk";
-import { Address } from "viem";
+import { MaybeDraft, SimulationResult, SimulationState } from "@morpho-org/simulation-sdk";
+import { Address, Client } from "viem";
 
 export type PrepareActionReturnType =
   | {
@@ -25,8 +28,8 @@ export type PrepareActionReturnType =
 export type PrepareMorphoActionReturnType =
   | (Extract<PrepareActionReturnType, { status: "success" }> & {
       status: "success";
-      initialSimulationState?: SimulationResult[number];
-      finalSimulationState?: SimulationResult[number];
+      initialSimulationState: SimulationResult[number];
+      finalSimulationState: SimulationResult[number];
     })
   | Extract<PrepareActionReturnType, { status: "error" }>;
 
@@ -102,17 +105,112 @@ export function prepareBundle(
         },
       ]);
 
+    const initialSimulationState = bundle.steps?.[0];
+    const finalSimulationState = bundle.steps?.[bundle.steps.length - 1];
+
+    if (!initialSimulationState || !finalSimulationState) {
+      return {
+        status: "error",
+        message: "Simulation Error: Missing simulation state",
+      };
+    }
+
     return {
       status: "success",
       signatureRequests,
       transactionRequests,
-      initialSimulationState: bundle.steps?.[0],
-      finalSimulationState: bundle.steps?.[bundle.steps.length - 1],
+      initialSimulationState,
+      finalSimulationState,
     };
   } catch (e) {
     return {
       status: "error",
       message: `Simulation Error: ${(e instanceof Error ? e.message : JSON.stringify(e)).split("0x")[0]}`,
     };
+  }
+}
+
+export type MarketPositionChange = {
+  positionCollateralChange: SimulatedValueChange<bigint>;
+  positionLoanChange: SimulatedValueChange<bigint>;
+  positionLtvChange: SimulatedValueChange<bigint>;
+};
+
+export function computeMarketPositionChange(
+  marketId: MarketId,
+  accountAddress: Address,
+  initialSimulationState: SimulationState | MaybeDraft<SimulationState>,
+  finalSimulationState: SimulationState | MaybeDraft<SimulationState>
+): MarketPositionChange {
+  const positionBefore = initialSimulationState.getPosition(accountAddress, marketId);
+  const positionAfter = finalSimulationState.getPosition(accountAddress, marketId);
+  const marketBefore = initialSimulationState.getMarket(marketId);
+  const marketAfter = finalSimulationState.getMarket(marketId);
+
+  const ltvBefore = marketBefore.getLtv({
+    collateral: positionBefore.collateral,
+    borrowShares: positionBefore.borrowShares,
+  });
+  const ltvAfter = marketAfter.getLtv({
+    collateral: positionAfter.collateral,
+    borrowShares: positionAfter.borrowShares,
+  });
+
+  return {
+    positionCollateralChange: {
+      before: positionBefore.collateral,
+      after: positionAfter.collateral,
+    },
+    positionLoanChange: {
+      before: marketBefore.toBorrowAssets(positionBefore.borrowShares),
+      after: marketAfter.toBorrowAssets(positionAfter.borrowShares),
+    },
+    positionLtvChange: {
+      before: ltvBefore ?? BigInt(0),
+      after: ltvAfter ?? BigInt(0),
+    },
+  };
+}
+
+// Build the simulation state, and include state for public reallocation if it is required based on the requested borrow amount
+export async function getMarketSimulationStateAccountingForPublicReallocation({
+  publicClient,
+  marketId,
+  accountAddress,
+  allocatingVaultAddresses,
+  requestedBorrowAmount,
+}: {
+  publicClient: Client;
+  marketId: MarketId;
+  accountAddress: Address;
+  allocatingVaultAddresses: Address[];
+  requestedBorrowAmount: bigint;
+}) {
+  const simulationStateWithoutPublicReallocation = await getSimulationState({
+    actionType: "market",
+    accountAddress,
+    marketId,
+    publicClient,
+    requiresPublicReallocation: false,
+  });
+
+  const market = simulationStateWithoutPublicReallocation.getMarket(marketId);
+
+  const supplyAssets = market.totalSupplyAssets;
+  const borrowAssets = market.totalBorrowAssets + requestedBorrowAmount;
+  const utilization = supplyAssets > BigInt(0) ? (borrowAssets * WAD) / supplyAssets : BigInt(0);
+  const requiresPublicReallocation = utilization > PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION;
+
+  if (!requiresPublicReallocation) {
+    return simulationStateWithoutPublicReallocation;
+  } else {
+    return await getSimulationState({
+      actionType: "market",
+      accountAddress,
+      marketId,
+      publicClient,
+      allocatingVaultAddresses,
+      requiresPublicReallocation: true,
+    });
   }
 }

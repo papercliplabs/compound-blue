@@ -11,9 +11,10 @@ import { expect } from "vitest";
 export async function getMorphoMarketAccountBalances(client: AnvilTestClient, marketId: MarketId) {
   const simulationState = await getSimulationState({
     publicClient: client,
-    actionType: "market-repay-withdraw-collateral",
+    actionType: "market",
     accountAddress: client.account.address,
     marketId,
+    requiresPublicReallocation: false,
   });
 
   const accrualPosition = simulationState.getAccrualPosition(client.account.address, marketId);
@@ -23,7 +24,7 @@ export async function getMorphoMarketAccountBalances(client: AnvilTestClient, ma
 export async function getMorphoVaultAccountBalance(client: AnvilTestClient, vaultAddress: Address) {
   const simulationState = await getSimulationState({
     publicClient: client,
-    actionType: "vault-supply",
+    actionType: "vault",
     accountAddress: client.account.address,
     vaultAddress,
   });
@@ -42,9 +43,10 @@ export async function dealAndBorrowFromMorphoMarket(
 ) {
   const simulationState = await getSimulationState({
     publicClient: client,
-    actionType: "market-repay-withdraw-collateral",
+    actionType: "market",
     accountAddress: client.account.address,
     marketId,
+    requiresPublicReallocation: false,
   });
   const market = simulationState.getMarket(marketId);
 

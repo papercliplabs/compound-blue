@@ -16,59 +16,43 @@ import { getBlock } from "viem/actions";
 
 const { bundler3 } = addresses[CHAIN_ID];
 
-type GetSimulationStateBaseParameters = {
+type GetSimulationStateMarketTypeParameters = {
+  actionType: "market";
+  marketId: MarketId;
+} & (
+  | {
+      requiresPublicReallocation: false;
+    }
+  | {
+      requiresPublicReallocation: true;
+      allocatingVaultAddresses: Address[];
+    }
+);
+
+type GetSimulationStateVaultTypeParameters = {
+  actionType: "vault";
+  vaultAddress: Address;
+};
+
+export type GetSimulationStateParameters = {
   publicClient: Client;
   accountAddress: Address;
-};
-
-export type GetSimulationStateVaultSupplyParameters = GetSimulationStateBaseParameters & {
-  actionType: "vault-supply";
-  vaultAddress: Address;
-};
-
-export type GetSimulationStateVaultWithdrawParameters = GetSimulationStateBaseParameters & {
-  actionType: "vault-withdraw";
-  vaultAddress: Address;
-};
-
-export type GetSimulationStateMarketRepayWithdrawParameters = GetSimulationStateBaseParameters & {
-  actionType: "market-repay-withdraw-collateral";
-  marketId: MarketId;
-};
-
-export type GetSimuationStateMarketSupplyBorrowParameters = GetSimulationStateBaseParameters & {
-  actionType: "market-supply-collateral-borrow";
-  marketId: MarketId;
-  allocatingVaultAddresses: Address[];
-  requiresReallocation: boolean;
-};
-
-export type GetSimulationStateParameters =
-  | GetSimulationStateVaultSupplyParameters
-  | GetSimulationStateVaultWithdrawParameters
-  | GetSimulationStateMarketRepayWithdrawParameters
-  | GetSimuationStateMarketSupplyBorrowParameters;
+} & (GetSimulationStateMarketTypeParameters | GetSimulationStateVaultTypeParameters);
 
 // Derive simulation state from real time on-chain data
 // Only use this for preparing actions as it is an expensive operation
 export async function getSimulationState({ publicClient, accountAddress, ...params }: GetSimulationStateParameters) {
   let vaultAddresses: Address[] = [];
   let marketIds: MarketId[] = [];
+
   switch (params.actionType) {
-    case "vault-supply":
-    case "vault-withdraw":
+    case "vault":
       vaultAddresses = [params.vaultAddress];
       break;
-    case "market-repay-withdraw-collateral":
+    case "market":
       marketIds = [params.marketId];
-      break;
-    case "market-supply-collateral-borrow":
-      if (params.requiresReallocation) {
-        // Requires everything for public reallocation
+      if (params.requiresPublicReallocation) {
         vaultAddresses = params.allocatingVaultAddresses;
-        marketIds = [params.marketId]; // All other markets of this vaults get's appended below (potential source markets for public reallocation)
-      } else {
-        marketIds = [params.marketId];
       }
       break;
   }
@@ -112,12 +96,10 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
   // Derive the tokens that will be involved in the action
   let tokenAddresses: Address[] = [];
   switch (params.actionType) {
-    case "vault-supply":
-    case "vault-withdraw":
+    case "vault":
       tokenAddresses = [vaults[0].asset, vaults[0].address]; // Underliying and the vault share token move
       break;
-    case "market-repay-withdraw-collateral":
-    case "market-supply-collateral-borrow":
+    case "market":
       tokenAddresses = [markets[0].params.loanToken, markets[0].params.collateralToken];
       break;
   }

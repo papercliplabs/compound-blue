@@ -1,62 +1,56 @@
-import { GetSimuationStateMarketSupplyBorrowParameters, getSimulationState } from "@/data/getSimulationState";
-import { addresses, DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
-import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } from "./helpers";
-import { CHAIN_ID } from "@/config";
+import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId } from "@morpho-org/blue-sdk";
+import {
+  computeMarketPositionChange,
+  getMarketSimulationStateAccountingForPublicReallocation,
+  MarketPositionChange,
+  prepareBundle,
+  PrepareMorphoActionReturnType,
+} from "./helpers";
 import { InputBundlerOperation } from "@morpho-org/bundler-sdk-viem";
-import { maxUint256 } from "viem";
+import { Address, Client, maxUint256 } from "viem";
 import { getIsSmartAccount } from "@/data/getIsSmartAccount";
+import { MORPHO_BLUE_ADDRESS } from "@/utils/constants";
 
-const { morpho } = addresses[CHAIN_ID];
-
-type PrepareMarketSupplyCollateralBorrowActionParameters = Omit<
-  GetSimuationStateMarketSupplyBorrowParameters,
-  "actionType"
-> & {
+interface PrepareMarketSupplyCollateralBorrowActionParameters {
+  publicClient: Client;
+  marketId: MarketId;
+  allocatingVaultAddresses: Address[];
+  accountAddress: Address;
   supplyCollateralAmount: bigint; // Max uint256 for entire account collateral balance
   borrowAmount: bigint; // Don't support max here since we will only allow origination below a marging from LLTV
-};
+}
 
 export type PrepareMarketSupplyCollateralBorrowActionReturnType =
   | (Omit<
       Extract<PrepareMorphoActionReturnType, { status: "success" }>,
       "initialSimulationState" | "finalSimulationState"
-    > & {
-      positionCollateralChange: SimulatedValueChange<bigint>;
-      positionLoanChange: SimulatedValueChange<bigint>;
-      positionLtvChange: SimulatedValueChange<bigint>;
-    })
+    > &
+      MarketPositionChange)
   | Extract<PrepareMorphoActionReturnType, { status: "error" }>;
 
 export async function prepareMarketSupplyCollateralBorrowAction({
+  publicClient,
+  marketId,
+  allocatingVaultAddresses,
+  accountAddress,
   supplyCollateralAmount,
   borrowAmount,
-  accountAddress,
-  marketId,
-  publicClient,
-  ...params
 }: PrepareMarketSupplyCollateralBorrowActionParameters): Promise<PrepareMarketSupplyCollateralBorrowActionReturnType> {
   const [simulationState, isSmartAccount] = await Promise.all([
-    getSimulationState({
-      actionType: "market-supply-collateral-borrow",
-      accountAddress,
+    getMarketSimulationStateAccountingForPublicReallocation({
       marketId,
+      accountAddress,
       publicClient,
-      ...params,
+      allocatingVaultAddresses,
+      requestedBorrowAmount: borrowAmount,
     }),
     getIsSmartAccount(publicClient, accountAddress),
   ]);
 
-  const market = simulationState.markets?.[marketId];
-  const userCollateralBalance =
-    simulationState.holdings?.[accountAddress]?.[market?.params.collateralToken ?? "0x"]?.balance;
+  const market = simulationState.getMarket(marketId);
+  const userCollateralBalance = simulationState.getHolding(accountAddress, market.params.collateralToken).balance;
+
   if (supplyCollateralAmount == maxUint256) {
-    if (!userCollateralBalance) {
-      // Won't happen, we need this to have a correct simulation anyways
-      return {
-        status: "error",
-        message: "Pre simulation error: Missing user asset balance for max collateral supply.",
-      };
-    }
     supplyCollateralAmount = userCollateralBalance;
   }
 
@@ -70,7 +64,7 @@ export async function prepareMarketSupplyCollateralBorrowAction({
             {
               type: "Blue_SupplyCollateral",
               sender: accountAddress,
-              address: morpho,
+              address: MORPHO_BLUE_ADDRESS,
               args: {
                 id: marketId,
                 onBehalf: accountAddress,
@@ -84,7 +78,7 @@ export async function prepareMarketSupplyCollateralBorrowAction({
             {
               type: "Blue_Borrow",
               sender: accountAddress,
-              address: morpho,
+              address: MORPHO_BLUE_ADDRESS,
               args: {
                 id: marketId,
                 onBehalf: accountAddress,
@@ -103,46 +97,16 @@ export async function prepareMarketSupplyCollateralBorrowAction({
   );
 
   if (preparedAction.status == "success") {
-    const positionBefore = preparedAction.initialSimulationState?.positions?.[accountAddress]?.[marketId];
-    const positionAfter = preparedAction.finalSimulationState?.positions?.[accountAddress]?.[marketId];
-    const marketBefore = preparedAction.initialSimulationState?.markets?.[marketId];
-    const marketAfter = preparedAction.finalSimulationState?.markets?.[marketId];
-
-    const positionCollateralBefore = positionBefore?.collateral ?? BigInt(0);
-    const positionCollateralAfter = positionAfter?.collateral ?? BigInt(0);
-
-    const positionLoanBefore = marketBefore?.toBorrowAssets(positionBefore?.borrowShares ?? BigInt(0)) ?? BigInt(0);
-    const positionLoanAfter = marketAfter?.toBorrowAssets(positionAfter?.borrowShares ?? BigInt(0)) ?? BigInt(0);
-
-    const ltvBefore =
-      positionBefore?.borrowShares == BigInt(0)
-        ? BigInt(0)
-        : (marketBefore?.getLtv({
-            collateral: positionCollateralBefore,
-            borrowShares: positionBefore?.borrowShares ?? BigInt(0),
-          }) ?? BigInt(0));
-    const ltvAfter =
-      positionAfter?.borrowShares == BigInt(0)
-        ? BigInt(0)
-        : (marketAfter?.getLtv({
-            collateral: positionCollateralAfter,
-            borrowShares: positionAfter?.borrowShares ?? BigInt(0),
-          }) ?? BigInt(0));
+    const positionChange = computeMarketPositionChange(
+      marketId,
+      accountAddress,
+      preparedAction.initialSimulationState,
+      preparedAction.finalSimulationState
+    );
 
     return {
       ...preparedAction,
-      positionCollateralChange: {
-        before: positionCollateralBefore,
-        after: positionCollateralAfter,
-      },
-      positionLoanChange: {
-        before: positionLoanBefore,
-        after: positionLoanAfter,
-      },
-      positionLtvChange: {
-        before: ltvBefore,
-        after: ltvAfter,
-      },
+      ...positionChange,
     };
   } else {
     return preparedAction;
