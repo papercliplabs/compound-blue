@@ -17,7 +17,6 @@ import { Form } from "@/components/ui/form";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import AssetFormField from "../../AssetFormField";
-import { MarketActionsProps } from "..";
 import { MarketId } from "@morpho-org/blue-sdk";
 import {
   prepareMarketRepayWithdrawCollateralAction,
@@ -30,11 +29,15 @@ import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
 import { ArrowRight } from "lucide-react";
 import { MetricChange } from "../../MetricChange";
+import { MarketNonIdle } from "@/data/whisk/getMarket";
 
 export default function MarketRepayWithdrawCollateral({
   market,
   onCloseAfterSuccess,
-}: MarketActionsProps & { onCloseAfterSuccess?: () => void }) {
+}: {
+  market: MarketNonIdle;
+  onCloseAfterSuccess?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [preparedAction, setPreparedAction] = useState<

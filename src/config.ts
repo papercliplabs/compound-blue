@@ -80,3 +80,6 @@ export const AAVE_V3_POOL_ADDRESS = getAddress("0x794a61358D6845594F94dc1DB02A25
 
 export const PARASWAP_PARTNER_NAME = "compound-blue";
 export const PARASWAP_PARTNER_ADDRESS = getAddress("0xCC3E7c85Bb0EE4f09380e041fee95a0caeDD4a02"); // Compoound DAO
+
+// ISO 3166-2: https://en.wikipedia.org/wiki/ISO_3166-2
+export const COUNTRY_CODES_TO_DISABLE_LEVERAGE = ["US", "GB"];

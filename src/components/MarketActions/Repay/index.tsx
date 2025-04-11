@@ -1,14 +1,17 @@
-import { MarketActionsProps } from "..";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import MarketRepayWithdrawCollateral from "./MarketRepayWithdrawCollateral";
 import MarketRepayWithCollateral from "./MarketRepayWithCollateral";
 import { Info } from "lucide-react";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "@/components/ui/tooltipPopover";
+import { MarketNonIdle } from "@/data/whisk/getMarket";
 
 export default function MarketRepay({
   market,
   onCloseAfterSuccess,
-}: MarketActionsProps & { onCloseAfterSuccess?: () => void }) {
+}: {
+  market: MarketNonIdle;
+  onCloseAfterSuccess?: () => void;
+}) {
   return (
     <Tabs defaultValue="wallet-balance" className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
