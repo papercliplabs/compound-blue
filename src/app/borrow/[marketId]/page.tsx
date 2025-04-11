@@ -15,12 +15,13 @@ import IrmChart from "@/components/IrmChart";
 import MarketActions from "@/components/MarketActions";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { WHITELISTED_MARKET_IDS } from "@/config";
+import { COUNTRY_CODES_TO_DISABLE_LEVERAGE, WHITELISTED_MARKET_IDS } from "@/config";
 import BackButton from "@/components/BackButton";
 import { AccountMarketPosition, AccountMarketPositionHighlight } from "@/components/AccountMarketPosition";
 import MarketAvailableLiquidity from "@/components/MarketAvailableLiquidity";
 import NumberFlow from "@/components/ui/NumberFlow";
 import { MarketIcon } from "@/components/MarketIdentifier";
+import { safeFetch } from "@/utils/fetch";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Market",
@@ -337,13 +338,17 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
 }
 
 async function MarketActionsWrapper({ marketId }: { marketId: Hex }) {
-  const market = await getMarket(marketId);
+  const [market, countryCode] = await Promise.all([
+    getMarket(marketId),
+    safeFetch<string>(`${process.env.NEXT_PUBLIC_URL}/api/country`),
+  ]);
+  const disableLeverage = !countryCode || COUNTRY_CODES_TO_DISABLE_LEVERAGE.includes(countryCode);
 
   if (!isNonIdleMarket(market)) {
     return null;
   }
 
-  return <MarketActions market={market} />;
+  return <MarketActions market={market} disableLeverage={disableLeverage} />;
 }
 
 async function UserMarketPositionWrapper({ marketId }: { marketId: Hex }) {

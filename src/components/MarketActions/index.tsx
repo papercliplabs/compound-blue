@@ -15,9 +15,10 @@ import MarketRepay from "./Repay";
 
 export interface MarketActionsProps {
   market: MarketNonIdle;
+  disableLeverage: boolean;
 }
 
-export default function MarketActions({ market }: MarketActionsProps) {
+export default function MarketActions({ market, disableLeverage }: MarketActionsProps) {
   const { data: accountMarketPosition } = useAccountMarketPosition(market.marketId as Hex);
   const { isDesktop, hasMounted } = useResponsiveContext();
 
@@ -35,13 +36,29 @@ export default function MarketActions({ market }: MarketActionsProps) {
   }
 
   if (isDesktop) {
-    return <MarketActionsDesktop market={market} canRepayAndWithdraw={canRepayAndWithdraw} />;
+    return (
+      <MarketActionsDesktop
+        market={market}
+        canRepayAndWithdraw={canRepayAndWithdraw}
+        disableLeverage={disableLeverage}
+      />
+    );
   } else {
-    return <MarketActionsMobile market={market} canRepayAndWithdraw={canRepayAndWithdraw} />;
+    return (
+      <MarketActionsMobile
+        market={market}
+        canRepayAndWithdraw={canRepayAndWithdraw}
+        disableLeverage={disableLeverage}
+      />
+    );
   }
 }
 
-function MarketActionsDesktop({ market, canRepayAndWithdraw }: MarketActionsProps & { canRepayAndWithdraw: boolean }) {
+function MarketActionsDesktop({
+  market,
+  canRepayAndWithdraw,
+  disableLeverage,
+}: MarketActionsProps & { canRepayAndWithdraw: boolean }) {
   const [selection, setSelection] = useState<"borrow" | "repay">("borrow");
 
   // Default to supply-borrow
@@ -76,7 +93,7 @@ function MarketActionsDesktop({ market, canRepayAndWithdraw }: MarketActionsProp
         <MarketMigrationCallout market={market} />
         <Card>
           <CardContent>
-            {selection == "borrow" && <MarketBorrow market={market} />}
+            {selection == "borrow" && <MarketBorrow market={market} disableLeverage={disableLeverage} />}
             {selection == "repay" && <MarketRepay market={market} />}
           </CardContent>
         </Card>
@@ -85,7 +102,11 @@ function MarketActionsDesktop({ market, canRepayAndWithdraw }: MarketActionsProp
   );
 }
 
-function MarketActionsMobile({ market, canRepayAndWithdraw }: MarketActionsProps & { canRepayAndWithdraw: boolean }) {
+function MarketActionsMobile({
+  market,
+  canRepayAndWithdraw,
+  disableLeverage,
+}: MarketActionsProps & { canRepayAndWithdraw: boolean }) {
   const [borrowOpen, setBorrowOpen] = useState(false);
   const [repayOpen, setRepayOpen] = useState(false);
 
@@ -103,7 +124,11 @@ function MarketActionsMobile({ market, canRepayAndWithdraw }: MarketActionsProps
             <VisuallyHidden>
               <DrawerTitle>Add collateral and borrow from market</DrawerTitle>
             </VisuallyHidden>
-            <MarketBorrow market={market} onCloseAfterSuccess={() => setBorrowOpen(false)} />
+            <MarketBorrow
+              market={market}
+              onCloseAfterSuccess={() => setBorrowOpen(false)}
+              disableLeverage={disableLeverage}
+            />
           </DrawerContent>
         </Drawer>
 
