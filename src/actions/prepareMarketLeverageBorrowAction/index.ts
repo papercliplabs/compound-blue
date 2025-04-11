@@ -253,9 +253,9 @@ export async function prepareMarketLeveragedBorrowAction({
     return createBundle(bundlerCalls);
   }
 
-  const simulationStateAfter = borrowSubBundleEncoded.steps[borrowSubBundleEncoded.steps.length - 1];
-  const marketAfter = simulationStateAfter.getMarket(marketId);
-  const userPositionAfter = simulationStateAfter.getPosition(accountAddress, marketId);
+  const simulationStateAfter = borrowSubBundleEncoded.steps?.[borrowSubBundleEncoded.steps.length - 1];
+  const marketAfter = simulationStateAfter?.getMarket(marketId);
+  const userPositionAfter = simulationStateAfter?.getPosition(accountAddress, marketId);
 
   return {
     status: "success",
@@ -284,15 +284,15 @@ export async function prepareMarketLeveragedBorrowAction({
     ],
     positionCollateralChange: {
       before: positionCollateralBefore,
-      after: userPositionAfter.collateral,
+      after: userPositionAfter?.collateral ?? BigInt(0),
     },
     positionLoanChange: {
       before: positionLoanBefore,
-      after: marketAfter.toBorrowAssets(userPositionAfter.borrowShares),
+      after: marketAfter?.toBorrowAssets(userPositionAfter?.borrowShares ?? BigInt(0)) ?? BigInt(0),
     },
     positionLtvChange: {
       before: positionLtvBefore,
-      after: marketAfter.getLtv(userPositionAfter) ?? BigInt(0),
+      after: marketAfter?.getLtv(userPositionAfter ?? { collateral: BigInt(0), borrowShares: BigInt(0) }) ?? BigInt(0),
     },
   };
 }
