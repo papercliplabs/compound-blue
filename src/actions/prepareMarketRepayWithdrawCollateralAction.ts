@@ -105,10 +105,10 @@ export async function prepareMarketRepayWithdrawCollateralAction({
   );
 
   if (preparedAction.status == "success") {
-    const positionBefore = preparedAction.initialSimulationState.positions?.[accountAddress]?.[marketId];
-    const positionAfter = preparedAction.finalSimulationState.positions?.[accountAddress]?.[marketId];
-    const marketBefore = preparedAction.initialSimulationState.markets?.[marketId];
-    const marketAfter = preparedAction.finalSimulationState.markets?.[marketId];
+    const positionBefore = preparedAction.initialSimulationState?.positions?.[accountAddress]?.[marketId];
+    const positionAfter = preparedAction.finalSimulationState?.positions?.[accountAddress]?.[marketId];
+    const marketBefore = preparedAction.initialSimulationState?.markets?.[marketId];
+    const marketAfter = preparedAction.finalSimulationState?.markets?.[marketId];
 
     const positionCollateralBefore = positionBefore?.collateral ?? BigInt(0);
     const positionCollateralAfter = positionAfter?.collateral ?? BigInt(0);

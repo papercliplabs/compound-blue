@@ -68,9 +68,9 @@ export async function prepareVaultWithdrawBundle({
 
   if (preparedAction.status == "success") {
     const positionBalanceBefore =
-      preparedAction.initialSimulationState.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
+      preparedAction.initialSimulationState?.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
     const positionBalanceAfter =
-      preparedAction.finalSimulationState.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
+      preparedAction.finalSimulationState?.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
 
     return {
       ...preparedAction,

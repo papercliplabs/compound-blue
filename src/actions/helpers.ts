@@ -25,8 +25,8 @@ export type PrepareActionReturnType =
 export type PrepareMorphoActionReturnType =
   | (Extract<PrepareActionReturnType, { status: "success" }> & {
       status: "success";
-      initialSimulationState: SimulationResult[number];
-      finalSimulationState: SimulationResult[number];
+      initialSimulationState?: SimulationResult[number];
+      finalSimulationState?: SimulationResult[number];
     })
   | Extract<PrepareActionReturnType, { status: "error" }>;
 
@@ -106,8 +106,8 @@ export function prepareBundle(
       status: "success",
       signatureRequests,
       transactionRequests,
-      initialSimulationState: bundle.steps[0],
-      finalSimulationState: bundle.steps[bundle.steps.length - 1],
+      initialSimulationState: bundle.steps?.[0],
+      finalSimulationState: bundle.steps?.[bundle.steps.length - 1],
     };
   } catch (e) {
     return {
