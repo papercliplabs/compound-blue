@@ -7,6 +7,7 @@ import Analytics from "@/components/Analytics";
 
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
+import MaintenanceMessage from "@/components/MaintenanceMessage";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -22,6 +23,8 @@ export const metadata: Metadata = {
   },
 };
 
+const maintenanceModeEnabled = process.env.MAINTENANCE_MODE_ENABLED === "1";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,12 +34,18 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`}>
         <Providers>
-          <div className="flex min-h-[100dvh] w-full flex-col items-center">
-            <Header />
-            <main className="flex w-full max-w-screen-xl flex-grow flex-col gap-8 p-4 pb-20">{children}</main>
-            <Footer />
-          </div>
-          <Analytics />
+          {maintenanceModeEnabled ? (
+            <MaintenanceMessage />
+          ) : (
+            <>
+              <div className="flex min-h-[100dvh] w-full flex-col items-center">
+                <Header />
+                <main className="flex w-full max-w-screen-xl flex-grow flex-col gap-8 p-4 pb-20">{children}</main>
+                <Footer />
+              </div>
+              <Analytics />
+            </>
+          )}
         </Providers>
       </body>
     </html>
