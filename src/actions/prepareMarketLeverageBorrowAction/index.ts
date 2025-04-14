@@ -16,8 +16,7 @@ import { readContract } from "viem/actions";
 import { TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 import { createBundle, morphoRepay, paraswapBuy } from "../bundler3";
-import { trackEvent } from "@/data/trackEvent";
-import { GetParaswapReturnType } from "@/data/paraswap/common";
+import { GetParaswapReturnType } from "@/data/paraswap/types";
 import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
 import { fetchMarket } from "@morpho-org/blue-sdk-viem";
 
@@ -174,11 +173,10 @@ export async function prepareMarketLeveragedBorrowAction({
       maxSrcTokenAmount: loanAmount,
       exactDestTokenAmount: requiredSwapCollateralAmount,
     });
-  } catch (e) {
-    trackEvent("paraswap-error", { error: e instanceof Error ? e.message : JSON.stringify(e) });
+  } catch {
     return {
       status: "error",
-      message: `Swap Error: Unable to get quote.`,
+      message: `No swap route found respecting slippage tolerance.`,
     };
   }
 

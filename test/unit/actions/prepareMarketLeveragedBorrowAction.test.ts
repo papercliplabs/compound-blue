@@ -6,7 +6,7 @@ import { Address, maxUint256, parseEther } from "viem";
 import { AnvilTestClient } from "@morpho-org/test";
 import { expectZeroErc20Balances, getErc20BalanceOf } from "../../helpers/erc20";
 import { getMorphoMarketPosition } from "../../helpers/morpho";
-import { GetParaswapReturnType } from "@/data/paraswap/common";
+import { GetParaswapReturnType } from "@/data/paraswap/types";
 import { fetchMarket } from "@morpho-org/blue-sdk-viem";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 import { BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";

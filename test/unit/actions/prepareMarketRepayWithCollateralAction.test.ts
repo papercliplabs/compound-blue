@@ -11,7 +11,7 @@ import { maxUint256, parseEther, parseUnits } from "viem";
 import { test } from "../../setup";
 import { WETH_USDC_MARKET_ID } from "../../helpers/constants";
 import { executeAction } from "../../helpers/executeAction";
-import { GetParaswapReturnType } from "@/data/paraswap/common";
+import { GetParaswapReturnType } from "@/data/paraswap/types";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 
 const BORROW_ACCURAL_MARGIN = 1000n;

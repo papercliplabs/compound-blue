@@ -3,12 +3,9 @@ import { TransactionParams, OptimalRate, SwapSide } from "@paraswap/sdk";
 import { Address, Client, erc20Abi, getAddress, Hex } from "viem";
 import { readContract } from "viem/actions";
 import { safeFetch } from "@/utils/fetch";
-import {
-  GetParaswapReturnType,
-  OFFSET_LOOKUP_TABLE,
-  SUPPORTED_CONTRACT_METHODS,
-  SupportedContractMethod,
-} from "./common";
+import { OFFSET_LOOKUP_TABLE, SUPPORTED_CONTRACT_METHODS, SUPPORTED_DEXS } from "./config";
+import { GetParaswapReturnType, SupportedContractMethod } from "./types";
+import { SupportedDex } from "./types";
 
 interface GetParaswapExactBuyParameters {
   publicClient: Client;
@@ -19,6 +16,8 @@ interface GetParaswapExactBuyParameters {
 
   exactDestTokenAmount: bigint;
   maxSrcTokenAmount: bigint; // This is how slippage is enforced
+
+  allowedDexs?: readonly SupportedDex[]; // Default is all, but can force to use specific ones
 }
 
 export async function getParaswapExactBuy({
@@ -28,6 +27,7 @@ export async function getParaswapExactBuy({
   destTokenAddress,
   exactDestTokenAmount,
   maxSrcTokenAmount,
+  allowedDexs = SUPPORTED_DEXS,
 }: GetParaswapExactBuyParameters): Promise<GetParaswapReturnType> {
   const [srcTokenDecimals, destTokenDecimals] = await Promise.all([
     readContract(publicClient, {
@@ -58,7 +58,10 @@ export async function getParaswapExactBuy({
 
     includeContractMethods: SUPPORTED_CONTRACT_METHODS.join(","),
 
-    excludeDEXS: "ParaSwapPool,ParaSwapLimitOrders",
+    ...(allowedDexs.length > 0 ? { includeDEXS: allowedDexs.join(",") } : {}),
+    excludeDEXS: "ParaSwapPool,ParaSwapLimitOrders", // Required otherwise api complains
+    excludeRFQ: "true",
+    ignoreBadUsdPrice: "true",
 
     version: "6.2",
     partner: PARASWAP_PARTNER_NAME,

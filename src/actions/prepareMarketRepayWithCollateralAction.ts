@@ -18,9 +18,8 @@ import {
 import { CHAIN_ID } from "@/config";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 import { createBundle, morphoSupplyCollateral, paraswapBuy } from "./bundler3";
-import { trackEvent } from "@/data/trackEvent";
-import { GetParaswapReturnType } from "@/data/paraswap/common";
 import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
+import { GetParaswapReturnType } from "@/data/paraswap/types";
 
 // 0.03% buffer on full loan repayments to account for accrued interest between now and execution.
 // This gives ~1 day grace period for execution for markets with 10% APY which is useful for multisigs.
@@ -131,11 +130,10 @@ export async function prepareMarketRepayWithCollateralAction({
       maxSrcTokenAmount: maxCollateralSwapAmount,
       exactDestTokenAmount: loanSwapAmount,
     });
-  } catch (e) {
-    trackEvent("paraswap-error", { error: e instanceof Error ? e.message : JSON.stringify(e) });
+  } catch {
     return {
       status: "error",
-      message: `Swap Error: Unable to get quote.`,
+      message: `No swap route found respecting slippage tolerance.`,
     };
   }
 

@@ -2,7 +2,7 @@ import { CHAIN_ID } from "@/config";
 import { Address, encodeAbiParameters, encodeFunctionData, Hex, keccak256, zeroHash } from "viem";
 import { addresses, ChainId, InputMarketParams } from "@morpho-org/blue-sdk";
 import { bundler3Abi, BundlerCall, generalAdapter1Abi, paraswapAdapterAbi } from "@morpho-org/bundler-sdk-viem";
-import { ParaswapOffsets } from "@/data/paraswap/common";
+import { ParaswapOffsets } from "@/data/paraswap/types";
 
 const {
   bundler3: {

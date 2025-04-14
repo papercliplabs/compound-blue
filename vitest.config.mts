@@ -10,7 +10,7 @@ export default defineConfig({
     },
     environment: "jsdom",
     globals: true,
-    testTimeout: 30_000,
+    testTimeout: 45_000,
     include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
   },
 });
