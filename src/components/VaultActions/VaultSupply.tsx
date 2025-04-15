@@ -166,6 +166,8 @@ export default function VaultSupply({
             <ActionFlowSummaryAssetItem
               asset={vault.asset}
               actionName="Supply"
+              side="supply"
+              isIncreasing={true}
               descaledAmount={supplyAmount}
               amountUsd={supplyAmount * vault.asset.priceUsd}
             />

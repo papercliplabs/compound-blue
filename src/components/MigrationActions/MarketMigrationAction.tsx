@@ -30,8 +30,6 @@ import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "..
 import LtvBar from "../LtvBar";
 import { computeLtvHealth } from "@/utils/ltv";
 import clsx from "clsx";
-import { WAD } from "@/utils/constants";
-import { PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION } from "@/config";
 
 const LTV_ROUNDING_THRESHOLD = 0.0001;
 
@@ -134,12 +132,6 @@ export default function MarketMigrationAction({
         ? maxUint256
         : parseUnits(numberToString(loanMigrateAmount), aaveV3LoanReservePosition.reserve.underlyingAsset.decimals);
 
-      const supplyAssets = BigInt(market.supplyAssets);
-      const newBorrowAssets =
-        BigInt(market.borrowAssets) +
-        parseUnits(numberToString(loanMigrateAmount), aaveV3LoanReservePosition.reserve.underlyingAsset.decimals);
-      const newUtilization = supplyAssets > BigInt(0) ? (newBorrowAssets * WAD) / supplyAssets : BigInt(0);
-
       const preparedAction = await prepareAaveV3MarketMigrationAction({
         publicClient,
         accountAddress: address,
@@ -150,7 +142,6 @@ export default function MarketMigrationAction({
         allocatingVaultAddresses: market.vaultAllocations.map((allocation) =>
           getAddress(allocation.vault.vaultAddress)
         ),
-        requiresPublicReallocation: newUtilization > PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION,
       });
 
       setPreparedAction(preparedAction);
@@ -407,6 +398,8 @@ export default function MarketMigrationAction({
             <ActionFlowSummaryAssetItem
               asset={destinationMarketPosition.market!.loanAsset}
               actionName="Migrate"
+              side="borrow"
+              isIncreasing={true}
               descaledAmount={collateralMigrateAmount}
               amountUsd={collateralMigrateAmountUsd}
               protocolName="Compound Blue"
@@ -414,6 +407,8 @@ export default function MarketMigrationAction({
             <ActionFlowSummaryAssetItem
               asset={destinationMarketPosition.market!.collateralAsset!}
               actionName="Borrow"
+              side="supply"
+              isIncreasing={true}
               descaledAmount={loanMigrateAmount}
               amountUsd={loanMigrateAmountUsd}
               protocolName="Compound Blue"

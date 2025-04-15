@@ -1,4 +1,4 @@
-import { addresses, DEFAULT_SLIPPAGE_TOLERANCE, MathLib } from "@morpho-org/blue-sdk";
+import { DEFAULT_SLIPPAGE_TOLERANCE, MathLib } from "@morpho-org/blue-sdk";
 import { PrepareActionReturnType } from "./helpers";
 import { Address, Client, encodeFunctionData, erc20Abi, maxUint256 } from "viem";
 import { BundlerAction } from "@morpho-org/bundler-sdk-viem";
@@ -7,8 +7,7 @@ import { TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProv
 import { getSimulationState } from "@/data/getSimulationState";
 import { readContract } from "viem/actions";
 import { aaveV3PoolAbi } from "@/abis/aaveV3PoolAbi";
-
-const { bundler3 } = addresses[CHAIN_ID];
+import { AAVE_V3_MIGRATION_ADAPTER_ADDRESS, GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
 
 const REBASEING_MARGIN = BigInt(100030);
 const REBASEING_MARGIN_SCALE = BigInt(100000);
@@ -26,8 +25,15 @@ export async function prepareAaveV3VaultMigrationAction({
   vaultAddress,
   amount,
 }: PrepareAaveV3VaultMigrationActionParameters): Promise<PrepareActionReturnType> {
+  if (!AAVE_V3_MIGRATION_ADAPTER_ADDRESS) {
+    return {
+      status: "error",
+      message: "Aave V3 Migrations not supported (missing adapter(s)).",
+    };
+  }
+
   const simulationState = await getSimulationState({
-    actionType: "vault-supply",
+    actionType: "vault",
     accountAddress,
     vaultAddress,
     publicClient,
@@ -47,7 +53,7 @@ export async function prepareAaveV3VaultMigrationAction({
       abi: erc20Abi,
       address: aTokenAddress,
       functionName: "allowance",
-      args: [accountAddress, bundler3.generalAdapter1],
+      args: [accountAddress, GENERAL_ADAPTER_1_ADDRESS],
     }),
     readContract(publicClient, {
       abi: erc20Abi,
@@ -70,7 +76,7 @@ export async function prepareAaveV3VaultMigrationAction({
     data: encodeFunctionData({
       abi: erc20Abi,
       functionName: "approve",
-      args: [bundler3.generalAdapter1, requiredAllowance],
+      args: [GENERAL_ADAPTER_1_ADDRESS, requiredAllowance],
     }),
     value: BigInt(0),
   };
@@ -79,7 +85,7 @@ export async function prepareAaveV3VaultMigrationAction({
     {
       // Move users aToken into aaveV3MigrationAdapter
       type: "erc20TransferFrom",
-      args: [aTokenAddress, amount, bundler3.aaveV3CoreMigrationAdapter],
+      args: [aTokenAddress, amount, AAVE_V3_MIGRATION_ADAPTER_ADDRESS],
     },
     {
       // Redeem aTokens for underlying and send to GA1
@@ -87,7 +93,7 @@ export async function prepareAaveV3VaultMigrationAction({
       args: [
         vault.asset,
         maxUint256, // Max to use all aTokens in the adapter
-        bundler3.generalAdapter1,
+        GENERAL_ADAPTER_1_ADDRESS,
       ],
     },
     {

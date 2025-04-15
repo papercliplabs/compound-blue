@@ -1,0 +1,63 @@
+import { OFFSET_LOOKUP_TABLE } from "@/data/paraswap/config";
+import { SupportedContractMethod } from "@/data/paraswap/types";
+import { ContractMethodV6 } from "@paraswap/sdk";
+import { Hex } from "viem";
+import { describe, expect, test } from "vitest";
+
+interface ParaswapOffsetLookupTest {
+  name: string;
+  method: SupportedContractMethod;
+  calldata: Hex;
+  expectedValues: {
+    exactAmount: bigint;
+    limitAmount: bigint;
+    quotedAmount: bigint;
+  };
+}
+
+// Read 32 bytes at the offset byte
+function getValueAtOffset(data: Hex, offset: bigint): bigint {
+  if (offset > BigInt((data.length - 2) / 2 - 32)) {
+    throw new Error("Invalid offset");
+  }
+
+  const offsetNum = Number(offset);
+  const slice = data.slice(
+    2 + offsetNum * 2, // Start: skip "0x" + offset
+    2 + (offsetNum + 32) * 2 // End: get next 32 bytes
+  );
+  return BigInt("0x" + slice);
+}
+
+function runParaswapOffsetLookupTest({ method, calldata, expectedValues }: ParaswapOffsetLookupTest) {
+  const offsets = OFFSET_LOOKUP_TABLE[method];
+  const exactAmount = getValueAtOffset(calldata, offsets.exactAmount);
+  const limitAmount = getValueAtOffset(calldata, offsets.limitAmount);
+  const quotedAmount = getValueAtOffset(calldata, offsets.quotedAmount);
+
+  expect(exactAmount).toBe(expectedValues.exactAmount);
+  expect(limitAmount).toBe(expectedValues.limitAmount);
+  expect(quotedAmount).toBe(expectedValues.quotedAmount);
+}
+
+const testCases: ParaswapOffsetLookupTest[] = [
+  {
+    name: "swapExactAmountOut",
+    method: ContractMethodV6.swapExactAmountOut,
+    calldata:
+      "0x7f457675000000000000000000000000a0f408a000017007015e0f00320e470d00090a5b0000000000000000000000007ceb23fd6bc0add59e62ac25578270cff1b9f6190000000000000000000000003c499c542cef5e3811e1192ce70d8cc03d5c33590000000000000000000000000000000000000000000000000007e1e2766d5a99000000000000000000000000000000000000000000000000000000000036d1140000000000000000000000000000000000000000000000000007de4f08a2b92a0fb05634f45041a8ad356dde1cff2992000000000000000000000000043067610000000000000000000000000000000000000000000000000000000000000000cc3e7c85bb0ee4f09380e041fee95a0caedd4a0294000000000000000000000000000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000180000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001c0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001e00000016000000000000000000000012000000000000001370000000000002710e592427a0aece92de3edee1f18e0157c058615640140008400a400000000000300000000000000000000000000000000000000000000000000000000f28c0498000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000006a000f20005980200259b80c5102003040001068000000000000000000000000000000000000000000000000000000006805e702000000000000000000000000000000000000000000000000000000000036d1140000000000000000000000000000000000000000000000000007de4f08a2b92a000000000000000000000000000000000000000000000000000000000000002b3c499c542cef5e3811e1192ce70d8cc03d5c33590001f47ceb23fd6bc0add59e62ac25578270cff1b9f619000000000000000000000000000000000000000000" as Hex,
+    expectedValues: {
+      exactAmount: 3592468n,
+      limitAmount: 2218687602711193n,
+      quotedAmount: 2214755865639210n,
+    },
+  },
+];
+
+describe("paraswapOffsetLookup", () => {
+  testCases.map((testCase) => {
+    test.concurrent(testCase.name, async () => {
+      await runParaswapOffsetLookupTest(testCase);
+    });
+  });
+});

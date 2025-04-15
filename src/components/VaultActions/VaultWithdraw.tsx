@@ -161,6 +161,8 @@ export default function VaultWithdraw({
             <ActionFlowSummaryAssetItem
               asset={vault.asset}
               actionName="Withdraw"
+              side="supply"
+              isIncreasing={false}
               descaledAmount={withdrawAmount}
               amountUsd={withdrawAmount * vault.asset.priceUsd}
             />

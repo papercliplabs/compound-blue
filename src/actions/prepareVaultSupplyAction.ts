@@ -1,12 +1,15 @@
-import { getSimulationState, GetSimulationStateVaultSupplyParameters } from "@/data/getSimulationState";
+import { getSimulationState } from "@/data/getSimulationState";
 import { DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
 import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } from "./helpers";
-import { maxUint256 } from "viem";
+import { Address, Client, maxUint256 } from "viem";
 import { getIsSmartAccount } from "@/data/getIsSmartAccount";
 
-type PrepareVaultSupplyActionParameters = Omit<GetSimulationStateVaultSupplyParameters, "actionType"> & {
+interface PrepareVaultSupplyActionParameters {
+  publicClient: Client;
+  vaultAddress: Address;
+  accountAddress: Address;
   supplyAmount: bigint; // Max uint256 for entire account balanace
-};
+}
 
 export type PrepareVaultSupplyActionReturnType =
   | (Omit<
@@ -18,33 +21,31 @@ export type PrepareVaultSupplyActionReturnType =
   | Extract<PrepareMorphoActionReturnType, { status: "error" }>;
 
 export async function prepareVaultSupplyBundle({
-  supplyAmount,
-  accountAddress,
-  vaultAddress,
   publicClient,
-  ...params
+  vaultAddress,
+  accountAddress,
+  supplyAmount,
 }: PrepareVaultSupplyActionParameters): Promise<PrepareVaultSupplyActionReturnType> {
+  if (supplyAmount == BigInt(0)) {
+    return {
+      status: "error",
+      message: "Input validation: Supply amount cannot be 0",
+    };
+  }
+
   const [simulationState, isSmartAccount] = await Promise.all([
     getSimulationState({
-      actionType: "vault-supply",
+      actionType: "vault",
       accountAddress,
       vaultAddress,
       publicClient,
-      ...params,
     }),
     getIsSmartAccount(publicClient, accountAddress),
   ]);
 
-  const vault = simulationState.vaults?.[vaultAddress];
-  const userAssetBalance = simulationState.holdings?.[accountAddress]?.[vault?.asset ?? "0x"]?.balance;
+  const vault = simulationState.getVault(vaultAddress);
+  const userAssetBalance = simulationState.getHolding(accountAddress, vault.asset).balance;
   if (supplyAmount == maxUint256) {
-    if (!userAssetBalance) {
-      // Won't happen, we need this to have a correct simulation anyways
-      return {
-        status: "error",
-        message: "Pre simulation error: Missing user asset balance for max supply.",
-      };
-    }
     supplyAmount = userAssetBalance;
   }
 
@@ -68,10 +69,11 @@ export async function prepareVaultSupplyBundle({
   );
 
   if (preparedAction.status == "success") {
-    const positionBalanceBefore =
-      preparedAction.initialSimulationState?.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
-    const positionBalanceAfter =
-      preparedAction.finalSimulationState?.holdings?.[accountAddress]?.[vaultAddress]?.balance ?? BigInt(0);
+    const positionBalanceBefore = preparedAction.initialSimulationState.getHolding(
+      accountAddress,
+      vaultAddress
+    ).balance;
+    const positionBalanceAfter = preparedAction.finalSimulationState.getHolding(accountAddress, vaultAddress).balance;
 
     return {
       ...preparedAction,

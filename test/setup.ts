@@ -1,10 +1,11 @@
 import { test as vitestTest } from "vitest";
 import { Chain, polygon } from "viem/chains";
 import { AnvilArgs, AnvilTestClient, spawnAnvil } from "@morpho-org/test";
-import { http } from "viem";
+import { http, parseEther } from "viem";
 import { createAnvilTestClient } from "@morpho-org/test";
 import "./helpers/expect";
 import "dotenv/config";
+import { TEST_SMART_ACCOUNT_1 } from "./helpers/constants";
 
 export interface ViemTestContext<chain extends Chain = Chain> {
   client: AnvilTestClient<chain>;
@@ -33,13 +34,19 @@ export const createViemTest = <chain extends Chain>(chain: chain, parameters: An
           fetchOptions: {
             cache: "force-cache",
           },
-          timeout: 30_000,
+          timeout: 45_000,
           batch: true,
         }),
         chain
       );
 
       await client.setBlockTimestampInterval({ interval: 2 });
+
+      await client.setBalance({ address: TEST_SMART_ACCOUNT_1, value: parseEther("1000") });
+
+      // Uncomment for debugging
+      // client.transport.tracer.all = true; // If you want to trace all submitted transactions, failing or not.
+      client.transport.tracer.all = false; // Remove for debugging
 
       // eslint-disable-next-line react-hooks/rules-of-hooks
       await use(client);
@@ -51,5 +58,6 @@ export const createViemTest = <chain extends Chain>(chain: chain, parameters: An
 
 export const test = createViemTest(polygon, {
   forkUrl: process.env.NEXT_PUBLIC_RPC_URL_1!,
-  forkBlockNumber: 69817278,
+  forkBlockNumber: 70278528,
+  hardfork: "Latest",
 });

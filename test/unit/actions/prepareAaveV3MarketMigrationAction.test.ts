@@ -2,21 +2,20 @@ import { describe, expect } from "vitest";
 import { prepareAaveV3MarketMigrationAction } from "@/actions/prepareAaveV3MarketMigrationAction";
 import { test } from "../../setup";
 import { Address, maxUint256, parseEther, parseUnits } from "viem";
-import { addresses, MarketId } from "@morpho-org/blue-sdk";
+import { addresses } from "@morpho-org/blue-sdk";
 import {
   borrowFromAaveV3,
   dealAndSupplyToAaveV3,
   getAaveV3LoanBalance,
   getAaveV3SupplyBalance,
 } from "../../helpers/aaveV3";
-import { executeAction } from "../../helpers/actions";
-import { getMorphoMarketAccountBalances } from "../../helpers/morpho";
+import { executeAction } from "../../helpers/executeAction";
 import { expectZeroErc20Balances } from "../../helpers/erc20";
 import { CHAIN_ID } from "@/config";
 import { AnvilTestClient } from "@morpho-org/test";
-import { WETH_ADDRESS, USDC_ADDRESS, USDT_ADDRESS } from "../../helpers/constants";
+import { WETH_ADDRESS, USDC_ADDRESS, USDT_ADDRESS, WETH_USDC_MARKET_ID } from "../../helpers/constants";
+import { getMorphoMarketPosition } from "../../helpers/morpho";
 
-const WETH_USDC_MARKET_ID = "0xa5b7ae7654d5041c28cb621ee93397394c7aee6c6e16c7e0fd030128d87ee1a3" as MarketId;
 const ALLOCATING_VAULT_ADDRESS: Address[] = ["0x781FB7F6d845E3bE129289833b04d43Aa8558c42"];
 
 const REBASEING_MARGIN = BigInt(100030);
@@ -30,8 +29,7 @@ async function fullPositionMigrationWithDelay(
   client: AnvilTestClient,
   delayBlocks: number,
   collateralTokenAmount?: bigint,
-  loanTokenAmount?: bigint,
-  requiresReallocation: boolean = false
+  loanTokenAmount?: bigint
 ) {
   const WETH_COLLATERAL_AMOUNT = collateralTokenAmount ?? parseEther("1");
   const USDC_LOAN_AMOUNT = loanTokenAmount ?? parseUnits("100", 6);
@@ -49,7 +47,6 @@ async function fullPositionMigrationWithDelay(
     marketId: WETH_USDC_MARKET_ID,
     collateralTokenAmount: maxUint256,
     loanTokenAmount: maxUint256,
-    requiresPublicReallocation: requiresReallocation,
     allocatingVaultAddresses: ALLOCATING_VAULT_ADDRESS,
   });
 
@@ -66,7 +63,7 @@ async function fullPositionMigrationWithDelay(
 
   // Check Morpho balances
   const { collateralBalance: morphoCollateralBalanceFinal, loanBalance: morphoLoanBalanceFinal } =
-    await getMorphoMarketAccountBalances(client, WETH_USDC_MARKET_ID);
+    await getMorphoMarketPosition(client, WETH_USDC_MARKET_ID);
 
   const minCollateralBalance = aaveCollateralBalanceInital;
   const maxCollateralBalance = (minCollateralBalance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE;
@@ -99,7 +96,7 @@ describe("prepareAaveV3MarketMigrationAction", () => {
       }
     );
     test.concurrent("should migrate full position with public reallocation", async ({ client }) => {
-      await fullPositionMigrationWithDelay(client, 0, parseEther("10000"), parseUnits("6300000", 6), true);
+      await fullPositionMigrationWithDelay(client, 0, parseEther("10000"), parseUnits("6300000", 6));
     });
   });
 
@@ -123,7 +120,6 @@ describe("prepareAaveV3MarketMigrationAction", () => {
         marketId: WETH_USDC_MARKET_ID,
         collateralTokenAmount: maxUint256,
         loanTokenAmount: usdcLoanMigrationAmount,
-        requiresPublicReallocation: false,
         allocatingVaultAddresses: ALLOCATING_VAULT_ADDRESS,
       });
       await executeAction(client, action);
@@ -141,7 +137,7 @@ describe("prepareAaveV3MarketMigrationAction", () => {
 
       // Check morpho balances
       const { collateralBalance: morphoCollateralBalanceFinal, loanBalance: morphoLoanBalanceFinal } =
-        await getMorphoMarketAccountBalances(client, WETH_USDC_MARKET_ID);
+        await getMorphoMarketPosition(client, WETH_USDC_MARKET_ID);
 
       expect(morphoCollateralBalanceFinal).toBeGreaterThanOrEqual(wethCollateralAmount);
 
@@ -170,7 +166,6 @@ describe("prepareAaveV3MarketMigrationAction", () => {
         marketId: WETH_USDC_MARKET_ID,
         collateralTokenAmount: collateralMigrationAmount,
         loanTokenAmount: maxUint256,
-        requiresPublicReallocation: false,
         allocatingVaultAddresses: ALLOCATING_VAULT_ADDRESS,
       });
       await executeAction(client, action);
@@ -188,7 +183,7 @@ describe("prepareAaveV3MarketMigrationAction", () => {
 
       // Check morpho balances
       const { collateralBalance: morphoCollateralBalanceFinal, loanBalance: morphoLoanBalanceFinal } =
-        await getMorphoMarketAccountBalances(client, WETH_USDC_MARKET_ID);
+        await getMorphoMarketPosition(client, WETH_USDC_MARKET_ID);
 
       expect(morphoCollateralBalanceFinal).toBeGreaterThanOrEqual(collateralMigrationAmount);
 
@@ -220,7 +215,6 @@ describe("prepareAaveV3MarketMigrationAction", () => {
         marketId: WETH_USDC_MARKET_ID,
         collateralTokenAmount: collateralMigrationAmount,
         loanTokenAmount: loanMigrationAmount,
-        requiresPublicReallocation: false,
         allocatingVaultAddresses: ALLOCATING_VAULT_ADDRESS,
       });
       await executeAction(client, action);
@@ -240,7 +234,7 @@ describe("prepareAaveV3MarketMigrationAction", () => {
 
       // Check morpho balances
       const { collateralBalance: morphoCollateralBalanceFinal, loanBalance: morphoLoanBalanceFinal } =
-        await getMorphoMarketAccountBalances(client, WETH_USDC_MARKET_ID);
+        await getMorphoMarketPosition(client, WETH_USDC_MARKET_ID);
 
       expect(morphoCollateralBalanceFinal).toEqual(collateralMigrationAmount);
       expect(morphoLoanBalanceFinal).toEqual(loanMigrationAmount + BigInt(1));
@@ -267,7 +261,6 @@ describe("prepareAaveV3MarketMigrationAction", () => {
         marketId: WETH_USDC_MARKET_ID,
         collateralTokenAmount: maxUint256,
         loanTokenAmount: BigInt(1),
-        requiresPublicReallocation: false,
         allocatingVaultAddresses: ALLOCATING_VAULT_ADDRESS,
       });
       await expect(executeAction(client, action)).rejects.toThrow("tx failed");
@@ -287,7 +280,6 @@ describe("prepareAaveV3MarketMigrationAction", () => {
         marketId: WETH_USDC_MARKET_ID,
         collateralTokenAmount: BigInt(1),
         loanTokenAmount: maxUint256,
-        requiresPublicReallocation: false,
         allocatingVaultAddresses: ALLOCATING_VAULT_ADDRESS,
       });
       // Will fail in simulation since we fully simulate Morpho side
@@ -312,7 +304,6 @@ describe("prepareAaveV3MarketMigrationAction", () => {
         marketId: WETH_USDC_MARKET_ID,
         collateralTokenAmount: collateralMigrationAmount,
         loanTokenAmount: BigInt(0),
-        requiresPublicReallocation: false,
         allocatingVaultAddresses: ALLOCATING_VAULT_ADDRESS,
       });
       expect(action.status).toBe("error");
@@ -332,7 +323,6 @@ describe("prepareAaveV3MarketMigrationAction", () => {
         marketId: WETH_USDC_MARKET_ID,
         collateralTokenAmount: BigInt(0),
         loanTokenAmount: usdcLoanAmount,
-        requiresPublicReallocation: false,
         allocatingVaultAddresses: ALLOCATING_VAULT_ADDRESS,
       });
       expect(action.status).toBe("error"); // Would fail anyways in sim since no Morpho collateral

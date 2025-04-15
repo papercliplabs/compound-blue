@@ -7,7 +7,7 @@ import {
   ActionFlowSummaryAssetItem,
 } from "@/components/ActionFlowDialog";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { useAccount, usePublicClient } from "wagmi";
 import { getAddress, maxUint256, parseUnits } from "viem";
 import { z } from "zod";
@@ -16,29 +16,32 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import AssetFormField from "../AssetFormField";
-import { MarketActionsProps } from ".";
+import AssetFormField from "../../AssetFormField";
 import { MarketId } from "@morpho-org/blue-sdk";
 import {
-  prepareMarketRepayWithdrawCollateralAction,
-  PrepareMarketRepayWithdrawCollateralActionReturnType,
-} from "@/actions/prepareMarketRepayWithdrawCollateralAction";
+  prepareMarketRepayAndWithdrawCollateralAction,
+  PrepareMarketRepayAndWithdrawCollateralActionReturnType,
+} from "@/actions/prepareMarketRepayAndWithdrawCollateralAction";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
-import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
+import PoweredByMorpho from "../../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
 import { ArrowRight } from "lucide-react";
-import { MetricChange } from "../MetricChange";
+import { MetricChange } from "../../MetricChange";
+import { MarketNonIdle } from "@/data/whisk/getMarket";
 
 export default function MarketRepayWithdrawCollateral({
   market,
   onCloseAfterSuccess,
-}: MarketActionsProps & { onCloseAfterSuccess?: () => void }) {
+}: {
+  market: MarketNonIdle;
+  onCloseAfterSuccess?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [preparedAction, setPreparedAction] = useState<
-    PrepareMarketRepayWithdrawCollateralActionReturnType | undefined
+    PrepareMarketRepayAndWithdrawCollateralActionReturnType | undefined
   >(undefined);
   const [success, setSuccess] = useState(false);
 
@@ -149,14 +152,14 @@ export default function MarketRepayWithdrawCollateral({
       const rawRepayAmount =
         repayAmount > 0 && repayAmount == descaledLoanAmount
           ? maxUint256
-          : parseUnits(numberToString(repayAmount), market.loanAsset.decimals ?? 18);
+          : parseUnits(numberToString(repayAmount), market.loanAsset.decimals);
 
       const withdrawCollateralAmountBigInt =
         withdrawCollateralAmount > 0 && withdrawCollateralAmount == descaledPositionCollateralAmount // Collateral doesn't earn interest, so this is safe to do
           ? maxUint256
           : parseUnits(numberToString(withdrawCollateralAmount), market.collateralAsset.decimals);
 
-      const preparedAction = await prepareMarketRepayWithdrawCollateralAction({
+      const preparedAction = await prepareMarketRepayAndWithdrawCollateralAction({
         publicClient,
         accountAddress: address,
         marketId: market.marketId as MarketId,
@@ -244,6 +247,8 @@ export default function MarketRepayWithdrawCollateral({
               <ActionFlowSummaryAssetItem
                 asset={market.loanAsset}
                 actionName="Repay"
+                side="borrow"
+                isIncreasing={false}
                 descaledAmount={repayAmount}
                 amountUsd={repayAmount * (market.loanAsset.priceUsd ?? 0)}
               />
@@ -252,6 +257,8 @@ export default function MarketRepayWithdrawCollateral({
               <ActionFlowSummaryAssetItem
                 asset={market.collateralAsset}
                 actionName="Withdraw"
+                side="supply"
+                isIncreasing={false}
                 descaledAmount={withdrawCollateralAmount}
                 amountUsd={withdrawCollateralAmount * (market.collateralAsset.priceUsd ?? 0)}
               />
