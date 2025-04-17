@@ -15,12 +15,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import AssetFormField from "../../AssetFormField";
 import PoweredByMorpho from "../../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { getAddress, maxUint256, parseUnits } from "viem";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
-import SliderFormField from "../../SliderFormField";
+import SliderFormField from "../../FormFields/SliderFormField";
 import { Input } from "../../ui/input";
 import { ArrowRight, Info } from "lucide-react";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../../ui/tooltipPopover";
@@ -28,6 +27,7 @@ import { computeMaxLeverageFactor } from "@/actions/prepareMarketLeverageBorrowA
 import { MetricChange } from "../../MetricChange";
 import NumberFlow from "../../ui/NumberFlow";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
+import AssetFormField from "@/components/FormFields/AssetFormField";
 
 const MAX_SLIPPAGE_TOLERANCE_PCT = 15;
 const MIN_MULTIPLIER = 1.1;

@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { descaleBigIntToNumber, numberToString } from "@/utils/format";
 import { zodResolver } from "@hookform/resolvers/zod";
-import AssetFormField, { AssetFormFieldViewOnly } from "../AssetFormField";
+import AssetFormField, { AssetFormFieldViewOnly } from "@/components/FormFields/AssetFormField";
 import { useAccount } from "wagmi";
 import { usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";

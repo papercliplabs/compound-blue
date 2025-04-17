@@ -78,7 +78,7 @@ async function runMarketLeveragedBorrowTest({
   const logs = await executeAction(client, action);
 
   // Assert
-  await expectOnlyAllowedApprovals(logs, client.account.address); // Make sure doesn't approve or permit anything unexpected
+  await expectOnlyAllowedApprovals(client, logs, client.account.address); // Make sure doesn't approve or permit anything unexpected
   await expectZeroErc20Balances(
     client,
     [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, PARASWAP_ADAPTER_ADDRESS!],

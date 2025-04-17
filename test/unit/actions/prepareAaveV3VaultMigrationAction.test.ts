@@ -1,5 +1,5 @@
 import { describe, expect } from "vitest";
-import { test } from "../../setup";
+import { currentBlockTest as test } from "../../setup";
 import { Address, maxUint256, parseUnits } from "viem";
 import { dealAndSupplyToAaveV3, getAaveV3SupplyBalance } from "../../helpers/aaveV3";
 import { USDC_ADDRESS } from "../../helpers/constants";

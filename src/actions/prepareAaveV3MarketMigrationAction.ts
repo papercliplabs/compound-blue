@@ -51,13 +51,6 @@ export async function prepareAaveV3MarketMigrationAction({
   loanTokenAmount,
   allocatingVaultAddresses,
 }: PrepareAaveV3MarketMigrationActionParameters): Promise<PrepareActionReturnType> {
-  if (!AAVE_V3_MIGRATION_ADAPTER_ADDRESS) {
-    return {
-      status: "error",
-      message: "Aave V3 Migrations are not currently supported (missing adapter(s)).",
-    };
-  }
-
   if (loanTokenAmount == BigInt(0) || collateralTokenAmount == BigInt(0)) {
     return {
       status: "error",

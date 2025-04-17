@@ -1,8 +1,8 @@
 "use client";
 import { ComponentProps, ReactNode, useMemo } from "react";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
-import { Slider } from "./ui/slider";
-import { Input } from "./ui/input";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
+import { Slider } from "../ui/slider";
+import { Input } from "../ui/input";
 import { formatNumber } from "@/utils/format";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

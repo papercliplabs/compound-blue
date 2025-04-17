@@ -2,9 +2,12 @@ import { PrepareActionReturnType } from "@/actions/helpers";
 import { AnvilTestClient } from "@morpho-org/test";
 import { expect } from "vitest";
 import { getTransactionReceipt, sendTransaction } from "viem/actions";
-import { Log } from "viem";
+import { Hex, Log } from "viem";
 
 export async function executeAction(client: AnvilTestClient, action: PrepareActionReturnType): Promise<Log[]> {
+  if (action.status == "error") {
+    console.log("DEBUG", action);
+  }
   expect(action.status).toBe("success");
 
   let logs: Log[] = [];
@@ -18,10 +21,16 @@ export async function executeAction(client: AnvilTestClient, action: PrepareActi
     }
 
     // Remove try-catch to get full trace for debugging
-    // try {
     for (const step of action.transactionRequests) {
       const tx = step.tx();
-      const hash = await sendTransaction(client, { ...tx, account: client.account.address });
+      let hash: Hex;
+      try {
+        // This will also throw sometimes, not sure why, but likely due to debug tracing.. (execution reverted)
+        hash = await sendTransaction(client, { ...tx, account: client.account.address });
+      } catch {
+        // console.log("Send threw...", e);
+        throw Error("action-tx-reverted");
+      }
       const receipt = await getTransactionReceipt(client, { hash });
       if (receipt.status == "reverted") {
         throw Error("action-tx-reverted");
@@ -29,9 +38,6 @@ export async function executeAction(client: AnvilTestClient, action: PrepareActi
 
       logs = [...logs, ...receipt.logs];
     }
-    // } catch (e) {
-    //   throw Error("execution error", { cause: e });
-    // }
   }
 
   return logs;
