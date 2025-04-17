@@ -33,10 +33,7 @@ interface PrepareMarketLeveragedBorrowActionParameters {
 }
 
 export type PrepareMarketLeveragedBorrowActionReturnType =
-  | (Omit<
-      Extract<PrepareActionReturnType, { status: "success" }>,
-      "initialSimulationState" | "finalSimulationState"
-    > & {
+  | (Extract<PrepareActionReturnType, { status: "success" }> & {
       positionCollateralChange: SimulatedValueChange<bigint>;
       positionLoanChange: SimulatedValueChange<bigint>;
       positionLtvChange: SimulatedValueChange<bigint>;
@@ -54,13 +51,6 @@ export async function prepareMarketLeveragedBorrowAction({
   leverageFactor,
   maxSlippageTolerance,
 }: PrepareMarketLeveragedBorrowActionParameters): Promise<PrepareMarketLeveragedBorrowActionReturnType> {
-  if (!PARASWAP_ADAPTER_ADDRESS) {
-    return {
-      status: "error",
-      message: "Leverage is not supported (missing adapter).",
-    };
-  }
-
   let market = await fetchMarket(marketId, publicClient);
   const { collateralToken: collateralTokenAddress, loanToken: loanTokenAddress } = market.params;
 

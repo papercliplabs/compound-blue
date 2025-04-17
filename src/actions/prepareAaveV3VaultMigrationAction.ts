@@ -25,13 +25,6 @@ export async function prepareAaveV3VaultMigrationAction({
   vaultAddress,
   amount,
 }: PrepareAaveV3VaultMigrationActionParameters): Promise<PrepareActionReturnType> {
-  if (!AAVE_V3_MIGRATION_ADAPTER_ADDRESS) {
-    return {
-      status: "error",
-      message: "Aave V3 Migrations not supported (missing adapter(s)).",
-    };
-  }
-
   const simulationState = await getSimulationState({
     actionType: "vault",
     accountAddress,

@@ -16,12 +16,12 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import AssetFormField from "../AssetFormField";
 import { VaultActionsProps } from ".";
 import { PrepareVaultWithdrawActionReturnType, prepareVaultWithdrawBundle } from "@/actions/prepareVaultWithdrawAction";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
 import { MetricChange } from "../MetricChange";
+import AssetFormField from "../FormFields/AssetFormField";
 
 export default function VaultWithdraw({
   vault,

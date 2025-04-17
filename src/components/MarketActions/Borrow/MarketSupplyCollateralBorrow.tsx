@@ -16,7 +16,6 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import AssetFormField from "../../AssetFormField";
 import {
   prepareMarketSupplyCollateralAndBorrowAction,
   PrepareMarketSupplyCollateralAndBorrowActionReturnType,
@@ -30,6 +29,7 @@ import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
 import { ArrowRight } from "lucide-react";
 import { MetricChange } from "../../MetricChange";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
+import AssetFormField from "@/components/FormFields/AssetFormField";
 
 export default function MarketSupplyCollateralBorrow({
   market,

@@ -1,7 +1,7 @@
 import { test as vitestTest } from "vitest";
 import { Chain, polygon } from "viem/chains";
 import { AnvilArgs, AnvilTestClient, spawnAnvil } from "@morpho-org/test";
-import { http, parseEther } from "viem";
+import { createPublicClient, http, parseEther } from "viem";
 import { createAnvilTestClient } from "@morpho-org/test";
 import "./helpers/expect";
 import "dotenv/config";
@@ -46,7 +46,8 @@ export const createViemTest = <chain extends Chain>(chain: chain, parameters: An
 
       // Uncomment for debugging
       // client.transport.tracer.all = true; // If you want to trace all submitted transactions, failing or not.
-      client.transport.tracer.all = false; // Remove for debugging
+      // client.transport.tracer.all = true; // Remove for debugging
+      // client.transport.tracer.failed = true; // Remove for debugging
 
       // eslint-disable-next-line react-hooks/rules-of-hooks
       await use(client);
@@ -59,5 +60,17 @@ export const createViemTest = <chain extends Chain>(chain: chain, parameters: An
 export const test = createViemTest(polygon, {
   forkUrl: process.env.NEXT_PUBLIC_RPC_URL_1!,
   forkBlockNumber: 70278528,
+  hardfork: "Latest",
+});
+
+const polygonClient = createPublicClient({
+  chain: polygon,
+  transport: http(),
+});
+const currentBlock = await polygonClient.getBlock();
+
+export const currentBlockTest = createViemTest(polygon, {
+  forkUrl: process.env.NEXT_PUBLIC_RPC_URL_1!,
+  forkBlockNumber: currentBlock.number,
   hardfork: "Latest",
 });

@@ -53,13 +53,6 @@ export async function prepareMarketRepayWithCollateralAction({
   loanRepayAmount,
   maxSlippageTolerance,
 }: PrepareMarketRepayWithCollateralActionParameters): Promise<PrepareMarketRepayWithCollateralActionReturnType> {
-  if (!PARASWAP_ADAPTER_ADDRESS) {
-    return {
-      status: "error",
-      message: "Repay with collateral not supported (missing adapter).",
-    };
-  }
-
   if (loanRepayAmount == 0n) {
     return {
       status: "error",

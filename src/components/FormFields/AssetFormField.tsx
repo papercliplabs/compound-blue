@@ -1,10 +1,10 @@
 "use client";
 import { ComponentProps } from "react";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 import Image from "next/image";
-import NumberFlow from "./ui/NumberFlow";
+import NumberFlow from "../ui/NumberFlow";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import { numberToString } from "@/utils/format";

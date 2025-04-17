@@ -157,9 +157,10 @@ export function morphoRepay(
 }
 
 export function createBundle(calls: BundlerCall[]) {
+  const value = calls.reduce((acc, call) => acc + call.value, 0n);
   return {
     to: bundler3Address,
-    value: BigInt(0),
+    value,
     data: encodeFunctionData({
       abi: bundler3Abi,
       functionName: "multicall",

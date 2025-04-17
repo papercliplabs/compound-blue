@@ -11,7 +11,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import AssetFormField from "../../AssetFormField";
 import PoweredByMorpho from "../../ui/icons/PoweredByMorpho";
 import { maxUint256, parseUnits } from "viem";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
@@ -25,6 +24,7 @@ import {
 } from "@/actions/prepareMarketRepayWithCollateralAction";
 import { MetricChange } from "@/components/MetricChange";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
+import AssetFormField from "@/components/FormFields/AssetFormField";
 
 const MAX_SLIPPAGE_TOLERANCE_PCT = 15;
 

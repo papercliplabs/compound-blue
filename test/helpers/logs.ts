@@ -2,11 +2,17 @@ import { expect } from "vitest";
 import { Address, erc20Abi, Log, parseEventLogs } from "viem";
 import { permit2Abi } from "@morpho-org/blue-sdk-viem";
 import { GENERAL_ADAPTER_1_ADDRESS, PERMIT2_ADDRESS } from "@/utils/constants";
+import { readContract } from "viem/actions";
+import { AnvilTestClient } from "@morpho-org/test";
+import { MathLib } from "@morpho-org/blue-sdk";
+
+const REBASEING_MARGIN = BigInt(100030);
+const REBASEING_MARGIN_SCALE = BigInt(100000);
 
 // Parses transaction logs to validate:
 //   * Any account approvals are for GA1 or permit2 only
 //   * Any account permits are for GA1 only
-export async function expectOnlyAllowedApprovals(logs: Log[], accountAddress: Address) {
+export async function expectOnlyAllowedApprovals(client: AnvilTestClient, logs: Log[], accountAddress: Address) {
   const erc20Events = await parseEventLogs({
     logs: logs,
     abi: erc20Abi,
@@ -49,5 +55,29 @@ export async function expectOnlyAllowedApprovals(logs: Log[], accountAddress: Ad
     expect(permit.spender).toBe(GENERAL_ADAPTER_1_ADDRESS);
   }
 
-  // TODO: also verify that the approvals / permits were fully used up (with rebasing margin allowed to be left over)
+  // Verify that the entire approval is used up (or at least up to the rebasing margin)
+  for (const erc20Approval of erc20Approvals) {
+    const erc20Allowance = await readContract(client, {
+      address: erc20Approval.asset,
+      abi: erc20Abi,
+      functionName: "allowance",
+      args: [accountAddress, erc20Approval.spender],
+    });
+    expect(erc20Allowance).toBeLessThanOrEqual(
+      MathLib.mulDivUp(erc20Approval.amount, REBASEING_MARGIN, REBASEING_MARGIN_SCALE)
+    );
+  }
+
+  // Verify that the entire permit is used up (or at least up to the rebasing margin)
+  for (const permit of permits) {
+    const permitAllowance = await readContract(client, {
+      address: PERMIT2_ADDRESS,
+      abi: permit2Abi,
+      functionName: "allowance",
+      args: [accountAddress, permit.asset, permit.spender],
+    });
+    expect(permitAllowance[0]).toBeLessThanOrEqual(
+      MathLib.mulDivUp(permit.amount, REBASEING_MARGIN, REBASEING_MARGIN_SCALE)
+    );
+  }
 }

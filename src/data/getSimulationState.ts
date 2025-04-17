@@ -1,5 +1,6 @@
 import { CHAIN_ID } from "@/config";
-import { addresses, Holding, MarketId, Position, VaultMarketConfig, VaultUser } from "@morpho-org/blue-sdk";
+import { SUPPORTED_ADDAPTERS, WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
+import { Holding, MarketId, NATIVE_ADDRESS, Position, VaultMarketConfig, VaultUser } from "@morpho-org/blue-sdk";
 import {
   fetchHolding,
   fetchMarket,
@@ -13,8 +14,6 @@ import {
 import { SimulationState } from "@morpho-org/simulation-sdk";
 import { Address, Client, zeroAddress } from "viem";
 import { getBlock } from "viem/actions";
-
-const { bundler3 } = addresses[CHAIN_ID];
 
 type GetSimulationStateMarketTypeParameters = {
   actionType: "market";
@@ -64,7 +63,7 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
     new Set(marketIds.concat(vaults.flatMap((vault) => vault.supplyQueue.concat(vault.withdrawQueue))))
   );
 
-  const userAddresses = [accountAddress, bundler3.generalAdapter1, ...vaultAddresses];
+  const userAddresses = [accountAddress, ...SUPPORTED_ADDAPTERS, ...vaultAddresses];
 
   const positionParams: { userAddress: Address; marketId: MarketId }[] = Array.from(userAddresses).flatMap(
     (userAddress) => Array.from(marketIds, (marketId) => ({ userAddress, marketId }))
@@ -97,10 +96,15 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
   let tokenAddresses: Address[] = [];
   switch (params.actionType) {
     case "vault":
-      tokenAddresses = [vaults[0].asset, vaults[0].address]; // Underliying and the vault share token move
+      tokenAddresses = [vaults[0].asset, vaults[0].address, NATIVE_ADDRESS, WRAPPED_NATIVE_ADDRESS]; // Underliying and the vault share token move
       break;
     case "market":
-      tokenAddresses = [markets[0].params.loanToken, markets[0].params.collateralToken];
+      tokenAddresses = [
+        markets[0].params.loanToken,
+        markets[0].params.collateralToken,
+        NATIVE_ADDRESS,
+        WRAPPED_NATIVE_ADDRESS,
+      ];
       break;
   }
 

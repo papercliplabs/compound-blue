@@ -1,6 +1,6 @@
 import { describe, expect } from "vitest";
 import { prepareAaveV3MarketMigrationAction } from "@/actions/prepareAaveV3MarketMigrationAction";
-import { test } from "../../setup";
+import { currentBlockTest as test } from "../../setup";
 import { Address, maxUint256, parseEther, parseUnits } from "viem";
 import { addresses } from "@morpho-org/blue-sdk";
 import {

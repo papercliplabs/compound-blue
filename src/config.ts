@@ -1,4 +1,4 @@
-import { Address, fallback, Hex, http, getAddress } from "viem";
+import { Address, fallback, Hex, http, getAddress, parseEther } from "viem";
 import { polygon } from "viem/chains";
 
 // Chain the app will support, all addresses below should be on this chain.
@@ -16,6 +16,7 @@ export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
   getAddress("0x781FB7F6d845E3bE129289833b04d43Aa8558c42"), // USDC
   getAddress("0xF5C81d25ee174d83f1FD202cA94AE6070d073cCF"), // WETH
   getAddress("0xfD06859A671C21497a2EB8C5E3fEA48De924D6c8"), // USDT
+  getAddress("0x3F33F9f7e2D7cfBCBDf8ea8b870a6E3d449664c2"), // POL
   // getAddress("0x27d6a7f9078104135b19d3b196d38316399a71a1"), // Morpho TEST
   // getAddress("0xFEf1b0dc9F6a337548088AaF882DA563a6f7D56C"), // TEST (my own)
 ];
@@ -37,6 +38,9 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
   "0x40aa905825a89eda33acce144f9125f6568411154e8166b5c65df31c40e0b999", // WETH idle
   "0xb8ae474af3b91c8143303723618b31683b52e9c86566aa54c06f0bc27906bcae", // wstETH/WETH - 91.5%
   "0x9eacb622c6ef9c2f0fa5f1fda58a8702eb8132d8f49783f6eea6acc3a398e741", // WBTC/WETH - 86%
+
+  "0x18e2a37b9edab9d06b509a71f43f51d15581d1176aa91cf1a4cdf5ee3102ad37", // POL idle
+  "0xa932e0d8a9bf52d45b8feac2584c7738c12cf63ba6dff0e8f199e289fb5ca9bb", // MATICx/POL - 91.5%
 
   // Morpho Test markets
   // "0x88a2953e642f96afcb8d8ba2a1cc2e732e9ba89bb99eecf2d6101ad558ab7698",
@@ -83,3 +87,6 @@ export const PARASWAP_PARTNER_ADDRESS = getAddress("0xCC3E7c85Bb0EE4f09380e041fe
 
 // ISO 3166-2: https://en.wikipedia.org/wiki/ISO_3166-2
 export const COUNTRY_CODES_TO_DISABLE_LEVERAGE = ["US", "GB"];
+
+// If a user requests max action and wrapping of native asset, leave this much native in their wallet for future gas.
+export const MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING = parseEther("0.1");
