@@ -18,7 +18,7 @@ export const columns: ColumnDef<Vault["marketAllocations"][number]>[] = [
       const market = row.original.market;
       return <MarketIdentifier {...market} />;
     },
-    minSize: 280,
+    minSize: 300,
   },
   {
     accessorKey: "vaultSupplyShare",
