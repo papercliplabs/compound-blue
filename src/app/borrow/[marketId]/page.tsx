@@ -1,7 +1,7 @@
 import { getMarket, isNonIdleMarket } from "@/data/whisk/getMarket";
 import Link from "next/link";
-import { getAddress, Hex, isHex } from "viem";
-import { ArrowLeft } from "lucide-react";
+import { getAddress, Hex, isHex, zeroAddress } from "viem";
+import { ArrowLeft, Info } from "lucide-react";
 import { ReactNode, Suspense } from "react";
 import { Skeleton, Skeletons } from "@/components/ui/skeleton";
 import { formatNumber } from "@/utils/format";
@@ -15,12 +15,13 @@ import IrmChart from "@/components/IrmChart";
 import MarketActions from "@/components/MarketActions";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { WHITELISTED_MARKET_IDS } from "@/config";
+import { WHITELISTED_MARKET_IDS, WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import BackButton from "@/components/BackButton";
 import { AccountMarketPosition, AccountMarketPositionHighlight } from "@/components/AccountMarketPosition";
 import MarketAvailableLiquidity from "@/components/MarketAvailableLiquidity";
 import NumberFlow from "@/components/ui/NumberFlow";
 import { MarketIcon } from "@/components/MarketIdentifier";
+import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "@/components/ui/tooltipPopover";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Market",
@@ -148,6 +149,10 @@ async function MarketMetadata({ marketId }: { marketId: Hex }) {
     notFound();
   }
 
+  const collateralRehypothecation = WHITELISTED_VAULT_ADDRESSES.includes(
+    getAddress(market.collateralAsset?.address ?? zeroAddress)
+  );
+
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center">
       <MarketIcon
@@ -161,6 +166,21 @@ async function MarketMetadata({ marketId }: { marketId: Hex }) {
           {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 0 })}
         </div>
       </div>
+      {collateralRehypothecation && (
+        <TooltipPopover>
+          <TooltipPopoverTrigger className="flex items-center gap-1 text-content-secondary label-sm">
+            <div>Rehypothecation</div>
+            <Info size={16} className="stroke-content-secondary" />
+          </TooltipPopoverTrigger>
+          <TooltipPopoverContent className="flex flex-col gap-2">
+            <p>
+              This market uses vault shares as collateral. Your deposited assets remain in the vault, earning yield,
+              while the vault shares themselves are used as collateral for borrowing.
+            </p>
+            <p>This improves capital efficiency, but also introduces additional risk.</p>
+          </TooltipPopoverContent>
+        </TooltipPopover>
+      )}
     </div>
   );
 }

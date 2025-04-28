@@ -61,6 +61,7 @@ const query = graphql(`
           collateralAsset {
             symbol
             icon
+            address
           }
           supplyApy {
             total

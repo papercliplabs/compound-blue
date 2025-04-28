@@ -17,8 +17,6 @@ export const WHITELISTED_VAULT_ADDRESSES: Address[] = [
   getAddress("0xF5C81d25ee174d83f1FD202cA94AE6070d073cCF"), // WETH
   getAddress("0xfD06859A671C21497a2EB8C5E3fEA48De924D6c8"), // USDT
   getAddress("0x3F33F9f7e2D7cfBCBDf8ea8b870a6E3d449664c2"), // POL
-  // getAddress("0x27d6a7f9078104135b19d3b196d38316399a71a1"), // Morpho TEST
-  // getAddress("0xFEf1b0dc9F6a337548088AaF882DA563a6f7D56C"), // TEST (my own)
 ];
 
 // Markets that will show up in borrow table and are supported by the app.
@@ -28,12 +26,14 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
   "0x1947267c49c3629c5ed59c88c411e8cf28c4d2afdb5da046dc8e3846a4761794", // MATICx/USDC - 77%
   "0xa5b7ae7654d5041c28cb621ee93397394c7aee6c6e16c7e0fd030128d87ee1a3", // WETH/USDC - 86%
   "0x7506b33817b57f686e37b87b5d4c5c93fdef4cffd21bbf9291f18b2f29ab0550", // POL/USDC - 77%
+  "0xd1485762dd5256b99530b6b07ab9d20c8d31b605dd5f27ad0c6dec2a18179ac6", // compWETH/USDC - 86%
 
   "0x372f25501f88e5e8b9373b8076985870b7c1cbd0903f26a1fef34790dbdb3607", // USDT idle
   "0x2476bb905e3d94acd7b402b3d70d411eeb6ace82afd3007da69a0d5904dfc998", // WBTC/USDT - 86%
   "0x41e537c46cc0e2f82aa69107cd72573f585602d8c33c9b440e08eaba5e8fded1", // MATICx/USDC - 77%
   "0x01550b8779f4ca978fc16591537f3852c02c3491f597db93d9bb299dcbf5ddbe", // WETH/USDT - 86%
   "0x267f344f5af0d85e95f253a2f250985a9fb9fca34a3342299e20c83b6906fc80", // POL/USDT - 77%
+  "0xa8c2e5b31d1f3fb6c000bd49355d091f71e7c866fcb74a1cb2562ef67157bc2a", // compWETH/USDT - 86%
 
   "0x40aa905825a89eda33acce144f9125f6568411154e8166b5c65df31c40e0b999", // WETH idle
   "0xb8ae474af3b91c8143303723618b31683b52e9c86566aa54c06f0bc27906bcae", // wstETH/WETH - 91.5%
@@ -41,10 +41,6 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
 
   "0x18e2a37b9edab9d06b509a71f43f51d15581d1176aa91cf1a4cdf5ee3102ad37", // POL idle
   "0xa932e0d8a9bf52d45b8feac2584c7738c12cf63ba6dff0e8f199e289fb5ca9bb", // MATICx/POL - 91.5%
-
-  // Morpho Test markets
-  // "0x88a2953e642f96afcb8d8ba2a1cc2e732e9ba89bb99eecf2d6101ad558ab7698",
-  // "0xe558a51e10f1fdf7156c9470d2f68b93b3fd1ad5e775c020ae4a7f805e8d5674",
 ];
 
 // Explicit callouts for a vault asset, this will be placed above the input field for the supply action

@@ -21,15 +21,16 @@ import {
   PrepareMarketSupplyCollateralAndBorrowActionReturnType,
 } from "@/actions/prepareMarketSupplyCollateralAndBorrowAction";
 import { MarketId } from "@morpho-org/blue-sdk";
-import { MAX_BORROW_LTV_MARGIN } from "@/config";
+import { MAX_BORROW_LTV_MARGIN, WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import PoweredByMorpho from "../../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { MetricChange } from "../../MetricChange";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import AssetFormField from "@/components/FormFields/AssetFormField";
+import Link from "next/link";
 
 export default function MarketSupplyCollateralBorrow({
   market,
@@ -50,6 +51,10 @@ export default function MarketSupplyCollateralBorrow({
   const publicClient = usePublicClient();
   const { data: userCollateralTokenHolding } = useAccountTokenHolding(getAddress(market.collateralAsset.address));
   const { data: userPosition } = useAccountMarketPosition(market.marketId as MarketId);
+
+  const collateralIsVault = useMemo(() => {
+    return WHITELISTED_VAULT_ADDRESSES.includes(getAddress(market.collateralAsset.address));
+  }, [market.collateralAsset.address]);
 
   const descaledCollateralTokenBalance = useMemo(
     () =>
@@ -178,6 +183,15 @@ export default function MarketSupplyCollateralBorrow({
                   form.setValue("isMaxSupply", isMax);
                 }}
               />
+              {collateralIsVault && (
+                <Link
+                  href={`/${market.collateralAsset.address}`}
+                  className="flex items-center justify-between gap-2 rounded-[8px] border px-4 py-3 text-content-secondary transition-all hover:bg-button-neutral/50"
+                >
+                  Deposit liqudity in the {market.collateralAsset.symbol} vault to use it as collateral here.
+                  <ArrowUpRight size={16} className="shrink-0" />
+                </Link>
+              )}
               <div className="h-[1px] w-full bg-border-primary" />
               <div className="[&_label]:text-accent-ternary">
                 <AssetFormField

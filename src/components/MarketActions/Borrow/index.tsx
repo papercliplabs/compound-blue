@@ -13,7 +13,7 @@ export default function MarketBorrow({
   return (
     <Tabs defaultValue="borrow" className="flex flex-col gap-6" value={enableMultiply ? undefined : "borrow"}>
       {enableMultiply && (
-        <TabsList className="bg-background-primary md:bg-background-inverse">
+        <TabsList className="bg-background-primary lg:bg-background-inverse">
           <TabsTrigger value="borrow">Borrow</TabsTrigger>
           <TabsTrigger value="multiply">Multiply</TabsTrigger>
         </TabsList>
