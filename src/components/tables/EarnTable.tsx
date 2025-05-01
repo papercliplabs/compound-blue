@@ -29,7 +29,7 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
     accessorKey: "userDepositsUsd",
     header: "Your Deposits",
     cell: ({ row }) => {
-      return <NumberFlow value={row.original.userDepositsUsd} format={{ currency: "USD" }} />;
+      return <NumberFlow value={row.original.userDepositsUsd} format={{ currency: "USD" }} hideWhenZero />;
     },
     minSize: 160,
   },

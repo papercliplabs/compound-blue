@@ -4,12 +4,12 @@ import { ComponentProps } from "react";
 
 const MAX_USD_VALUE = 1e12;
 
-export default function NumberFlow({
-  value,
-  format,
-  className,
-  ...props
-}: { value: number } & ComponentProps<typeof NumberFlowReact>) {
+type NumberFlowProps = {
+  hideWhenZero?: boolean;
+  value: number;
+} & ComponentProps<typeof NumberFlowReact>;
+
+export default function NumberFlow({ className, format, hideWhenZero = false, value, ...props }: NumberFlowProps) {
   const currency = format?.currency;
   const isPercent = format?.style === "percent";
   const {
@@ -41,7 +41,9 @@ export default function NumberFlow({
     value = minValue * Math.pow(10, format?.style === "percent" ? -2 : 0) * (neg ? -1 : 1);
   }
 
-  return (
+  return hideWhenZero && value == 0 ? (
+    <span className={cn("text-content-secondary", className)}>-</span>
+  ) : (
     <span className={cn("inline-flex items-center", className)}>
       {prefix}
       <NumberFlowReact value={value} format={formatOptions} {...props} className="inline-flex items-center" />
