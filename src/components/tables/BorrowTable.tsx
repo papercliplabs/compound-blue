@@ -69,7 +69,7 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
     accessorKey: "userBorrowUsd",
     header: "Your Borrow",
     cell: ({ row }) => {
-      return <NumberFlow value={row.original.userBorrowUsd} format={{ currency: "USD" }} />;
+      return <NumberFlow value={row.original.userBorrowUsd} format={{ currency: "USD" }} hideWhenZero />;
     },
     minSize: 160,
   },
@@ -80,8 +80,12 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
       const market = row.original;
       return (
         <span className="flex items-center gap-1">
-          <NumberFlow value={row.original.userLtv} format={{ style: "percent", minimumFractionDigits: 1 }} /> /{" "}
-          {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 1 })}
+          <NumberFlow
+            value={row.original.userLtv}
+            format={{ style: "percent", minimumFractionDigits: 1 }}
+            hideWhenZero
+          />{" "}
+          / {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 1 })}
         </span>
       );
     },
