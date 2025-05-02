@@ -6,10 +6,10 @@ import { useAccount, useConnectorClient, usePublicClient, useSwitchChain } from 
 import { CHAIN_ID } from "@/config";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { estimateGas, sendTransaction, waitForTransactionReceipt } from "viem/actions";
-import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
 import { revalidateDynamicPages } from "@/utils/revalidateDynamicPages";
 import { trackEvent } from "@/data/trackEvent";
 import { safeFetch } from "@/utils/fetch";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type ActionFlowState = "review" | "active" | "success" | "failed";
 export type ActionState = "pending-wallet" | "pending-transaction";
@@ -71,7 +71,6 @@ export function ActionFlowProvider({
   const [lastTransactionHash, setLastTransactionHash] = useState<Hex | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { triggerFastPolling } = useAccountDataPollingContext();
   const { chainId } = useAccount();
   const { data: client } = useConnectorClient();
   const { connector } = useAccount();
@@ -79,6 +78,7 @@ export function ActionFlowProvider({
   const { openChainModal } = useChainModal();
   const publicClient = usePublicClient();
   const { switchChainAsync } = useSwitchChain();
+  const queryClient = useQueryClient();
 
   const startFlow = useCallback(async () => {
     // Must be connected
@@ -166,6 +166,11 @@ export function ActionFlowProvider({
           if (receipt.status == "success") {
             trackEvent("transaction", { hash, status: "success", connector: connectorName, name: step.name });
             setActiveStep((step) => step + 1);
+
+            // Trigger data revalidation
+            revalidateDynamicPages();
+            queryClient.invalidateQueries({ type: "all" });
+            queryClient.refetchQueries({ type: "all" });
           } else {
             trackEvent("transaction", { hash, status: "failed", connector: connectorName, name: step.name });
             setFlowState("failed");
@@ -184,10 +189,6 @@ export function ActionFlowProvider({
         });
         return;
       }
-
-      // Trigger data refetches
-      revalidateDynamicPages();
-      triggerFastPolling();
 
       setFlowState("success");
       flowCompletionCb?.();
@@ -209,7 +210,7 @@ export function ActionFlowProvider({
     flowCompletionCb,
     switchChainAsync,
     connector,
-    triggerFastPolling,
+    queryClient,
   ]);
 
   return (

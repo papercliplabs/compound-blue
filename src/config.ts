@@ -87,3 +87,6 @@ export const COUNTRY_CODES_TO_DISABLE_LEVERAGE = ["US", "GB"];
 
 // If a user requests max action and wrapping of native asset, leave this much native in their wallet for future gas.
 export const MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING = parseEther("0.1");
+
+// How often to poll the account state changes - note also will be revalidated on any actions
+export const ACCOUNT_STATE_POLLING_INTERVAL_MS = 60_000;

@@ -6,58 +6,41 @@ import { Address } from "viem";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
-  query getMarketPosition($chainId: Number!, $marketId: String!, $accountAddress: String!) {
-    morphoMarketPosition(chainId: $chainId, marketId: $marketId, accountAddress: $accountAddress) {
+  query getMarketPositions($chainId: Number!, $marketIds: [String!]!, $accountAddress: String!) {
+    morphoMarketPositions(chainId: $chainId, marketIds: $marketIds, accountAddress: $accountAddress) {
       market {
         marketId
-        lltv
-        collateralPriceInLoanAsset
-        collateralAsset {
-          symbol
-          decimals
-          address
-          icon
-        }
-        loanAsset {
-          symbol
-          decimals
-          icon
-          address
-        }
+
+        # Used for aggregation
         borrowApy {
-          base
           total
-          rewards {
-            asset {
-              symbol
-              icon
-            }
-            apr
-          }
         }
       }
       collateralAssets
       collateralAssetsUsd
+
       supplyAssetsUsd
+
       borrowAssets
       borrowAssetsUsd
+
       maxBorrowAssetsUsd
       maxBorrowAssets
+
       ltv
     }
   }
 `);
 
 export const getAccountMarketPositions = cacheAndCatch(async (accountAddress: Address) => {
-  const marketPositions = await Promise.all(
-    WHITELISTED_MARKET_IDS.map((marketId) =>
-      whiskClient.request(query, { chainId: CHAIN_ID, marketId, accountAddress })
-    )
-  );
+  const marketPositions = await whiskClient.request(query, {
+    chainId: CHAIN_ID,
+    marketIds: WHITELISTED_MARKET_IDS,
+    accountAddress,
+  });
+
   return Object.fromEntries(
-    marketPositions
-      .filter((position) => position.morphoMarketPosition?.market)
-      .map((position) => [position.morphoMarketPosition!.market!.marketId, position.morphoMarketPosition!])
+    marketPositions.morphoMarketPositions.map((position) => [position.market.marketId, position])
   );
 }, "getUserMarketPositions");
 

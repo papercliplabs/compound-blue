@@ -1,6 +1,6 @@
 "use client";
+import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
 import { AccountVaultPositions } from "@/data/whisk/getAccountVaultPositions";
-import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
 import { safeFetch } from "@/utils/fetch";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -8,13 +8,12 @@ import { Address } from "viem";
 import { useAccount } from "wagmi";
 
 export function useAccountVaultPositions() {
-  const { pollingInterval, revalidateSignal } = useAccountDataPollingContext();
   const { address } = useAccount();
   return useQuery({
-    queryKey: ["account-vault-positions", address, revalidateSignal],
+    queryKey: ["account-vault-positions", address],
     queryFn: async () => safeFetch<AccountVaultPositions>(`/api/account/${address}/vault-positions`),
     enabled: !!address,
-    refetchInterval: pollingInterval,
+    refetchInterval: ACCOUNT_STATE_POLLING_INTERVAL_MS,
     placeholderData: (prev) => prev,
   });
 }

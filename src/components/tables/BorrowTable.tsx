@@ -129,6 +129,8 @@ export default function BorrowTableClient({ marketSummaries }: TableProps) {
   // Inject user position
   const { data: accountMarketPositions } = useAccountMarketPositions();
 
+  console.log("DEB", accountMarketPositions);
+
   const marketSummariesWithUserPositions = useMemo(() => {
     return marketSummaries.map((market) => {
       const userBorrowUsd = accountMarketPositions?.[market.marketId]?.borrowAssetsUsd ?? 0;

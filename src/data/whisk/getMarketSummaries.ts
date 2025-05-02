@@ -4,8 +4,8 @@ import { CHAIN_ID, WHITELISTED_MARKET_IDS } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
-  query getMarketSummary($chainId: Number!, $marketId: String!) {
-    morphoMarket(chainId: $chainId, marketId: $marketId) {
+  query getMarketSummary($chainId: Number!, $marketIds: [String!]!) {
+    morphoMarkets(chainId: $chainId, marketIds: $marketIds) {
       marketId
       name
       isIdle
@@ -47,12 +47,8 @@ const query = graphql(`
 `);
 
 export const getMarketSummaries = cacheAndCatch(async () => {
-  const marketSummaries = await Promise.all(
-    WHITELISTED_MARKET_IDS.map((marketId) => whiskClient.request(query, { chainId: CHAIN_ID, marketId }))
-  );
-  return marketSummaries
-    .filter((summary) => summary.morphoMarket && !summary.morphoMarket.isIdle)
-    .map((summary) => summary.morphoMarket!);
+  const marketSummaries = await whiskClient.request(query, { chainId: CHAIN_ID, marketIds: WHITELISTED_MARKET_IDS });
+  return marketSummaries.morphoMarkets.filter((summary) => !summary.isIdle);
 }, "getMarketSummaries");
 
 export type MarketSummary = NonNullable<Awaited<ReturnType<typeof getMarketSummaries>>>[number];
