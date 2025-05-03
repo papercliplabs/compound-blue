@@ -5,8 +5,8 @@ import { Hex, maxUint256, parseEther, parseUnits } from "viem";
 import { executeAction } from "../../helpers/executeAction";
 import { expectOnlyAllowedApprovals } from "../../helpers/logs";
 import { expectZeroErc20Balances, getErc20BalanceOf } from "../../helpers/erc20";
-import { BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS } from "@/utils/constants";
-import { dealAndBorrowFromMorphoMarket, getMorphoMarketPosition } from "../../helpers/morpho";
+import { BUNDLER3_ADDRESS, MORPHO_BLUE_ADDRESS, SUPPORTED_ADDAPTERS } from "@/utils/constants";
+import { dealAndBorrowFromMorphoMarket, getMorphoMarketPosition, seedMarketLiquidity } from "../../helpers/morpho";
 import { describe, expect } from "vitest";
 import { WETH_ADDRESS, WETH_USDC_MARKET_ID } from "../../helpers/constants";
 import { test } from "../../setup";
@@ -46,6 +46,7 @@ async function runRepayAndWithdrawCollateralTest({
   const market = await fetchMarket(marketId, client);
   const { loanToken: loanTokenAddrress, collateralToken: collateralTokenAddress } = market.params;
 
+  await seedMarketLiquidity(client, marketId, initialPositionLoanAmount * 2n);
   await dealAndBorrowFromMorphoMarket(client, marketId, initialPositionCollateralAmount, initialPositionLoanAmount);
   await client.deal({ erc20: loanTokenAddrress, amount: initialWalletLoanAssetAmount });
 
@@ -66,8 +67,6 @@ async function runRepayAndWithdrawCollateralTest({
 
   // Assert
   await expectOnlyAllowedApprovals(client, logs, client.account.address); // Make sure doesn't approve or permit anything unexpected
-  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS], collateralTokenAddress); // Make sure no funds left in bundler or used adapters
-  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS], loanTokenAddrress); // Make sure no funds left in bundler or used adapters
 
   const { collateralBalance: positionCollateralBalance, loanBalance: positionLoanBalance } =
     await getMorphoMarketPosition(client, marketId, client.account.address);
@@ -99,6 +98,9 @@ async function runRepayAndWithdrawCollateralTest({
     expect(positionCollateralBalance).toEqual(initialPositionCollateralAmount - withdrawCollateralAmount);
     expect(walletCollateralBalance).toEqual(withdrawCollateralAmount);
   }
+
+  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], loanTokenAddrress);
+  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], collateralTokenAddress);
 }
 
 const successTestCases: ({ name: string } & Omit<MarketRepayAndWithdrawCollateralTestParameters, "client">)[] = [
@@ -161,7 +163,7 @@ const successTestCases: ({ name: string } & Omit<MarketRepayAndWithdrawCollatera
 describe("prepareMarketRepayAndWithdrawCollateralAction", () => {
   describe("happy path", () => {
     successTestCases.map((testCase) => {
-      test.concurrent(testCase.name + " - eoa caller", async ({ client }) => {
+      test(testCase.name + " - eoa caller", async ({ client }) => {
         await runRepayAndWithdrawCollateralTest({
           client,
           ...testCase,
@@ -171,7 +173,7 @@ describe("prepareMarketRepayAndWithdrawCollateralAction", () => {
     });
 
     successTestCases.map((testCase) => {
-      test.concurrent(testCase.name + " - contract caller", async ({ client }) => {
+      test(testCase.name + " - contract caller", async ({ client }) => {
         await runRepayAndWithdrawCollateralTest({
           client,
           ...testCase,
@@ -182,7 +184,7 @@ describe("prepareMarketRepayAndWithdrawCollateralAction", () => {
   });
 
   describe("sad path", () => {
-    test.concurrent("throws error when market doesn't exist", async ({ client }) => {
+    test("throws error when market doesn't exist", async ({ client }) => {
       await expect(
         prepareMarketRepayAndWithdrawCollateralAction({
           publicClient: client,
@@ -191,10 +193,10 @@ describe("prepareMarketRepayAndWithdrawCollateralAction", () => {
           repayAmount: parseUnits("100", 6),
           withdrawCollateralAmount: parseEther("1"),
         })
-      ).rejects;
+      ).rejects.toThrow(); // Unknown, this is viem error
     });
-
-    test.concurrent("prepare error if repay and withdraw collateral amount are both 0", async ({ client }) => {
+    test("prepare error if repay and withdraw collateral amount are both 0", async ({ client }) => {
+      await seedMarketLiquidity(client, WETH_USDC_MARKET_ID, parseEther("100"));
       await dealAndBorrowFromMorphoMarket(client, WETH_USDC_MARKET_ID, parseEther("10"), parseUnits("100", 6));
       await client.deal({ erc20: WETH_ADDRESS, amount: parseEther("100") });
       const action = await prepareMarketRepayAndWithdrawCollateralAction({
@@ -206,7 +208,7 @@ describe("prepareMarketRepayAndWithdrawCollateralAction", () => {
       });
       expect(action.status).toBe("error");
     });
-    test.concurrent("prepare error if repay exceeds wallet balance", async ({ client }) => {
+    test("prepare error if repay exceeds wallet balance", async ({ client }) => {
       const action = await prepareMarketRepayAndWithdrawCollateralAction({
         publicClient: client,
         marketId: WETH_USDC_MARKET_ID,
@@ -216,7 +218,7 @@ describe("prepareMarketRepayAndWithdrawCollateralAction", () => {
       });
       expect(action.status).toBe("error");
     });
-    test.concurrent("prepare error if withdraw collateral exceeds position balance", async ({ client }) => {
+    test("prepare error if withdraw collateral exceeds position balance", async ({ client }) => {
       const action = await prepareMarketRepayAndWithdrawCollateralAction({
         publicClient: client,
         marketId: WETH_USDC_MARKET_ID,
@@ -226,7 +228,8 @@ describe("prepareMarketRepayAndWithdrawCollateralAction", () => {
       });
       expect(action.status).toBe("error");
     });
-    test.concurrent("prepare error if loan is not sufficiently collateralized", async ({ client }) => {
+    test("prepare error if loan is not sufficiently collateralized", async ({ client }) => {
+      await seedMarketLiquidity(client, WETH_USDC_MARKET_ID, parseEther("100"));
       await dealAndBorrowFromMorphoMarket(client, WETH_USDC_MARKET_ID, parseEther("10"), parseUnits("100", 6));
       const action = await prepareMarketRepayAndWithdrawCollateralAction({
         publicClient: client,
@@ -237,8 +240,7 @@ describe("prepareMarketRepayAndWithdrawCollateralAction", () => {
       });
       expect(action.status).toBe("error");
     });
-
-    test.concurrent("tx reverts if slippage tolerance is exceeded", async ({ client }) => {
+    test.sequential("tx reverts if slippage tolerance is exceeded", async ({ client }) => {
       const marketId = WETH_USDC_MARKET_ID;
       await expect(
         runRepayAndWithdrawCollateralTest({

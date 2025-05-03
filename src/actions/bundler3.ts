@@ -1,16 +1,8 @@
-import { CHAIN_ID } from "@/config";
-import { Address, encodeAbiParameters, encodeFunctionData, Hex, keccak256, zeroHash } from "viem";
-import { addresses, ChainId, InputMarketParams } from "@morpho-org/blue-sdk";
-import { bundler3Abi, BundlerCall, generalAdapter1Abi, paraswapAdapterAbi } from "@morpho-org/bundler-sdk-viem";
+import { Address, encodeFunctionData, Hex, zeroHash } from "viem";
+import { InputMarketParams } from "@morpho-org/blue-sdk";
+import { bundler3Abi, BundlerCall, paraswapAdapterAbi } from "@morpho-org/bundler-sdk-viem";
 import { ParaswapOffsets } from "@/data/paraswap/types";
-
-const {
-  bundler3: {
-    paraswapAdapter: paraswapAdapterAddress,
-    bundler3: bundler3Address,
-    generalAdapter1: generalAdapter1Address,
-  },
-} = addresses[CHAIN_ID];
+import { BUNDLER3_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
 
 export function paraswapBuy(
   augustus: Address,
@@ -20,13 +12,9 @@ export function paraswapBuy(
   offsets: ParaswapOffsets,
   receiver: Address
 ): BundlerCall[] {
-  if (!paraswapAdapterAddress) {
-    throw new Error("Paraswap adapter not found");
-  }
-
   return [
     {
-      to: paraswapAdapterAddress,
+      to: PARASWAP_ADAPTER_ADDRESS,
       data: encodeFunctionData({
         abi: paraswapAdapterAbi,
         functionName: "buy",
@@ -49,13 +37,9 @@ export function paraswapBuyDebt(
   onBehalf: Address,
   receiver: Address
 ): BundlerCall[] {
-  if (!paraswapAdapterAddress) {
-    throw new Error("Paraswap adapter not found");
-  }
-
   return [
     {
-      to: paraswapAdapterAddress,
+      to: PARASWAP_ADAPTER_ADDRESS,
       data: encodeFunctionData({
         abi: paraswapAdapterAbi,
         functionName: "buyMorphoDebt",
@@ -77,13 +61,9 @@ export function paraswapSell(
   offsets: ParaswapOffsets,
   receiver: Address
 ): BundlerCall[] {
-  if (!paraswapAdapterAddress) {
-    throw new Error("Paraswap adapter not found");
-  }
-
   return [
     {
-      to: paraswapAdapterAddress,
+      to: PARASWAP_ADAPTER_ADDRESS,
       data: encodeFunctionData({
         abi: paraswapAdapterAbi,
         functionName: "sell",
@@ -96,70 +76,10 @@ export function paraswapSell(
   ];
 }
 
-const reenterAbiInputs = bundler3Abi.find((item) => item.name === "reenter")!.inputs;
-
-// https://github.com/morpho-org/sdks/blob/next/packages/bundler-sdk-viem/src/BundlerAction.ts#L1049
-// Not using Morpho's SDK here since it doesn't give control over skipRevert which we use for the sweep
-export function morphoSupplyCollateral(
-  _chainId: ChainId, // To conform to SDK to plug back out later
-  market: InputMarketParams,
-  assets: bigint,
-  onBehalf: Address,
-  callbackCalls: BundlerCall[],
-  skipRevert: boolean = false
-): BundlerCall[] {
-  const reenter = callbackCalls.length > 0;
-  const reenterData = reenter ? encodeAbiParameters(reenterAbiInputs, [callbackCalls]) : "0x";
-
-  return [
-    {
-      to: generalAdapter1Address,
-      data: encodeFunctionData({
-        abi: generalAdapter1Abi,
-        functionName: "morphoSupplyCollateral",
-        args: [market, assets, onBehalf, reenterData],
-      }),
-      value: BigInt(0),
-      skipRevert,
-      callbackHash: reenter ? keccak256(reenterData) : zeroHash,
-    },
-  ];
-}
-
-// https://github.com/morpho-org/sdks/blob/next/packages/bundler-sdk-viem/src/BundlerAction.ts#L1049
-// Not using Morpho's SDK here since it doesn't give control over skipRevert which we use for the sweep
-export function morphoRepay(
-  _chainId: ChainId, // To conform to SDK to plug back out later
-  market: InputMarketParams,
-  assets: bigint,
-  shares: bigint,
-  slippageAmount: bigint,
-  onBehalf: Address,
-  callbackCalls: BundlerCall[],
-  skipRevert = false
-): BundlerCall[] {
-  const reenter = callbackCalls.length > 0;
-  const reenterData = reenter ? encodeAbiParameters(reenterAbiInputs, [callbackCalls]) : "0x";
-
-  return [
-    {
-      to: generalAdapter1Address,
-      data: encodeFunctionData({
-        abi: generalAdapter1Abi,
-        functionName: "morphoRepay",
-        args: [market, assets, shares, slippageAmount, onBehalf, reenterData],
-      }),
-      value: BigInt(0),
-      skipRevert,
-      callbackHash: reenter ? keccak256(reenterData) : zeroHash,
-    },
-  ];
-}
-
 export function createBundle(calls: BundlerCall[]) {
   const value = calls.reduce((acc, call) => acc + call.value, 0n);
   return {
-    to: bundler3Address,
+    to: BUNDLER3_ADDRESS,
     value,
     data: encodeFunctionData({
       abi: bundler3Abi,

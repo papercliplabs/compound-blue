@@ -15,7 +15,7 @@ import { CHAIN_ID } from "@/config";
 import { readContract } from "viem/actions";
 import { TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
-import { createBundle, morphoRepay, paraswapBuy } from "../bundler3";
+import { createBundle, paraswapBuy } from "../bundler3";
 import { GetParaswapReturnType } from "@/data/paraswap/types";
 import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
 import { fetchMarket } from "@morpho-org/blue-sdk-viem";
@@ -28,7 +28,7 @@ interface PrepareMarketLeveragedBorrowActionParameters {
   accountAddress: Address;
 
   initialCollateralAmount: bigint; // a.k.a margin, uint256 max for entire wallet balance
-  leverageFactor: number; // (1, 1/(1-LLTV * (1-maxSlippageTolerance))]
+  leverageFactor: number; // (1, (1 + S) / (1 + S - LLTV_WITH_MARGIN))]
   maxSlippageTolerance: number; // (0,1)
 }
 
@@ -51,6 +51,8 @@ export async function prepareMarketLeveragedBorrowAction({
   leverageFactor,
   maxSlippageTolerance,
 }: PrepareMarketLeveragedBorrowActionParameters): Promise<PrepareMarketLeveragedBorrowActionReturnType> {
+  // Input validation performed within computeLeverageValues
+
   let market = await fetchMarket(marketId, publicClient);
   const { collateralToken: collateralTokenAddress, loanToken: loanTokenAddress } = market.params;
 
@@ -203,7 +205,6 @@ export async function prepareMarketLeveragedBorrowAction({
           ),
           // Sweep any remaing loan tokens from Paraswap adapter back to GA1
           BundlerAction.erc20Transfer(
-            CHAIN_ID,
             loanTokenAddress,
             GENERAL_ADAPTER_1_ADDRESS,
             maxUint256,
@@ -214,7 +215,16 @@ export async function prepareMarketLeveragedBorrowAction({
       // Collateral will be withdrawn from GA1 here to complete the supply collateral
 
       // Use any leftover loan tokens in GA1 to repay the loan to lower LTV
-      morphoRepay(CHAIN_ID, market.params, maxUint256, BigInt(0), maxSharePriceE27, accountAddress, [], true),
+      BundlerAction.morphoRepay(
+        CHAIN_ID,
+        market.params,
+        maxUint256,
+        BigInt(0),
+        maxSharePriceE27,
+        accountAddress,
+        [],
+        true
+      ),
     ].flat();
 
     return createBundle(bundlerCalls);

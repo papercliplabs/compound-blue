@@ -88,7 +88,7 @@ const successTestCases: ({ name: string } & Omit<VaultWithdrawTestParameters, "c
 describe("prepareVaultWithdrawAction", () => {
   describe("happy path", () => {
     successTestCases.map((testCase) => {
-      test.concurrent(testCase.name + " - eoa caller", async ({ client }) => {
+      test(testCase.name + " - eoa caller", async ({ client }) => {
         await runVaultWithdrawTest({
           client,
           ...testCase,
@@ -98,7 +98,7 @@ describe("prepareVaultWithdrawAction", () => {
     });
 
     successTestCases.map((testCase) => {
-      test.concurrent(testCase.name + " - contract caller", async ({ client }) => {
+      test(testCase.name + " - contract caller", async ({ client }) => {
         await runVaultWithdrawTest({
           client,
           ...testCase,
@@ -109,7 +109,7 @@ describe("prepareVaultWithdrawAction", () => {
   });
 
   describe("sad path", () => {
-    test.concurrent("throws error when vault doens't exist", async ({ client }) => {
+    test("throws error when vault doens't exist", async ({ client }) => {
       await expect(
         runVaultWithdrawTest({
           client,
@@ -120,7 +120,7 @@ describe("prepareVaultWithdrawAction", () => {
       ).rejects.toThrow();
     });
 
-    test.concurrent("prepare error when withdraw amount is 0", async ({ client }) => {
+    test("prepare error when withdraw amount is 0", async ({ client }) => {
       const vaultAddress = USDC_VAULT_ADDRESS;
       const action = await prepareVaultWithdrawBundle({
         publicClient: client,
@@ -131,7 +131,7 @@ describe("prepareVaultWithdrawAction", () => {
       expect(action.status).toBe("error");
     });
 
-    test.concurrent("prepare error when withdraw amount exceeds user balance", async ({ client }) => {
+    test("prepare error when withdraw amount exceeds user balance", async ({ client }) => {
       const vaultAddress = USDC_VAULT_ADDRESS;
       const action = await prepareVaultWithdrawBundle({
         publicClient: client,
@@ -144,7 +144,7 @@ describe("prepareVaultWithdrawAction", () => {
 
     // It's not possible to deflate the share price in metamorpho v1.1 since it doesn't realize market losses.
     // Tried to override storage slot for lastTotalAssets to force a loss realization, but causes other issues since this is used elsewhere in the contract.
-    // test.concurrent("tx should revert if slippage tolerance is exceeded", async ({ client }) => {
+    // test("tx should revert if slippage tolerance is exceeded", async ({ client }) => {
     // });
   });
 });

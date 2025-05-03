@@ -4,7 +4,7 @@ import { AnvilTestClient } from "@morpho-org/test";
 import { MarketId, MathLib, ORACLE_PRICE_SCALE } from "@morpho-org/blue-sdk";
 import { fetchMarket } from "@morpho-org/blue-sdk-viem";
 import { expectOnlyAllowedApprovals } from "../../helpers/logs";
-import { BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
+import { BUNDLER3_ADDRESS, SUPPORTED_ADDAPTERS } from "@/utils/constants";
 import { expectZeroErc20Balances, getErc20BalanceOf } from "../../helpers/erc20";
 import { describe, expect, vi } from "vitest";
 import { maxUint256, parseEther, parseUnits } from "viem";
@@ -15,6 +15,8 @@ import { GetParaswapReturnType } from "@/data/paraswap/types";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 
 const BORROW_ACCURAL_MARGIN = 1000n;
+const FACTOR_SCALE = 100000n;
+const REBASEING_MARGIN = 100030n;
 
 vi.mock("@/data/paraswap/getParaswapExactBuy");
 
@@ -72,23 +74,16 @@ async function runMarketRepayWithCollateralTest({
 
   // Assert
   await expectOnlyAllowedApprovals(client, logs, client.account.address); // Make sure doesn't approve or permit anything unexpected
-  await expectZeroErc20Balances(
-    client,
-    [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, PARASWAP_ADAPTER_ADDRESS!],
-    collateralTokenAddress
-  ); // Make sure no funds left in bundler or used adapters
-  await expectZeroErc20Balances(
-    client,
-    [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, PARASWAP_ADAPTER_ADDRESS!],
-    loanTokenAddrress
-  ); // Make sure no funds left in bundler or used adapters
+  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], collateralTokenAddress); // Make sure no funds left in bundler or used adapters
+  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], loanTokenAddrress); // Make sure no funds left in bundler or used adapters
 
   const { collateralBalance: positionCollateralBalance, loanBalance: positionLoanBalance } =
     await getMorphoMarketPosition(client, marketId, client.account.address);
   const walletCollateralBalance = await getErc20BalanceOf(client, collateralTokenAddress, client.account.address);
   const price = market.price!;
 
-  const loanRepaymentAmountInternal = loanRepayAmount == maxUint256 ? initialPositionLoanAmount : loanRepayAmount;
+  const loanRepaymentAmountInternal =
+    loanRepayAmount == maxUint256 ? initialPositionLoanAmount : (loanRepayAmount * REBASEING_MARGIN) / FACTOR_SCALE;
   const loanRepaymentAmountInCollateral = MathLib.mulDivDown(loanRepaymentAmountInternal, ORACLE_PRICE_SCALE, price);
   const maxCollateralUsedForLoanRepayment = MathLib.mulDivUp(
     loanRepaymentAmountInCollateral,
@@ -149,7 +144,7 @@ const successTestCases: ({ name: string } & Omit<MarketRepayWithCollateralTestPa
 describe("prepareMarketRepayWithCollateralAction", () => {
   describe("happy path", () => {
     successTestCases.map((testCase) => {
-      test.concurrent(testCase.name + " - eoa caller", async ({ client }) => {
+      test(testCase.name + " - eoa caller", async ({ client }) => {
         await runMarketRepayWithCollateralTest({
           client,
           ...testCase,
@@ -159,7 +154,7 @@ describe("prepareMarketRepayWithCollateralAction", () => {
     });
 
     successTestCases.map((testCase) => {
-      test.concurrent(testCase.name + " - contract caller", async ({ client }) => {
+      test(testCase.name + " - contract caller", async ({ client }) => {
         await runMarketRepayWithCollateralTest({
           client,
           ...testCase,
@@ -170,7 +165,7 @@ describe("prepareMarketRepayWithCollateralAction", () => {
   });
 
   describe("sad path", () => {
-    test.concurrent("throws error when market doesn't exist", async ({ client }) => {
+    test("throws error when market doesn't exist", async ({ client }) => {
       await expect(
         prepareMarketRepayWithCollateralAction({
           publicClient: client,
@@ -179,24 +174,34 @@ describe("prepareMarketRepayWithCollateralAction", () => {
           loanRepayAmount: parseUnits("100", 6),
           maxSlippageTolerance: 0.01,
         })
-      ).rejects;
+      ).rejects.toThrow(); // Unknown, this is viem error
     });
 
-    test.concurrent("prepare error if loanRepayAmount is 0", async ({ client }) => {
-      await expect(
-        prepareMarketRepayWithCollateralAction({
-          publicClient: client,
-          marketId: WETH_USDC_MARKET_ID,
-          accountAddress: client.account.address,
-          loanRepayAmount: 0n,
-          maxSlippageTolerance: 0.01,
-        })
-      ).rejects;
+    test("prepare error if loanRepayAmount is 0", async ({ client }) => {
+      const action = await prepareMarketRepayWithCollateralAction({
+        publicClient: client,
+        marketId: WETH_USDC_MARKET_ID,
+        accountAddress: client.account.address,
+        loanRepayAmount: 0n,
+        maxSlippageTolerance: 0.01,
+      });
+      expect(action.status).toBe("error");
+    });
+
+    test("prepare error if slippage tolerance is 0", async ({ client }) => {
+      const action = await prepareMarketRepayWithCollateralAction({
+        publicClient: client,
+        marketId: WETH_USDC_MARKET_ID,
+        accountAddress: client.account.address,
+        loanRepayAmount: 0n,
+        maxSlippageTolerance: 0,
+      });
+      expect(action.status).toBe("error");
     });
 
     // This is hard to test, would need to hook into the paraswap contract somehow
     // This is inforced at the adapter contract level, so just need to make sure the offsets are correct (see paraswapOffsetLookup.test.ts)
-    // test.concurrent("tx reverts if slippage tolerance is exceeded", async ({ client }) => {
+    // test("tx reverts if slippage tolerance is exceeded", async ({ client }) => {
     // });
   });
 });

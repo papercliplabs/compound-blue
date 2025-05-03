@@ -149,7 +149,7 @@ const successTestCases: ({ name: string } & Omit<VaultSupplyTestParameters, "cli
 describe("prepareVaultSupplyAction", () => {
   describe("happy path", () => {
     successTestCases.map((testCase) => {
-      test.concurrent(testCase.name + " - eoa caller", async ({ client }) => {
+      test(testCase.name + " - eoa caller", async ({ client }) => {
         await runVaultSupplyTest({
           client,
           ...testCase,
@@ -159,7 +159,7 @@ describe("prepareVaultSupplyAction", () => {
     });
 
     successTestCases.map((testCase) => {
-      test.concurrent(testCase.name + " - contract caller", async ({ client }) => {
+      test(testCase.name + " - contract caller", async ({ client }) => {
         await runVaultSupplyTest({
           client,
           ...testCase,
@@ -170,13 +170,13 @@ describe("prepareVaultSupplyAction", () => {
   });
 
   describe("sad path", () => {
-    test.concurrent("throws error when vault doens't exist", async ({ client }) => {
+    test("throws error when vault doens't exist", async ({ client }) => {
       await expect(
         runVaultSupplyTest({ client, vaultAddress: zeroAddress, supplyAmount: parseUnits("100000", 6) })
       ).rejects.toThrow();
     });
 
-    test.concurrent("prepare error when supply amount is 0", async ({ client }) => {
+    test("prepare error when supply amount is 0", async ({ client }) => {
       const vaultAddress = USDC_VAULT_ADDRESS;
       const action = await prepareVaultSupplyBundle({
         publicClient: client,
@@ -188,7 +188,7 @@ describe("prepareVaultSupplyAction", () => {
       expect(action.status).toBe("error");
     });
 
-    test.concurrent("prepare error when supply amount exceeds user balance", async ({ client }) => {
+    test("prepare error when supply amount exceeds user balance", async ({ client }) => {
       const vaultAddress = USDC_VAULT_ADDRESS;
       const action = await prepareVaultSupplyBundle({
         publicClient: client,
@@ -200,7 +200,7 @@ describe("prepareVaultSupplyAction", () => {
       expect(action.status).toBe("error");
     });
 
-    test.concurrent("tx should revert if slippage tolerance is exceeded", async ({ client }) => {
+    test("tx should revert if slippage tolerance is exceeded", async ({ client }) => {
       const vaultAddress = USDC_VAULT_ADDRESS;
 
       const totalAssetsBefore = await readContract(client, {

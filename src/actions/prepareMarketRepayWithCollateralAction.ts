@@ -17,7 +17,7 @@ import {
 } from "@morpho-org/bundler-sdk-viem";
 import { CHAIN_ID } from "@/config";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
-import { createBundle, morphoSupplyCollateral, paraswapBuy } from "./bundler3";
+import { createBundle, paraswapBuy } from "./bundler3";
 import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
 import { GetParaswapReturnType } from "@/data/paraswap/types";
 
@@ -53,10 +53,10 @@ export async function prepareMarketRepayWithCollateralAction({
   loanRepayAmount,
   maxSlippageTolerance,
 }: PrepareMarketRepayWithCollateralActionParameters): Promise<PrepareMarketRepayWithCollateralActionReturnType> {
-  if (loanRepayAmount == 0n) {
+  if (loanRepayAmount <= 0n || maxSlippageTolerance <= 0) {
     return {
       status: "error",
-      message: "Loan repay amount cannot be 0.",
+      message: "Loan repay amount and slippage tolerance must be greater than 0.",
     };
   }
 
@@ -78,10 +78,10 @@ export async function prepareMarketRepayWithCollateralAction({
   const positionLoanBefore = market.toBorrowAssets(accountPosition.borrowShares);
   const positionLtvBefore = market.getLtv(accountPosition) ?? BigInt(0);
 
-  if (!market.price) {
+  if (market.price == undefined || market.price == 0n) {
     return {
       status: "error",
-      message: "Oracle issue: missing price.",
+      message: "Missing oracle price.",
     };
   }
 
@@ -99,10 +99,12 @@ export async function prepareMarketRepayWithCollateralAction({
   }
 
   // Worst case required collateral amount
-  const slippageMultiplier = 1 / (1 - maxSlippageTolerance); // This is guarentted to be >1
-  const loanSwapAmountWithSlippage =
-    (loanSwapAmount * BigInt(Math.floor(slippageMultiplier * FACTOR_SCALE))) / BigInt(FACTOR_SCALE);
-  const maxCollateralSwapAmount = MathLib.mulDivDown(loanSwapAmountWithSlippage, ORACLE_PRICE_SCALE, market.price);
+  const quoteCollateralAmount = MathLib.mulDivUp(loanSwapAmount, ORACLE_PRICE_SCALE, market.price);
+  const maxCollateralSwapAmount = MathLib.mulDivDown(
+    quoteCollateralAmount,
+    BigInt(Math.floor((1 + maxSlippageTolerance) * FACTOR_SCALE)),
+    FACTOR_SCALE
+  );
 
   // Need to move worst case collateral into adapter, so must exist
   if (maxCollateralSwapAmount > positionCollateralBefore) {
@@ -200,7 +202,6 @@ export async function prepareMarketRepayWithCollateralAction({
           ),
           // Sweep any leftover collateral assets from paraswap adapter to GA1
           BundlerAction.erc20Transfer(
-            CHAIN_ID,
             collateralTokenAddress,
             GENERAL_ADAPTER_1_ADDRESS,
             maxUint256,
@@ -213,13 +214,13 @@ export async function prepareMarketRepayWithCollateralAction({
       ...(closingPosition
         ? [
             // Sweep any leftover collateral assets from GA1 to user
-            BundlerAction.erc20Transfer(CHAIN_ID, collateralTokenAddress, accountAddress, maxUint256),
+            BundlerAction.erc20Transfer(collateralTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
             // Sweep any leftover loan assets from GA1 to user
-            BundlerAction.erc20Transfer(CHAIN_ID, loanTokenAddress, accountAddress, maxUint256),
+            BundlerAction.erc20Transfer(loanTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
           ]
         : [
             // Add back to position if it's not being closed
-            morphoSupplyCollateral(CHAIN_ID, market.params, maxUint256, accountAddress, [], true),
+            BundlerAction.morphoSupplyCollateral(CHAIN_ID, market.params, maxUint256, accountAddress, [], true),
             // There won't be any loan assets leftover since we did an exact buy for partial positions
           ]),
     ].flat();

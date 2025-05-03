@@ -1,6 +1,5 @@
 import { createPublicClient, http, Address, parseUnits } from "viem";
 import { polygon } from "viem/chains";
-import { createViemTest } from "../../setup";
 import { describe, expect } from "vitest";
 import { AnvilTestClient } from "@morpho-org/test";
 import { PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
@@ -12,6 +11,7 @@ import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { getErc20BalanceOf } from "../../helpers/erc20";
 import { GetParaswapReturnType, SupportedDex } from "@/data/paraswap/types";
 import { SUPPORTED_DEXS } from "@/data/paraswap/config";
+import { createViemTest } from "@morpho-org/test/vitest";
 
 const polygonClient = createPublicClient({
   chain: polygon,
@@ -112,7 +112,7 @@ const testCases: ({ name: string } & Omit<ParaswapAdapterExactBuyTest, "client">
 
 describe("paraswap-test", () => {
   testCases.map((testCase) => {
-    test.concurrent(testCase.name, async ({ client }) => {
+    test(testCase.name, async ({ client }) => {
       await runParaswapTest({
         client,
         ...testCase,

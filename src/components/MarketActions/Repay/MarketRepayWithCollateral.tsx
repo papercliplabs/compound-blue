@@ -68,7 +68,7 @@ export default function MarketRepayWithCollateral({
     defaultValues: {
       repayAmount: undefined,
       isMaxRepay: false,
-      maxSlippageTolerance: 0.3,
+      maxSlippageTolerance: 0.5,
     },
   });
 

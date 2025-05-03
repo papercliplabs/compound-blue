@@ -2,12 +2,12 @@ import { CHAIN_ID } from "@/config";
 import { SUPPORTED_ADDAPTERS, WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
 import { Holding, MarketId, NATIVE_ADDRESS, Position, VaultMarketConfig, VaultUser } from "@morpho-org/blue-sdk";
 import {
+  fetchAccrualVault,
   fetchHolding,
   fetchMarket,
   fetchPosition,
   fetchToken,
   fetchUser,
-  fetchVault,
   fetchVaultMarketConfig,
   fetchVaultUser,
 } from "@morpho-org/blue-sdk-viem";
@@ -56,7 +56,7 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
       break;
   }
 
-  const vaults = await Promise.all(vaultAddresses.map((vaultAddress) => fetchVault(vaultAddress, publicClient)));
+  const vaults = await Promise.all(vaultAddresses.map((vaultAddress) => fetchAccrualVault(vaultAddress, publicClient)));
 
   // Add markets from the vault queues
   marketIds = Array.from(
@@ -119,8 +119,9 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
     ),
   ]);
 
-  // Accrue interest on all markets
+  // Accrue interest on all markets and markets
   const accruedMarkets = markets.map((market) => market.accrueInterest(block.timestamp));
+  const accruedVaults = vaults.map((vault) => vault.accrueInterest(block.timestamp));
 
   const simulationState = new SimulationState({
     chainId: CHAIN_ID,
@@ -129,7 +130,7 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
     markets: Object.fromEntries(marketIds.map((marketId, i) => [marketId, accruedMarkets[i]])),
     users: Object.fromEntries(userAddresses.map((userAddress, i) => [userAddress, users[i]])),
     tokens: Object.fromEntries(tokenAddresses.map((tokenAddress, i) => [tokenAddress, tokens[i]])),
-    vaults: Object.fromEntries(vaultAddresses.map((vaultAddress, i) => [vaultAddress, vaults[i]])),
+    vaults: Object.fromEntries(vaultAddresses.map((vaultAddress, i) => [vaultAddress, accruedVaults[i]])),
 
     positions: positionParams.reduce(
       (acc, { userAddress, marketId }, i) => {

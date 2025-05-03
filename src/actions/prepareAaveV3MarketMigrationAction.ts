@@ -19,7 +19,7 @@ import { readContract } from "viem/actions";
 import { aaveV3PoolAbi } from "@/abis/aaveV3PoolAbi";
 import { getIsSmartAccount } from "@/data/getIsSmartAccount";
 import { bigIntMin } from "@/utils/bigint";
-import { createBundle, morphoSupplyCollateral } from "./bundler3";
+import { createBundle } from "./bundler3";
 import { AAVE_V3_MIGRATION_ADAPTER_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS } from "@/utils/constants";
 import { fetchMarket } from "@morpho-org/blue-sdk-viem";
 
@@ -184,7 +184,7 @@ export async function prepareAaveV3MarketMigrationAction({
       BundlerAction.encode(CHAIN_ID, action)
     );
     const bundlerCalls: BundlerCall[] = [
-      morphoSupplyCollateral(
+      BundlerAction.morphoSupplyCollateral(
         CHAIN_ID,
         market.params,
         bigIntMin(accountATokenBalance, collateralTokenAmount), // Minimum collateral amount, any excess will be added at the end
@@ -197,7 +197,6 @@ export async function prepareAaveV3MarketMigrationAction({
           BundlerAction.aaveV3Repay(CHAIN_ID, loanTokenAddress, maxUint256, accountAddress, BigInt(2)),
           // Skim any left over loan assets from aaveV3MigrationAdapter to GA1 (only occurs for full debt migrations)
           BundlerAction.erc20Transfer(
-            CHAIN_ID,
             loanTokenAddress,
             GENERAL_ADAPTER_1_ADDRESS,
             maxUint256,
@@ -219,7 +218,7 @@ export async function prepareAaveV3MarketMigrationAction({
       // For full collateral migrations might be left with small amount of collateral in GA1 (<REBASING_MARGIN of collateral amount)
       // Skip revert handles the case where there is no dust which can occur for low interest collateral assets.
       ...(isFullCollateralMigration
-        ? [morphoSupplyCollateral(CHAIN_ID, market.params, maxUint256, accountAddress, [], true)]
+        ? [BundlerAction.morphoSupplyCollateral(CHAIN_ID, market.params, maxUint256, accountAddress, [], true)]
         : []),
 
       // For full debt migrations will be left with full loan amount in GA1 (<REBASING_MARGIN of loan amount)

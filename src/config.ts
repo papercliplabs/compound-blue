@@ -90,3 +90,6 @@ export const MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING = parseEther("0.1
 
 // How often to poll the account state changes - note also will be revalidated on any actions
 export const ACCOUNT_STATE_POLLING_INTERVAL_MS = 60_000;
+
+// Limit for the max slippage tolerance users can set (0, 1)
+export const MAX_SLIPPAGE_TOLERANCE_LIMIT = 0.5;

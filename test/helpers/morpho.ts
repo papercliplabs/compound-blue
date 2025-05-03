@@ -1,12 +1,13 @@
 import { getSimulationState } from "@/data/getSimulationState";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { AnvilTestClient } from "@morpho-org/test";
-import { Address, erc20Abi, maxUint256 } from "viem";
+import { Address, erc20Abi, Hex, maxUint256, parseEther } from "viem";
 import { getErc20BalanceOf } from "./erc20";
 import { writeContract } from "viem/actions";
 import { blueAbi, fetchMarket, fetchVaultConfig, metaMorphoAbi } from "@morpho-org/blue-sdk-viem";
 import { MORPHO_BLUE_ADDRESS } from "@/utils/constants";
 import { expect } from "vitest";
+import { RANDOM_ADDRESS } from "./constants";
 
 export async function getMorphoMarketPosition(
   client: AnvilTestClient,
@@ -220,4 +221,41 @@ export async function dealAndBorrowFromMorphoMarket(
   const accountBalance = await getMorphoMarketPosition(client, marketId);
   expect(accountBalance.collateralBalance).toEqual(collateralAmount);
   expect(accountBalance.loanBalance).toBeWithinRange(loanAmount, loanAmount + BigInt(1));
+}
+
+export async function seedMarketLiquidity(client: AnvilTestClient, marketId: Hex, supplyAmount: bigint) {
+  const supplyAmountInternal = supplyAmount + 1n; // Extra to make 0 supply work
+  const market = await fetchMarket(marketId as MarketId, client);
+  const { loanToken: loanAssetAddress } = market.params;
+  await client.deal({ erc20: loanAssetAddress, amount: supplyAmountInternal, account: RANDOM_ADDRESS });
+  await client.setBalance({ address: RANDOM_ADDRESS, value: parseEther("10") });
+
+  await writeContract(client, {
+    address: loanAssetAddress,
+    abi: erc20Abi,
+    functionName: "approve",
+    args: [MORPHO_BLUE_ADDRESS, supplyAmountInternal],
+    account: RANDOM_ADDRESS,
+  });
+
+  // Supply on behalf of random address
+  await writeContract(client, {
+    address: MORPHO_BLUE_ADDRESS,
+    abi: blueAbi,
+    functionName: "supply",
+    args: [
+      {
+        loanToken: market.params.loanToken,
+        collateralToken: market.params.collateralToken,
+        oracle: market.params.oracle,
+        irm: market.params.irm,
+        lltv: market.params.lltv,
+      },
+      supplyAmountInternal,
+      BigInt(0),
+      RANDOM_ADDRESS,
+      "0x",
+    ],
+    account: RANDOM_ADDRESS,
+  });
 }

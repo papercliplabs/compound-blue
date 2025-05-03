@@ -56,7 +56,7 @@ const testCases: ParaswapOffsetLookupTest[] = [
 
 describe("paraswapOffsetLookup", () => {
   testCases.map((testCase) => {
-    test.concurrent(testCase.name, async () => {
+    test(testCase.name, async () => {
       await runParaswapOffsetLookupTest(testCase);
     });
   });

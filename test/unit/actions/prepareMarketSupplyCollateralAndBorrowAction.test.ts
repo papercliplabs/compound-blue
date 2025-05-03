@@ -6,7 +6,12 @@ import { Address, Hex, maxUint256, parseEther, parseUnits } from "viem";
 import { executeAction } from "../../helpers/executeAction";
 import { expectOnlyAllowedApprovals } from "../../helpers/logs";
 import { expectZeroErc20Balances, getErc20BalanceOf } from "../../helpers/erc20";
-import { BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS } from "@/utils/constants";
+import {
+  BUNDLER3_ADDRESS,
+  GENERAL_ADAPTER_1_ADDRESS,
+  MORPHO_BLUE_ADDRESS,
+  SUPPORTED_ADDAPTERS,
+} from "@/utils/constants";
 import { dealAndSupplyCollateralToMorphoMarket, getMorphoMarketPosition } from "../../helpers/morpho";
 import { describe, expect } from "vitest";
 import { WETH_ADDRESS, WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS, WETH_USDC_MARKET_ID } from "../../helpers/constants";
@@ -67,8 +72,8 @@ async function runSupplyCollateralAndBorrowTest({
 
   // Assert
   await expectOnlyAllowedApprovals(client, logs, client.account.address); // Make sure doesn't approve or permit anything unexpected
-  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS], collateralTokenAddress); // Make sure no funds left in bundler or used adapters
-  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS], loanTokenAddrress); // Make sure no funds left in bundler or used adapters
+  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], collateralTokenAddress); // Make sure no funds left in bundler or used adapters
+  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], loanTokenAddrress); // Make sure no funds left in bundler or used adapters
 
   const { collateralBalance: positionCollateralBalance, loanBalance: positionLoanBalance } =
     await getMorphoMarketPosition(client, marketId, client.account.address);
@@ -140,14 +145,14 @@ const successTestCases: ({ name: string } & Omit<MarketSupplyCollateralAndBorrow
     marketId: WETH_USDC_MARKET_ID,
     allocatingVaultAddresses: WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS,
     collateralAmount: parseEther("1000000"),
-    borrowAmount: parseUnits("3000000", 6), // USDC
+    borrowAmount: parseUnits("110000", 6), // USDC
   },
 ];
 
 describe("prepareMarketSupplyCollateralAndBorrowAction", () => {
   describe("happy path", () => {
     successTestCases.map((testCase) => {
-      test.concurrent(testCase.name + " - eoa caller", async ({ client }) => {
+      test(testCase.name + " - eoa caller", async ({ client }) => {
         await runSupplyCollateralAndBorrowTest({
           client,
           ...testCase,
@@ -157,7 +162,7 @@ describe("prepareMarketSupplyCollateralAndBorrowAction", () => {
     });
 
     successTestCases.map((testCase) => {
-      test.concurrent(testCase.name + " - contract caller", async ({ client }) => {
+      test(testCase.name + " - contract caller", async ({ client }) => {
         await runSupplyCollateralAndBorrowTest({
           client,
           ...testCase,
@@ -168,7 +173,7 @@ describe("prepareMarketSupplyCollateralAndBorrowAction", () => {
   });
 
   describe("sad path", () => {
-    test.concurrent("throws error when market doesn't exist", async ({ client }) => {
+    test("throws error when market doesn't exist", async ({ client }) => {
       await client.deal({ erc20: WETH_ADDRESS, amount: parseEther("100") });
       await expect(
         prepareMarketSupplyCollateralAndBorrowAction({
@@ -179,10 +184,10 @@ describe("prepareMarketSupplyCollateralAndBorrowAction", () => {
           collateralAmount: parseEther("100"),
           borrowAmount: parseUnits("100", 6),
         })
-      ).rejects;
+      ).rejects.toThrow(); // Unknown, this is viem error
     });
 
-    test.concurrent("prepare error if collateral and borrow amount are both 0", async ({ client }) => {
+    test("prepare error if collateral and borrow amount are both 0", async ({ client }) => {
       await client.deal({ erc20: WETH_ADDRESS, amount: parseEther("100") });
       const action = await prepareMarketSupplyCollateralAndBorrowAction({
         publicClient: client,
@@ -195,7 +200,7 @@ describe("prepareMarketSupplyCollateralAndBorrowAction", () => {
       expect(action.status).toBe("error");
     });
 
-    test.concurrent("prepare error if collateral exceeds wallet balance", async ({ client }) => {
+    test("prepare error if collateral exceeds wallet balance", async ({ client }) => {
       const action = await prepareMarketSupplyCollateralAndBorrowAction({
         publicClient: client,
         marketId: WETH_USDC_MARKET_ID,
@@ -207,7 +212,7 @@ describe("prepareMarketSupplyCollateralAndBorrowAction", () => {
       expect(action.status).toBe("error");
     });
 
-    test.concurrent("prepare error if loan is not sufficiently collateralized", async ({ client }) => {
+    test("prepare error if loan is not sufficiently collateralized", async ({ client }) => {
       await client.deal({ erc20: WETH_ADDRESS, amount: parseEther("100") });
       const action = await prepareMarketSupplyCollateralAndBorrowAction({
         publicClient: client,
@@ -220,7 +225,7 @@ describe("prepareMarketSupplyCollateralAndBorrowAction", () => {
       expect(action.status).toBe("error");
     });
 
-    test.concurrent("prepare error if borrow exceeds markets available liquidity", async ({ client }) => {
+    test("prepare error if borrow exceeds markets available liquidity", async ({ client }) => {
       await client.deal({ erc20: WETH_ADDRESS, amount: parseEther("10000000") });
       const action = await prepareMarketSupplyCollateralAndBorrowAction({
         publicClient: client,
@@ -233,7 +238,7 @@ describe("prepareMarketSupplyCollateralAndBorrowAction", () => {
       expect(action.status).toBe("error");
     });
 
-    test.concurrent("tx reverts if slippage tolerance is exceeded", async ({ client }) => {
+    test("tx reverts if slippage tolerance is exceeded", async ({ client }) => {
       const marketId = WETH_USDC_MARKET_ID;
 
       await expect(
