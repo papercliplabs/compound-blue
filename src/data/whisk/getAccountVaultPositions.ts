@@ -30,7 +30,7 @@ export const getAccountVaultPositions = cacheAndCatch(async (accountAddress: Add
     accountAddress,
   });
   return Object.fromEntries(
-    accountVaultPositions.morphoVaultPositions.map((position) => [position.vaultAddress, position])
+    accountVaultPositions.morphoVaultPositions.map((position) => [position.vault.vaultAddress, position])
   );
 }, "getAccountVaultPositions");
 

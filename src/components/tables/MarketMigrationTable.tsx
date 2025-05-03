@@ -6,30 +6,30 @@ import NumberFlow from "../ui/NumberFlow";
 import { Button } from "../ui/button";
 import { ArrowRight } from "lucide-react";
 import Apy from "../Apy";
-import { MigratableAaveV3BorrowPosition } from "@/hooks/useMigratableAaveV3BorrowPosition";
+import { MarketMigrationTableEntry } from "@/hooks/useMarketMigrationTableData";
 
 interface TableProps {
-  data: MigratableAaveV3BorrowPosition[];
-  onRowClick: (entry: MigratableAaveV3BorrowPosition) => void;
+  data: MarketMigrationTableEntry[];
+  onRowClick: (entry: MarketMigrationTableEntry) => void;
 }
 
-const columns: ColumnDef<MigratableAaveV3BorrowPosition>[] = [
+const columns: ColumnDef<MarketMigrationTableEntry>[] = [
   {
     accessorKey: "destinationMarketPosition.market.loanAsset.symbol",
     header: "Loan",
     cell: ({ row }) => {
-      const { destinationMarketPosition } = row.original;
+      const { destinationMarketSummary } = row.original;
       return (
         <div className="flex min-w-0 items-center gap-3">
           <Image
-            src={destinationMarketPosition.market?.loanAsset.icon ?? ""}
+            src={destinationMarketSummary.loanAsset.icon ?? ""}
             width={36}
             height={36}
             className="shrink-0 rounded-full border"
-            alt={destinationMarketPosition.market!.loanAsset.symbol}
+            alt={destinationMarketSummary.loanAsset.symbol}
           />
           <div className="flex flex-col justify-between">
-            <span className="label-lg">{destinationMarketPosition.market!.loanAsset.symbol}</span>
+            <span className="label-lg">{destinationMarketSummary.loanAsset.symbol}</span>
           </div>
         </div>
       );
@@ -40,18 +40,18 @@ const columns: ColumnDef<MigratableAaveV3BorrowPosition>[] = [
     accessorKey: "destinationMarketPosition.market.collateralAsset.symbol",
     header: "Collateral",
     cell: ({ row }) => {
-      const { destinationMarketPosition } = row.original;
+      const { destinationMarketSummary } = row.original;
       return (
         <div className="flex min-w-0 items-center gap-3">
           <Image
-            src={destinationMarketPosition.market?.collateralAsset!.icon ?? ""}
+            src={destinationMarketSummary.collateralAsset!.icon ?? ""}
             width={36}
             height={36}
             className="shrink-0 rounded-full border"
-            alt={destinationMarketPosition.market!.collateralAsset!.symbol}
+            alt={destinationMarketSummary.collateralAsset!.symbol}
           />
           <div className="flex flex-col justify-between">
-            <span className="label-lg">{destinationMarketPosition.market!.collateralAsset!.symbol}</span>
+            <span className="label-lg">{destinationMarketSummary.collateralAsset!.symbol}</span>
           </div>
         </div>
       );
@@ -109,7 +109,7 @@ const columns: ColumnDef<MigratableAaveV3BorrowPosition>[] = [
     accessorKey: "destinationMarketPosition.market.borrowApy.total",
     header: "Borrow APY Change",
     cell: ({ row }) => {
-      const { destinationMarketPosition, aaveV3LoanReservePosition } = row.original;
+      const { destinationMarketSummary, aaveV3LoanReservePosition } = row.original;
       return (
         <div className="flex items-center gap-1">
           <NumberFlow
@@ -118,7 +118,7 @@ const columns: ColumnDef<MigratableAaveV3BorrowPosition>[] = [
             className="text-content-secondary"
           />
           <ArrowRight size={13} className="stroke-content-secondary" />
-          <Apy type="supply" apy={destinationMarketPosition.market!.borrowApy} />
+          <Apy type="supply" apy={destinationMarketSummary.borrowApy} />
         </div>
       );
     },
@@ -148,7 +148,7 @@ export default function MarketMigrationTable({ data, onRowClick }: TableProps) {
     <Table
       columns={columns}
       data={data}
-      initialSortKey="loan-balance"
+      initialSort={[{ id: "loan-balance", desc: true }]}
       rowAction={(row) => ({
         type: "callback",
         callback: () => {

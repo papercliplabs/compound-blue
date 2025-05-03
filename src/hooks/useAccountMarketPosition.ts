@@ -9,31 +9,33 @@ import { useAccount } from "wagmi";
 
 export function useAccountMarketPositions() {
   const { address } = useAccount();
-  const query = useQuery({
+  return useQuery({
     queryKey: ["user-market-positions", address],
     queryFn: async () => safeFetch<AccountMarketPositions>(`/api/account/${address}/market-positions`, {}, true),
     enabled: !!address,
     refetchInterval: ACCOUNT_STATE_POLLING_INTERVAL_MS,
   });
-
-  return query;
 }
 
 export function useAccountMarketPosition(marketId: Hex) {
-  const { data: userMarketPositions, isPending, isError } = useAccountMarketPositions();
+  const { data: userMarketPositions, ...rest } = useAccountMarketPositions();
 
   const marketPosition = useMemo(() => {
     return userMarketPositions?.[marketId];
   }, [userMarketPositions, marketId]);
 
-  return { data: marketPosition, isPending, isError };
+  return { data: marketPosition, ...rest };
 }
 
 export function useAccountMarketPositionAggregate() {
-  const { data: accountMarketPositions, isPending, isError } = useAccountMarketPositions();
+  const { data: accountMarketPositions, ...rest } = useAccountMarketPositions();
 
-  const { totalBorrowUsd, avgApy } = useMemo(() => {
-    const { totalBorrowUsd, avgApy } = Object.values(accountMarketPositions ?? {}).reduce(
+  const data = useMemo(() => {
+    if (accountMarketPositions == undefined) {
+      return undefined;
+    }
+
+    const { totalBorrowUsd, avgApy } = Object.values(accountMarketPositions).reduce(
       (acc, marketPosition) => {
         return {
           totalBorrowUsd: acc.totalBorrowUsd + marketPosition.borrowAssetsUsd,
@@ -50,11 +52,7 @@ export function useAccountMarketPositionAggregate() {
   }, [accountMarketPositions]);
 
   return {
-    data: {
-      totalBorrowUsd,
-      avgApy,
-    },
-    isPending,
-    isError,
+    data,
+    ...rest,
   };
 }

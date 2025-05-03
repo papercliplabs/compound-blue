@@ -17,6 +17,7 @@ const query = graphql(`
       loanAsset {
         symbol
         icon
+        address
       }
       lltv
       borrowApy {

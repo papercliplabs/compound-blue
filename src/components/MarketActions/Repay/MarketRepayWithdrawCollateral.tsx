@@ -25,7 +25,7 @@ import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import PoweredByMorpho from "../../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
-import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
+import { AccountMarketPosition } from "@/data/whisk/getAccountMarketPositions";
 import { ArrowRight } from "lucide-react";
 import { MetricChange } from "../../MetricChange";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
@@ -90,7 +90,7 @@ export default function MarketRepayWithdrawCollateral({
           if (!userPosition) {
             return true;
           }
-          const collateralWithdrawMax = computeCollateralWithdrawMax(data.repayAmount ?? 0, userPosition);
+          const collateralWithdrawMax = computeCollateralWithdrawMax(market, data.repayAmount ?? 0, userPosition);
           return (data.withdrawCollateralAmount ?? 0) <= collateralWithdrawMax;
         },
         {
@@ -98,7 +98,7 @@ export default function MarketRepayWithdrawCollateral({
           path: ["withdrawCollateralAmount"],
         }
       );
-  }, [descaledLoanAmount, descaledLoanAssetBalance, userPosition]);
+  }, [descaledLoanAmount, descaledLoanAssetBalance, userPosition, market]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onTouched",
@@ -119,7 +119,7 @@ export default function MarketRepayWithdrawCollateral({
 
   const { descaledCollateralWithdrawMax, descaledPositionCollateralAmount } = useMemo(() => {
     return {
-      descaledCollateralWithdrawMax: computeCollateralWithdrawMax(repayAmount, userPosition),
+      descaledCollateralWithdrawMax: computeCollateralWithdrawMax(market, repayAmount, userPosition),
       descaledPositionCollateralAmount: descaleBigIntToNumber(
         userPosition?.collateralAssets ?? BigInt(0),
         market.collateralAsset.decimals
@@ -327,20 +327,19 @@ export default function MarketRepayWithdrawCollateral({
   );
 }
 
-function computeCollateralWithdrawMax(repayAmount: number, position?: AccountMarketPositions[number]): number {
-  if (!position?.market?.collateralAsset) {
+function computeCollateralWithdrawMax(
+  market: MarketNonIdle,
+  repayAmount: number,
+  position?: AccountMarketPosition
+): number {
+  if (!position || market.lltv == 0 || market.collateralPriceInLoanAsset == 0) {
     return 0;
   }
 
-  if (position.market.lltv == 0 || position.market.collateralPriceInLoanAsset == 0) {
-    return 0;
-  }
-
-  const collateral = descaleBigIntToNumber(position.collateralAssets, position.market.collateralAsset.decimals);
-  const currentLoan = descaleBigIntToNumber(position.borrowAssets, position.market.loanAsset.decimals);
+  const collateral = descaleBigIntToNumber(position.collateralAssets, market.collateralAsset.decimals);
+  const currentLoan = descaleBigIntToNumber(position.borrowAssets, market.loanAsset.decimals);
   const newLoan = currentLoan - repayAmount;
-  const minRequiredCollateral =
-    newLoan / (position.market.lltv - MAX_BORROW_LTV_MARGIN) / position.market.collateralPriceInLoanAsset;
+  const minRequiredCollateral = newLoan / (market.lltv - MAX_BORROW_LTV_MARGIN) / market.collateralPriceInLoanAsset;
   const collateralWithdrawMax = collateral - minRequiredCollateral;
   return Math.max(collateralWithdrawMax, 0);
 }

@@ -66,7 +66,7 @@ export default function MarketAllocationTable({ allocations }: TableProps) {
     <Table
       columns={columns}
       data={allocations}
-      initialSortKey="vaultSupplyShare"
+      initialSort={[{ id: "vaultSupplyShare", desc: true }]}
       rowAction={(row) => (row.market.isIdle ? null : { type: "link", href: `/borrow/${row.market.marketId}` })} // No link for idle markets
     />
   );

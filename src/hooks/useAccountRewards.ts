@@ -9,9 +9,8 @@ export function useAccountRewards() {
   const { address } = useAccount();
   return useQuery({
     queryKey: ["account-rewards", address],
-    queryFn: async () => safeFetch<AccountRewards>(`/api/account/${address}/rewards`),
+    queryFn: async () => safeFetch<AccountRewards>(`/api/account/${address}/rewards`, {}, true),
     enabled: !!address,
     refetchInterval: ACCOUNT_STATE_POLLING_INTERVAL_MS,
-    placeholderData: (prev) => prev,
   });
 }

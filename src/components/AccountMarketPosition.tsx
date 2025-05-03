@@ -6,7 +6,7 @@ import { Skeleton } from "./ui/skeleton";
 import Metric from "./Metric";
 import { useAccount } from "wagmi";
 import Image from "next/image";
-import NumberFlow from "./ui/NumberFlow";
+import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
 import Apy from "./Apy";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
@@ -90,10 +90,9 @@ export function AccountMarketPositionHighlight({ market }: MarketPositionProps) 
       <Metric
         label={<span className="justify-end text-accent-ternary">Borrowing</span>}
         description="Your borrow balance in this market."
+        className="items-end title-3"
       >
-        <span className="title-3">
-          <NumberFlow value={marketPosition.borrowAssetsUsd} format={{ currency: "USD" }} />
-        </span>
+        <NumberFlow value={marketPosition.borrowAssetsUsd} format={{ currency: "USD" }} />
       </Metric>
       <div className="flex items-center gap-1 text-content-secondary label-sm">
         {market.loanAsset.icon && (
@@ -112,32 +111,33 @@ export function AccountMarketPositionHighlight({ market }: MarketPositionProps) 
 }
 
 export function AccountMarketPositionAggregate() {
-  const { address } = useAccount();
-  const { data: accountMarketPositonAggregate } = useAccountMarketPositionAggregate();
-
-  // Hide if not connected
-  if (!address) {
-    return null;
-  }
-
+  const { data: accountMarketPositonAggregate, isLoading } = useAccountMarketPositionAggregate();
   return (
     <div className="flex gap-10 md:text-end">
       <Metric
         label={<span className="justify-end text-accent-ternary">Your Borrowing</span>}
         description="Your total borrow balance across all markets."
+        className="items-end title-3"
       >
-        <span className="title-3">
-          <NumberFlow value={accountMarketPositonAggregate.totalBorrowUsd} format={{ currency: "USD" }} />
-        </span>
+        <NumberFlowWithLoading
+          value={accountMarketPositonAggregate?.totalBorrowUsd}
+          format={{ currency: "USD" }}
+          isLoading={isLoading}
+          loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
+        />
       </Metric>
 
       <Metric
         label={<span className="justify-end">Avg. Borrow APY</span>}
         description="Your average borrow APY across all markets, including rewards."
+        className="items-end title-3"
       >
-        <span className="title-3">
-          <NumberFlow value={accountMarketPositonAggregate.avgApy} format={{ style: "percent" }} />
-        </span>
+        <NumberFlowWithLoading
+          value={accountMarketPositonAggregate?.avgApy}
+          format={{ style: "percent" }}
+          isLoading={isLoading}
+          loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
+        />
       </Metric>
     </div>
   );

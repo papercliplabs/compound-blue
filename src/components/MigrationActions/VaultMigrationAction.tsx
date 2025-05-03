@@ -21,22 +21,19 @@ import NumberFlow from "../ui/NumberFlow";
 import Image from "next/image";
 import { MetricChange } from "../MetricChange";
 import Apy from "../Apy";
-import { MigratableAaveV3SupplyPosition } from "@/hooks/useMigratableAaveV3SupplyPosition";
 import { VaultIdentifier } from "../VaultIdentifier";
-import { VaultSummary } from "@/data/whisk/getVaultSummaries";
+import { VaultMigrationTableEntry } from "@/hooks/useVaultMigrationTableData";
 
 interface VaultMigrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  migratableAaveV3SupplyPosition: MigratableAaveV3SupplyPosition;
-  vault: VaultSummary;
+  data: VaultMigrationTableEntry;
 }
 
 export default function VaultMigrationAction({
   open,
   onOpenChange,
-  migratableAaveV3SupplyPosition: { aaveV3ReservePosition, destinationVaultPosition },
-  vault,
+  data: { sourcePosition, destinationPosition, destinationVaultSummary },
 }: VaultMigrationDialogProps) {
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [txFlowOpen, setTxFlowOpen] = useState(false);
@@ -47,11 +44,11 @@ export default function VaultMigrationAction({
   const publicClient = usePublicClient();
 
   const descaledATokenBalance = useMemo(() => {
-    return descaleBigIntToNumber(aaveV3ReservePosition.aTokenAssets, aaveV3ReservePosition.reserve.aToken.decimals);
-  }, [aaveV3ReservePosition]);
+    return descaleBigIntToNumber(sourcePosition.aTokenAssets, sourcePosition.reserve.aToken.decimals);
+  }, [sourcePosition]);
 
-  const aTokenBalanceUsd = aaveV3ReservePosition.aTokenAssetsUsd;
-  const vaultPositionBalanceUsd = destinationVaultPosition.supplyAssetsUsd;
+  const aTokenBalanceUsd = sourcePosition.aTokenAssetsUsd;
+  const vaultPositionBalanceUsd = destinationPosition.supplyAssetsUsd;
 
   const formSchema = useMemo(() => {
     return z.object({
@@ -93,12 +90,12 @@ export default function VaultMigrationAction({
 
       const migrateAmountBigInt = isMaxMigrate
         ? maxUint256
-        : parseUnits(numberToString(migrateAmount), aaveV3ReservePosition.reserve.aToken.decimals);
+        : parseUnits(numberToString(migrateAmount), sourcePosition.reserve.aToken.decimals);
 
       const preparedAction = await prepareAaveV3VaultMigrationAction({
         publicClient,
         accountAddress: address,
-        vaultAddress: getAddress(destinationVaultPosition.vaultAddress),
+        vaultAddress: getAddress(destinationVaultSummary.vaultAddress),
         amount: migrateAmountBigInt,
       });
 
@@ -111,7 +108,7 @@ export default function VaultMigrationAction({
 
       setSimulatingBundle(false);
     },
-    [address, openConnectModal, publicClient, destinationVaultPosition, aaveV3ReservePosition, onOpenChange]
+    [address, openConnectModal, publicClient, sourcePosition, onOpenChange, destinationVaultSummary]
   );
 
   // Reset form on new vaultReservePositionPairing
@@ -120,16 +117,16 @@ export default function VaultMigrationAction({
       migrateAmount: descaledATokenBalance,
       isMaxMigrate: true,
     });
-  }, [destinationVaultPosition, aaveV3ReservePosition, descaledATokenBalance, form]);
+  }, [destinationPosition, sourcePosition, descaledATokenBalance, form]);
 
   const migrateAmount = Number(form.watch("migrateAmount") ?? 0);
-  const migrateAmountUsd = migrateAmount * aaveV3ReservePosition.reserve.underlyingAsset.priceUsd;
+  const migrateAmountUsd = migrateAmount * sourcePosition.reserve.underlyingAsset.priceUsd;
 
   const simContent = useMemo(() => {
     return (
       <>
         <MetricChange
-          name={`Aave v3 (${destinationVaultPosition.asset.symbol})`}
+          name={`Aave v3 (${destinationVaultSummary.asset.symbol})`}
           initialValue={<NumberFlow value={aTokenBalanceUsd} format={{ currency: "USD" }} />}
           finalValue={
             <NumberFlow
@@ -139,16 +136,14 @@ export default function VaultMigrationAction({
           }
         />
         <MetricChange
-          name={`Compound (${destinationVaultPosition.asset.symbol})`}
+          name={`Compound (${destinationVaultSummary.asset.symbol})`}
           initialValue={<NumberFlow value={vaultPositionBalanceUsd} format={{ currency: "USD" }} />}
           finalValue={<NumberFlow value={vaultPositionBalanceUsd + migrateAmountUsd} format={{ currency: "USD" }} />}
         />
         <MetricChange
           name="Net APY"
-          initialValue={
-            <NumberFlow value={aaveV3ReservePosition.reserve.supplyApy.total} format={{ style: "percent" }} />
-          }
-          finalValue={<Apy type="supply" apy={destinationVaultPosition.supplyApy} />}
+          initialValue={<NumberFlow value={sourcePosition.reserve.supplyApy.total} format={{ style: "percent" }} />}
+          finalValue={<Apy type="supply" apy={destinationVaultSummary.supplyApy} />}
         />
       </>
     );
@@ -157,9 +152,9 @@ export default function VaultMigrationAction({
     migrateAmount,
     migrateAmountUsd,
     vaultPositionBalanceUsd,
-    aaveV3ReservePosition,
-    destinationVaultPosition,
+    sourcePosition,
     descaledATokenBalance,
+    destinationVaultSummary,
   ]);
 
   return (
@@ -186,7 +181,7 @@ export default function VaultMigrationAction({
                           control={form.control}
                           name="migrateAmount"
                           actionName="Remove"
-                          asset={aaveV3ReservePosition.reserve.underlyingAsset}
+                          asset={sourcePosition.reserve.underlyingAsset}
                           descaledAvailableBalance={descaledATokenBalance}
                           setIsMax={(isMax) => {
                             form.setValue("isMaxMigrate", isMax);
@@ -198,11 +193,15 @@ export default function VaultMigrationAction({
                     <ArrowDown size={16} className="stroke-content-primary md:mt-[56px] md:-rotate-90" />
 
                     <div className="flex w-full flex-1 flex-col gap-4">
-                      <VaultIdentifier name={vault.name} metadata={vault.metadata} asset={vault.asset} />
+                      <VaultIdentifier
+                        name={destinationVaultSummary.name}
+                        metadata={destinationVaultSummary.metadata}
+                        asset={destinationVaultSummary.asset}
+                      />
                       <div className="rounded-[12px] bg-background-secondary p-6">
                         <AssetFormFieldViewOnly
                           actionName="Supply"
-                          asset={aaveV3ReservePosition.reserve.underlyingAsset}
+                          asset={sourcePosition.reserve.underlyingAsset}
                           amount={migrateAmount}
                           amountUsd={migrateAmountUsd}
                         />
@@ -245,7 +244,7 @@ export default function VaultMigrationAction({
         >
           <ActionFlowSummary>
             <ActionFlowSummaryAssetItem
-              asset={destinationVaultPosition.asset}
+              asset={destinationVaultSummary.asset}
               actionName="Remove"
               side="supply"
               isIncreasing={false}
@@ -254,7 +253,7 @@ export default function VaultMigrationAction({
               protocolName="Aave v3"
             />
             <ActionFlowSummaryAssetItem
-              asset={destinationVaultPosition.asset}
+              asset={destinationVaultSummary.asset}
               actionName="Supply"
               side="supply"
               isIncreasing={true}

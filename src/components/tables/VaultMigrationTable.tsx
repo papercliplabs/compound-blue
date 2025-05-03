@@ -6,30 +6,30 @@ import NumberFlow from "../ui/NumberFlow";
 import { Button } from "../ui/button";
 import { ArrowRight } from "lucide-react";
 import Apy from "../Apy";
-import { MigratableAaveV3SupplyPosition } from "@/hooks/useMigratableAaveV3SupplyPosition";
+import { VaultMigrationTableEntry } from "@/hooks/useVaultMigrationTableData";
 
 interface TableProps {
-  data: MigratableAaveV3SupplyPosition[];
-  onRowClick: (entry: MigratableAaveV3SupplyPosition) => void;
+  data: VaultMigrationTableEntry[];
+  onRowClick: (entry: VaultMigrationTableEntry) => void;
 }
 
-const columns: ColumnDef<MigratableAaveV3SupplyPosition>[] = [
+const columns: ColumnDef<VaultMigrationTableEntry>[] = [
   {
     accessorKey: "vaultSummary.asset.symbol",
     header: "Asset",
     cell: ({ row }) => {
-      const { destinationVaultPosition } = row.original;
+      const { destinationVaultSummary } = row.original;
       return (
         <div className="flex min-w-0 items-center gap-3">
           <Image
-            src={destinationVaultPosition.asset.icon ?? ""}
+            src={destinationVaultSummary.asset.icon ?? ""}
             width={36}
             height={36}
             className="shrink-0 rounded-full border"
-            alt={destinationVaultPosition.asset.symbol}
+            alt={destinationVaultSummary.asset.symbol}
           />
           <div className="flex flex-col justify-between">
-            <span className="label-lg">{destinationVaultPosition.asset.symbol}</span>
+            <span className="label-lg">{destinationVaultSummary.asset.symbol}</span>
           </div>
         </div>
       );
@@ -41,7 +41,7 @@ const columns: ColumnDef<MigratableAaveV3SupplyPosition>[] = [
     accessorKey: "reservePosition.aTokenAssetsUsd",
     header: "Balance",
     cell: ({ row }) => {
-      return <NumberFlow value={row.original.aaveV3ReservePosition.aTokenAssetsUsd} format={{ currency: "USD" }} />;
+      return <NumberFlow value={row.original.sourcePosition.aTokenAssetsUsd} format={{ currency: "USD" }} />;
     },
     meta: {
       tooltip: "Your asset balance inside the other protocol.",
@@ -74,16 +74,16 @@ const columns: ColumnDef<MigratableAaveV3SupplyPosition>[] = [
     accessorKey: "vaultSummary.supplyApy.total",
     header: "Earn APY Change",
     cell: ({ row }) => {
-      const { aaveV3ReservePosition, destinationVaultPosition } = row.original;
+      const { sourcePosition, destinationVaultSummary } = row.original;
       return (
         <div className="flex items-center gap-1">
           <NumberFlow
-            value={aaveV3ReservePosition.reserve.supplyApy.total}
+            value={sourcePosition.reserve.supplyApy.total}
             format={{ style: "percent" }}
             className="text-content-secondary"
           />
           <ArrowRight size={13} className="stroke-content-secondary" />
-          <Apy type="supply" apy={destinationVaultPosition.supplyApy} />
+          <Apy type="supply" apy={destinationVaultSummary.supplyApy} />
         </div>
       );
     },
@@ -113,7 +113,7 @@ export default function VaultMigrationTable({ data, onRowClick }: TableProps) {
     <Table
       columns={columns}
       data={data}
-      initialSortKey="balance"
+      initialSort={[{ id: "balance", desc: true }]}
       rowAction={(row) => ({
         type: "callback",
         callback: () => {

@@ -8,22 +8,16 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Button } from "./ui/button";
 import VaultMigrationAction from "./MigrationActions/VaultMigrationAction";
 import { useState } from "react";
-import {
-  MigratableAaveV3SupplyPosition,
-  useMigratableAaveV3SupplyPositions,
-} from "@/hooks/useMigratableAaveV3SupplyPosition";
 import { Skeleton } from "./ui/skeleton";
 import EarnEducationalSummary from "./EducationalSummary/EarnEducationalSummary";
 import BorrowEducationalSummary from "./EducationalSummary/BorrowEducationalSummary";
 import Link from "next/link";
 import NumberFlow from "./ui/NumberFlow";
-import {
-  MigratableAaveV3BorrowPosition,
-  useMigratableAaveV3BorrowPositions,
-} from "@/hooks/useMigratableAaveV3BorrowPosition";
 import MarketMigrationTable from "./tables/MarketMigrationTable";
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
 import MarketMigrationAction from "./MigrationActions/MarketMigrationAction";
+import { useVaultMigrationTableData, VaultMigrationTableEntry } from "@/hooks/useVaultMigrationTableData";
+import { useMarketMigrationTableData, MarketMigrationTableEntry } from "@/hooks/useMarketMigrationTableData";
 
 interface MigrateContentProps {
   vaultSummaries: VaultSummary[];
@@ -70,10 +64,10 @@ export default function MigratePageContent({ vaultSummaries, marketSummaries }: 
 }
 
 function VaultMigrationTableWrapper({ vaultSummaries }: { vaultSummaries: MigrateContentProps["vaultSummaries"] }) {
-  const [selected, setSelected] = useState<MigratableAaveV3SupplyPosition | null>(null);
+  const [selected, setSelected] = useState<VaultMigrationTableEntry | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: migratableVaultPositions, isLoading } = useMigratableAaveV3SupplyPositions();
+  const { data, isLoading } = useVaultMigrationTableData({ vaultSummaries });
 
   const maxEarnApy = vaultSummaries.reduce((max, vault) => {
     return Math.max(max, vault.supplyApy.total);
@@ -83,7 +77,7 @@ function VaultMigrationTableWrapper({ vaultSummaries }: { vaultSummaries: Migrat
     return <Skeleton className="m-8 h-[336px]" />;
   }
 
-  if (migratableVaultPositions?.length == 0) {
+  if (data?.length == 0) {
     return (
       <div className="flex flex-col items-center gap-6 p-8 text-center">
         <div className="flex flex-col gap-4">
@@ -108,7 +102,7 @@ function VaultMigrationTableWrapper({ vaultSummaries }: { vaultSummaries: Migrat
   return (
     <>
       <VaultMigrationTable
-        data={migratableVaultPositions ?? []}
+        data={data ?? []}
         onRowClick={(entry) => {
           setSelected(entry);
           setDialogOpen(true);
@@ -116,22 +110,17 @@ function VaultMigrationTableWrapper({ vaultSummaries }: { vaultSummaries: Migrat
       />
 
       {selected && (
-        <VaultMigrationAction
-          open={dialogOpen}
-          onOpenChange={(open) => setDialogOpen(open)}
-          migratableAaveV3SupplyPosition={selected}
-          vault={vaultSummaries.find((v) => v.vaultAddress === selected.destinationVaultPosition.vaultAddress)!} // Guaranteed to exist
-        />
+        <VaultMigrationAction open={dialogOpen} onOpenChange={(open) => setDialogOpen(open)} data={selected} />
       )}
     </>
   );
 }
 
 function MarketMigrationTableWrapper({ marketSummaries }: { marketSummaries: MigrateContentProps["marketSummaries"] }) {
-  const [selected, setSelected] = useState<MigratableAaveV3BorrowPosition | null>(null);
+  const [selected, setSelected] = useState<MarketMigrationTableEntry | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: migratableBorrowPositions, isLoading } = useMigratableAaveV3BorrowPositions();
+  const { data: migratableBorrowPositions, isLoading } = useMarketMigrationTableData({ marketSummaries });
 
   if (isLoading) {
     return <Skeleton className="m-8 h-[336px]" />;
@@ -169,8 +158,7 @@ function MarketMigrationTableWrapper({ marketSummaries }: { marketSummaries: Mig
         <MarketMigrationAction
           open={dialogOpen}
           onOpenChange={(open) => setDialogOpen(open)}
-          migratableAaveV3BorrowPosition={selected}
-          market={marketSummaries.find((m) => m.marketId === selected.destinationMarketPosition.market!.marketId)!} // Guaranteed to exist
+          migrationData={selected}
         />
       )}
     </>

@@ -16,7 +16,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import BackButton from "@/components/BackButton";
-import { AccountVaultPosition, AccoutnVaultPositionHighlight } from "@/components/AccountVaultPosition";
+import { AccountVaultPosition, AccountVaultPositionHighlight } from "@/components/AccountVaultPosition";
 import NumberFlow from "@/components/ui/NumberFlow";
 
 export const metadata: Metadata = {
@@ -58,7 +58,9 @@ export default async function VaultPage({ params }: { params: Promise<{ vaultAdd
           </Suspense>
         </div>
 
-        <AccoutnVaultPositionHighlight vaultAddress={vaultAddress} />
+        <Suspense fallback={null}>
+          <AccountVaultPositionHighlightWrapper vaultAddress={vaultAddress} />
+        </Suspense>
       </section>
 
       <div className="flex w-full flex-col gap-5 lg:flex-row">
@@ -291,6 +293,16 @@ function UnsupportedVault() {
       <BackButton />
     </div>
   );
+}
+
+async function AccountVaultPositionHighlightWrapper({ vaultAddress }: { vaultAddress: Address }) {
+  const vault = await getVault(vaultAddress);
+
+  if (!vault) {
+    return null;
+  }
+
+  return <AccountVaultPositionHighlight vault={vault} />;
 }
 
 export const dynamic = "force-static";

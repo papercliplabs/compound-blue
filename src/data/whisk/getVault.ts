@@ -57,6 +57,7 @@ const query = graphql(`
           loanAsset {
             symbol
             icon
+            address
           }
           collateralAsset {
             symbol

@@ -78,7 +78,6 @@ export interface TableCellProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function TableCell({ minWidth, className, style, ...props }: TableCellProps) {
-  // shrink first col on mobile to allow more table to be displayed in resting position
   return (
     <div
       className={cn(
@@ -97,22 +96,13 @@ export function TableCell({ minWidth, className, style, ...props }: TableCellPro
 interface TableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  initialSortKey?: string;
+  initialSort?: SortingState;
   rowAction: (row: TData) => TableRowAction | null;
 }
 
-export function Table<TData, TValue>({ columns, data, initialSortKey, rowAction }: TableProps<TData, TValue>) {
+export function Table<TData, TValue>({ columns, data, initialSort, rowAction }: TableProps<TData, TValue>) {
   const tableRef = useRef<HTMLDivElement>(null);
-  const [sorting, setSorting] = useState<SortingState>([
-    ...(initialSortKey
-      ? [
-          {
-            id: initialSortKey,
-            desc: true,
-          },
-        ]
-      : []),
-  ]);
+  const [sorting, setSorting] = useState<SortingState>(initialSort ?? []);
 
   // Scroll to top of the table on sort change if its above the header
   useEffect(() => {

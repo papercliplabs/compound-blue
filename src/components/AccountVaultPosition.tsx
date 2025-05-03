@@ -1,16 +1,16 @@
 "use client";
 import { descaleBigIntToNumber } from "@/utils/format";
-import { Address, getAddress } from "viem";
-import { ReactNode, useMemo } from "react";
+import { getAddress } from "viem";
+import { ReactNode } from "react";
 import { Skeleton } from "./ui/skeleton";
 import Metric from "./Metric";
 import { useAccount } from "wagmi";
 import Image from "next/image";
-import NumberFlow from "./ui/NumberFlow";
+import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
 import Apy from "./Apy";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 import { Vault } from "@/data/whisk/getVault";
-import { useAccountVaultPosition, useAccountVaultPositions } from "@/hooks/useAccountVaultPosition";
+import { useAccountVaultPosition, useAccountVaultPositionAggregate } from "@/hooks/useAccountVaultPosition";
 
 interface VaultPositionProps {
   vault: Vault;
@@ -47,9 +47,9 @@ export function AccountVaultPosition({ vault }: VaultPositionProps) {
   );
 }
 
-export function AccoutnVaultPositionHighlight({ vaultAddress }: { vaultAddress: Address }) {
+export function AccountVaultPositionHighlight({ vault }: { vault: Vault }) {
   const { address } = useAccount();
-  const { data: vaultPosition } = useAccountVaultPosition(vaultAddress);
+  const { data: vaultPosition } = useAccountVaultPosition(getAddress(vault.vaultAddress));
 
   // Hide if not connected
   if (!address || !vaultPosition) {
@@ -61,23 +61,16 @@ export function AccoutnVaultPositionHighlight({ vaultAddress }: { vaultAddress: 
       <Metric
         label={<span className="justify-end text-accent-secondary">Supplying</span>}
         description="Your supply balance in this vault."
+        className="items-end title-3"
       >
-        <span className="title-3">
-          <NumberFlow value={vaultPosition.supplyAssetsUsd} format={{ currency: "USD" }} />
-        </span>
+        <NumberFlow value={vaultPosition.supplyAssetsUsd} format={{ currency: "USD" }} />
       </Metric>
-      <div className="label-sm flex items-center gap-1 text-content-secondary">
-        {vaultPosition.asset.icon && (
-          <Image
-            src={vaultPosition.asset.icon}
-            width={12}
-            height={12}
-            alt={vaultPosition.asset.symbol}
-            className="rounded-full"
-          />
+      <div className="flex items-center gap-1 text-content-secondary label-sm">
+        {vault.asset.icon && (
+          <Image src={vault.asset.icon} width={12} height={12} alt={vault.asset.symbol} className="rounded-full" />
         )}
         <NumberFlow
-          value={descaleBigIntToNumber(BigInt(vaultPosition.supplyAssets), vaultPosition.asset.decimals)}
+          value={descaleBigIntToNumber(BigInt(vaultPosition.supplyAssets), vault.asset.decimals)}
           className="label-sm"
         />
       </div>
@@ -86,49 +79,33 @@ export function AccoutnVaultPositionHighlight({ vaultAddress }: { vaultAddress: 
 }
 
 export function AccountVaultPositionAggregate() {
-  const { address } = useAccount();
-  const { data: accountVaultPositions } = useAccountVaultPositions();
-
-  const { totalSupplyUsd, avgApy } = useMemo(() => {
-    const { totalSupplyUsd, avgApy } = Object.values(accountVaultPositions ?? {}).reduce(
-      (acc, vaultPosition) => {
-        return {
-          totalSupplyUsd: acc.totalSupplyUsd + vaultPosition.supplyAssetsUsd,
-          avgApy: acc.avgApy + vaultPosition.supplyApy.total * vaultPosition.supplyAssetsUsd,
-        };
-      },
-      { totalSupplyUsd: 0, avgApy: 0 }
-    );
-
-    return {
-      totalSupplyUsd,
-      avgApy: totalSupplyUsd > 0 ? avgApy / totalSupplyUsd : 0,
-    };
-  }, [accountVaultPositions]);
-
-  // Hide if not connected
-  if (!address) {
-    return null;
-  }
-
+  const { data: accountVaultPositionAggregate, isLoading } = useAccountVaultPositionAggregate();
   return (
     <div className="flex gap-10 md:text-end">
       <Metric
         label={<span className="justify-end text-accent-secondary">Your Deposits</span>}
         description="Your total deposit balance across all vaults."
+        className="items-end title-3"
       >
-        <span className="title-3">
-          <NumberFlow value={totalSupplyUsd} format={{ currency: "USD" }} />
-        </span>
+        <NumberFlowWithLoading
+          value={accountVaultPositionAggregate?.totalSupplyUsd}
+          format={{ currency: "USD" }}
+          isLoading={isLoading}
+          loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
+        />
       </Metric>
 
       <Metric
         label={<span className="justify-end">Avg. Earn APY</span>}
         description="Your average supply APY across all vaults, including rewards and fees."
+        className="items-end title-3"
       >
-        <span className="title-3">
-          <NumberFlow value={avgApy} format={{ style: "percent" }} />
-        </span>
+        <NumberFlowWithLoading
+          value={accountVaultPositionAggregate?.avgApy}
+          format={{ style: "percent" }}
+          isLoading={isLoading}
+          loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
+        />
       </Metric>
     </div>
   );

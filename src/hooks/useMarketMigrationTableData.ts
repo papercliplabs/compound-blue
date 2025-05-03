@@ -7,9 +7,9 @@ import { trackEvent } from "@/data/trackEvent";
 import { useAaveV3MarketPosition } from "./useAaveV3MarketPosition";
 import { AccountMarketPosition } from "@/data/whisk/getAccountMarketPositions";
 import { useAccountMarketPositions } from "./useAccountMarketPosition";
-import { MarketId } from "@morpho-org/blue-sdk";
+import { MarketSummary } from "@/data/whisk/getMarketSummaries";
 
-export interface MigratableAaveV3BorrowPosition {
+export interface MarketMigrationTableEntry {
   aaveV3CollateralReservePosition: AaveV3ReservePosition;
   aaveV3LoanReservePosition: AaveV3ReservePosition;
   aaveFullPositionMetrics: {
@@ -17,11 +17,12 @@ export interface MigratableAaveV3BorrowPosition {
     totalCollateralUsd: number;
     lltv: number;
   };
+  destinationMarketSummary: MarketSummary;
   destinationMarketPosition: AccountMarketPosition;
 }
 
-export function useMigratableAaveV3BorrowPositions(): {
-  data?: MigratableAaveV3BorrowPosition[];
+export function useMarketMigrationTableData({ marketSummaries }: { marketSummaries: MarketSummary[] }): {
+  data?: MarketMigrationTableEntry[];
   isLoading: boolean;
   error: Error | null;
 } {
@@ -37,7 +38,7 @@ export function useMigratableAaveV3BorrowPositions(): {
     error: marketPositionsError,
   } = useAccountMarketPositions();
 
-  const migratableAaveV3BorrowPositions: MigratableAaveV3BorrowPosition[] | undefined = useMemo(() => {
+  const data: MarketMigrationTableEntry[] | undefined = useMemo(() => {
     if (!aaveV3MarketPosition || !marketPositions) {
       return undefined;
     }
@@ -48,15 +49,23 @@ export function useMigratableAaveV3BorrowPositions(): {
 
     const aaveV3LoanReservePositions = aaveV3MarketPosition.reservePositions.filter((r) => r.borrowAssetsUsd > 0);
 
-    const migratableAaveV3BorrowPositions: MigratableAaveV3BorrowPosition[] = [];
+    const migratableAaveV3BorrowPositions: MarketMigrationTableEntry[] = [];
     for (const destinationMarketPosition of Object.values(marketPositions)) {
-      const market = destinationMarketPosition.market;
-      if (market && market.collateralAsset) {
+      const destinationMarketSummary = marketSummaries.find(
+        (m) => m.marketId == destinationMarketPosition?.market.marketId
+      );
+      if (destinationMarketSummary && destinationMarketSummary.collateralAsset) {
         const aaveV3CollateralReservePosition = aaveV3CollateralReservePositions.find((r) =>
-          isAddressEqual(getAddress(r.reserve.underlyingAsset.address), getAddress(market.collateralAsset!.address))
+          isAddressEqual(
+            getAddress(r.reserve.underlyingAsset.address),
+            getAddress(destinationMarketSummary.collateralAsset!.address)
+          )
         );
         const aaveV3LoanReservePosition = aaveV3LoanReservePositions.find((r) =>
-          isAddressEqual(getAddress(r.reserve.underlyingAsset.address), getAddress(market.loanAsset.address))
+          isAddressEqual(
+            getAddress(r.reserve.underlyingAsset.address),
+            getAddress(destinationMarketSummary.loanAsset.address)
+          )
         );
 
         if (aaveV3CollateralReservePosition && aaveV3LoanReservePosition) {
@@ -68,6 +77,7 @@ export function useMigratableAaveV3BorrowPositions(): {
               totalCollateralUsd: aaveV3MarketPosition.totalCollateralBalanceUsd,
               lltv: aaveV3MarketPosition.lltv,
             },
+            destinationMarketSummary,
             destinationMarketPosition,
           });
         }
@@ -75,42 +85,26 @@ export function useMigratableAaveV3BorrowPositions(): {
     }
 
     return migratableAaveV3BorrowPositions;
-  }, [aaveV3MarketPosition, marketPositions]);
+  }, [aaveV3MarketPosition, marketPositions, marketSummaries]);
 
   // Event to better understand how many users have migratable positions
   const { address } = useAccount();
   const [hasLoggedEvent, setHasLoggedEvent] = useState(false);
   useEffect(() => {
-    if (migratableAaveV3BorrowPositions && migratableAaveV3BorrowPositions.length > 0 && !hasLoggedEvent && address) {
+    if (data && data.length > 0 && !hasLoggedEvent && address) {
       trackEvent("found-migratable-market-positions", {
         address,
-        numPositions: migratableAaveV3BorrowPositions.length,
-        totalLoanValueUsd: migratableAaveV3BorrowPositions.reduce(
-          (acc, p) => acc + p.aaveV3LoanReservePosition.aTokenAssetsUsd,
-          0
-        ),
-        totalCollateralValueUsd: migratableAaveV3BorrowPositions.reduce(
-          (acc, p) => acc + p.aaveV3CollateralReservePosition.aTokenAssetsUsd,
-          0
-        ),
+        numPositions: data.length,
+        totalLoanValueUsd: data.reduce((acc, p) => acc + p.aaveV3LoanReservePosition.aTokenAssetsUsd, 0),
+        totalCollateralValueUsd: data.reduce((acc, p) => acc + p.aaveV3CollateralReservePosition.aTokenAssetsUsd, 0),
       });
       setHasLoggedEvent(true);
     }
-  }, [migratableAaveV3BorrowPositions, hasLoggedEvent, setHasLoggedEvent, address]);
+  }, [data, hasLoggedEvent, setHasLoggedEvent, address]);
 
   return {
-    data: migratableAaveV3BorrowPositions,
+    data,
     isLoading: isAavePositionLoading || isMarketPositionsLoading,
     error: aaveV3MarketPositionError || marketPositionsError,
   };
-}
-
-export function useMigratableAaveV3BorrowPosition(marketId: MarketId) {
-  const { data, isLoading, error } = useMigratableAaveV3BorrowPositions();
-  const ret = useMemo(
-    () => data?.find((p) => p.destinationMarketPosition.market!.marketId == marketId),
-    [data, marketId]
-  );
-
-  return { data: ret, isLoading, error };
 }

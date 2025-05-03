@@ -11,7 +11,7 @@ interface FeatureFlags {
 export function useFeatureFlags() {
   const { data: countryCode } = useQuery({
     queryKey: ["country"],
-    queryFn: async () => safeFetch<string>(`/api/country`),
+    queryFn: async () => safeFetch<string>(`/api/country`, {}, true),
   });
 
   const featureFlags: FeatureFlags = useMemo(() => {

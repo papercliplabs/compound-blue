@@ -20,8 +20,6 @@ import NumberFlow from "../ui/NumberFlow";
 import Image from "next/image";
 import { MetricChange } from "../MetricChange";
 import Apy from "../Apy";
-import { MigratableAaveV3BorrowPosition } from "@/hooks/useMigratableAaveV3BorrowPosition";
-import { MarketSummary } from "@/data/whisk/getMarketSummaries";
 import { prepareAaveV3MarketMigrationAction } from "@/actions/prepareAaveV3MarketMigrationAction";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { MarketIdentifier } from "../MarketIdentifier";
@@ -30,26 +28,26 @@ import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "..
 import LtvBar from "../LtvBar";
 import { computeLtvHealth } from "@/utils/ltv";
 import clsx from "clsx";
+import { MarketMigrationTableEntry } from "@/hooks/useMarketMigrationTableData";
 
 const LTV_ROUNDING_THRESHOLD = 0.0001;
 
 interface MarketMigrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  migratableAaveV3BorrowPosition: MigratableAaveV3BorrowPosition;
-  market: MarketSummary;
+  migrationData: MarketMigrationTableEntry;
 }
 
 export default function MarketMigrationAction({
   open,
   onOpenChange,
-  migratableAaveV3BorrowPosition: {
+  migrationData: {
     aaveV3CollateralReservePosition,
     aaveV3LoanReservePosition,
     aaveFullPositionMetrics,
     destinationMarketPosition,
+    destinationMarketSummary,
   },
-  market,
 }: MarketMigrationDialogProps) {
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [txFlowOpen, setTxFlowOpen] = useState(false);
@@ -61,10 +59,10 @@ export default function MarketMigrationAction({
 
   const { collateralAsset, loanAsset } = useMemo(() => {
     return {
-      collateralAsset: destinationMarketPosition.market!.collateralAsset!,
-      loanAsset: destinationMarketPosition.market!.loanAsset,
+      collateralAsset: destinationMarketSummary.collateralAsset!,
+      loanAsset: destinationMarketSummary.loanAsset,
     };
-  }, [destinationMarketPosition]);
+  }, [destinationMarketSummary]);
 
   const { collateralBalance, loanBalance } = useMemo(() => {
     const collateralBalance = descaleBigIntToNumber(
@@ -135,11 +133,10 @@ export default function MarketMigrationAction({
       const preparedAction = await prepareAaveV3MarketMigrationAction({
         publicClient,
         accountAddress: address,
-        marketId: market.marketId as MarketId,
+        marketId: destinationMarketSummary.marketId as MarketId,
         collateralTokenAmount: rawCollateralMigrateAmount,
         loanTokenAmount: rawLoanMigrateAmount,
-
-        allocatingVaultAddresses: market.vaultAllocations.map((allocation) =>
+        allocatingVaultAddresses: destinationMarketSummary.vaultAllocations.map((allocation) =>
           getAddress(allocation.vault.vaultAddress)
         ),
       });
@@ -157,7 +154,7 @@ export default function MarketMigrationAction({
       address,
       openConnectModal,
       publicClient,
-      market,
+      destinationMarketSummary,
       aaveV3CollateralReservePosition,
       aaveV3LoanReservePosition,
       onOpenChange,
@@ -207,7 +204,7 @@ export default function MarketMigrationAction({
             </TooltipPopoverContent>
           </TooltipPopover>
         }
-        finalValue={<Apy type="borrow" apy={destinationMarketPosition.market!.borrowApy} />}
+        finalValue={<Apy type="borrow" apy={destinationMarketSummary.borrowApy} />}
       />
     );
   }, [
@@ -215,7 +212,7 @@ export default function MarketMigrationAction({
     aaveV3CollateralReservePosition,
     loanMigrateAmountUsd,
     aaveV3LoanReservePosition,
-    destinationMarketPosition,
+    destinationMarketSummary,
   ]);
 
   const { simulatedAaveLtv, simulatedAaveLltv, simulatedMarketPositionLtv, aaveLtvHealth, morphoLtvHealth } =
@@ -246,7 +243,7 @@ export default function MarketMigrationAction({
         simulatedAaveLltv,
         simulatedMarketPositionLtv,
         aaveLtvHealth: computeLtvHealth(simulatedAaveLtv, simulatedAaveLltv),
-        morphoLtvHealth: computeLtvHealth(simulatedMarketPositionLtv, destinationMarketPosition.market?.lltv),
+        morphoLtvHealth: computeLtvHealth(simulatedMarketPositionLtv, destinationMarketSummary.lltv),
       };
     }, [
       aaveFullPositionMetrics,
@@ -254,6 +251,7 @@ export default function MarketMigrationAction({
       collateralMigrateAmountUsd,
       destinationMarketPosition,
       aaveV3CollateralReservePosition,
+      destinationMarketSummary,
     ]);
 
   return (
@@ -316,7 +314,7 @@ export default function MarketMigrationAction({
                     <ArrowDown size={16} className="stroke-content-primary md:mt-[56px] md:-rotate-90" />
 
                     <div className="flex h-full w-full flex-1 flex-col gap-4">
-                      <MarketIdentifier {...market} />
+                      <MarketIdentifier {...destinationMarketSummary} />
                       <div
                         className={clsx("rounded-[12px] p-[3px] transition-colors", {
                           "bg-background-positive": morphoLtvHealth === "healthy",
@@ -342,7 +340,7 @@ export default function MarketMigrationAction({
                           </div>
                         </div>
                         <div className="px-6 py-4">
-                          <LtvBar ltv={simulatedMarketPositionLtv} lltv={destinationMarketPosition.market?.lltv} />
+                          <LtvBar ltv={simulatedMarketPositionLtv} lltv={destinationMarketSummary.lltv} />
                         </div>
                       </div>
                     </div>
@@ -396,7 +394,7 @@ export default function MarketMigrationAction({
         >
           <ActionFlowSummary>
             <ActionFlowSummaryAssetItem
-              asset={destinationMarketPosition.market!.loanAsset}
+              asset={destinationMarketSummary.loanAsset}
               actionName="Migrate"
               side="borrow"
               isIncreasing={true}
@@ -405,7 +403,7 @@ export default function MarketMigrationAction({
               protocolName="Compound Blue"
             />
             <ActionFlowSummaryAssetItem
-              asset={destinationMarketPosition.market!.collateralAsset!}
+              asset={destinationMarketSummary.collateralAsset!}
               actionName="Borrow"
               side="supply"
               isIncreasing={true}
@@ -416,7 +414,7 @@ export default function MarketMigrationAction({
           </ActionFlowSummary>
           <ActionFlowReview>
             <MetricChange
-              name={`Collateral (${destinationMarketPosition.market!.collateralAsset!.symbol})`}
+              name={`Collateral (${destinationMarketSummary.collateralAsset!.symbol})`}
               initialValue={
                 <NumberFlow value={destinationMarketPosition.collateralAssetsUsd} format={{ currency: "USD" }} />
               }
@@ -428,7 +426,7 @@ export default function MarketMigrationAction({
               }
             />
             <MetricChange
-              name={`Loan (${destinationMarketPosition.market!.loanAsset.symbol})`}
+              name={`Loan (${destinationMarketSummary.loanAsset.symbol})`}
               initialValue={
                 <NumberFlow value={destinationMarketPosition.borrowAssetsUsd} format={{ currency: "USD" }} />
               }
@@ -452,7 +450,7 @@ export default function MarketMigrationAction({
                 {formatNumber(simulatedMarketPositionLtv, {
                   style: "percent",
                 })}
-                ) / {formatNumber(market.lltv, { style: "percent" })}
+                ) / {formatNumber(destinationMarketSummary.lltv, { style: "percent" })}
               </div>
             </div>
           </ActionFlowReview>

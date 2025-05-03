@@ -5,13 +5,13 @@ import { useAccount } from "wagmi";
 import { Address } from "viem";
 import { AccountTokenHolding } from "@/data/whisk/getAccountTokenHolding";
 
+import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
 export function useAccountTokenHolding(tokenAddress: Address) {
   const { address } = useAccount();
   return useQuery({
     queryKey: ["user-token-holding", tokenAddress, address],
-    queryFn: async () => safeFetch<AccountTokenHolding>(`/api/account/${address}/holding/${tokenAddress}`),
+    queryFn: async () => safeFetch<AccountTokenHolding>(`/api/account/${address}/holding/${tokenAddress}`, {}, true),
     enabled: !!address,
     refetchInterval: ACCOUNT_STATE_POLLING_INTERVAL_MS,
-    placeholderData: (prev) => prev,
   });
 }

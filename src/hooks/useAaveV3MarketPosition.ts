@@ -7,13 +7,10 @@ import { useAccount } from "wagmi";
 
 export function useAaveV3MarketPosition() {
   const { address } = useAccount();
-  const query = useQuery({
+  return useQuery({
     queryKey: ["user-aave-v3-market-position", address],
-    queryFn: async () => safeFetch<AaveV3MarketPosition>(`/api/account/${address}/aave-v3-market-position`),
+    queryFn: async () => safeFetch<AaveV3MarketPosition>(`/api/account/${address}/aave-v3-market-position`, {}, true),
     enabled: !!address,
     refetchInterval: ACCOUNT_STATE_POLLING_INTERVAL_MS,
-    placeholderData: (prev) => prev,
   });
-
-  return query;
 }
