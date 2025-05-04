@@ -115,7 +115,7 @@ export default function MarketSupplyCollateralBorrow({
 
   // Anytime the supplyCollateralAmount changes, trigger the borrowAmount validation since it depends on it
   useEffect(() => {
-    form.trigger("borrowAmount");
+    void form.trigger("borrowAmount");
   }, [supplyCollateralAmount, form]);
 
   const descaledBorrowMax = useMemo(() => {

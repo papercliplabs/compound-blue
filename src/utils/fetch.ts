@@ -12,7 +12,7 @@ export async function safeFetch<T>(
 
     if (!resp.ok) {
       const message = `${resp.status}, ${await resp.text()}`;
-      trackEvent("fetch-error-bad-response", { url, error: message });
+      void trackEvent("fetch-error-bad-response", { url, error: message });
 
       if (throwOnError) {
         throw new Error(`Fetch status error, ${resp.status}`);
@@ -22,7 +22,7 @@ export async function safeFetch<T>(
 
     return resp.json() as T;
   } catch (err) {
-    trackEvent("fetch-error-threw", { url, error: `${err}` });
+    void trackEvent("fetch-error-threw", { url, error: `${err}` });
     if (throwOnError) {
       throw new Error("Fetch error");
     }

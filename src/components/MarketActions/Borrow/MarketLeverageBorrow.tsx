@@ -118,7 +118,7 @@ export default function MarketLeverageBorrow({
 
   // Anytime the maxSlippageTolerance changes, trigger the multiplier validation since it depends on it
   useEffect(() => {
-    form.trigger("multiplier");
+    void form.trigger("multiplier");
   }, [maxSlippageTolerance, form]);
 
   // Clear the form on flow completion

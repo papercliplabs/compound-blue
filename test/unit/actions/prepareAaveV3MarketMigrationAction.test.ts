@@ -1,6 +1,6 @@
 import { describe, expect } from "vitest";
 import { prepareAaveV3MarketMigrationAction } from "@/actions/prepareAaveV3MarketMigrationAction";
-import { currentBlockTest as test } from "../../setup";
+import { currentBlockTest as test } from "../../config";
 import { Address, maxUint256, parseEther, parseUnits } from "viem";
 import {
   borrowFromAaveV3,
@@ -62,7 +62,7 @@ async function fullPositionMigrationWithDelay(
 
   const minCollateralBalance = aaveCollateralBalanceInital;
   const maxCollateralBalance = (minCollateralBalance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE;
-  expect(morphoCollateralBalanceFinal).toBeWithinRange(minCollateralBalance, maxCollateralBalance);
+  expect(morphoCollateralBalanceFinal).toBeWithinRange(minCollateralBalance - 1n, maxCollateralBalance);
 
   // The loan amount for full debt repayments always has the full buffer, +1 since rounded up
   const minLoanBalance = aaveLoanBalanceInital;

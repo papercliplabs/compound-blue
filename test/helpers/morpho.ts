@@ -171,7 +171,7 @@ export async function dealAndBorrowFromMorphoMarket(
   });
   const market = simulationState.getMarket(marketId);
 
-  client.deal({
+  await client.deal({
     erc20: market.params.collateralToken,
     amount: collateralAmount,
   });

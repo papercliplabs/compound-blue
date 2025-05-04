@@ -9,7 +9,7 @@ import { BUNDLER3_ADDRESS, MORPHO_BLUE_ADDRESS, SUPPORTED_ADDAPTERS } from "@/ut
 import { dealAndBorrowFromMorphoMarket, getMorphoMarketPosition, seedMarketLiquidity } from "../../helpers/morpho";
 import { describe, expect } from "vitest";
 import { WETH_ADDRESS, WETH_USDC_MARKET_ID } from "../../helpers/constants";
-import { test } from "../../setup";
+import { test } from "../../config";
 import { bigIntMax } from "@/utils/bigint";
 import { prepareMarketRepayAndWithdrawCollateralAction } from "@/actions/prepareMarketRepayAndWithdrawCollateralAction";
 import { readContract } from "viem/actions";

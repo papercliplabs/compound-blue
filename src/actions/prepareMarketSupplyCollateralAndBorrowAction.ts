@@ -8,7 +8,7 @@ import {
 } from "./helpers";
 import { InputBundlerOperation } from "@morpho-org/bundler-sdk-viem";
 import { Address, Client, maxUint256 } from "viem";
-import { getIsSmartAccount } from "@/data/getIsSmartAccount";
+import { getIsContract } from "@/data/getIsContract";
 import { MORPHO_BLUE_ADDRESS } from "@/utils/constants";
 
 interface PrepareMarketSupplyCollateralAndBorrowActionParameters {
@@ -36,14 +36,20 @@ export async function prepareMarketSupplyCollateralAndBorrowAction({
   collateralAmount,
   borrowAmount,
 }: PrepareMarketSupplyCollateralAndBorrowActionParameters): Promise<PrepareMarketSupplyCollateralAndBorrowActionReturnType> {
-  if (collateralAmount == BigInt(0) && borrowAmount == BigInt(0)) {
+  if (collateralAmount < 0n || borrowAmount < 0n) {
     return {
       status: "error",
-      message: "Collateral and borrow amount cannot both be 0",
+      message: "Collateral and borrow amounts cannot be negative",
+    };
+  }
+  if (collateralAmount == 0n && borrowAmount == 0n) {
+    return {
+      status: "error",
+      message: "Collateral and borrow amounts cannot both be 0",
     };
   }
 
-  const [simulationState, isSmartAccount] = await Promise.all([
+  const [simulationState, isContract] = await Promise.all([
     getMarketSimulationStateAccountingForPublicReallocation({
       marketId,
       accountAddress,
@@ -51,18 +57,16 @@ export async function prepareMarketSupplyCollateralAndBorrowAction({
       allocatingVaultAddresses,
       requestedBorrowAmount: borrowAmount,
     }),
-    getIsSmartAccount(publicClient, accountAddress),
+    getIsContract(publicClient, accountAddress),
   ]);
 
   const market = simulationState.getMarket(marketId);
   const userCollateralBalance = simulationState.getHolding(accountAddress, market.params.collateralToken).balance;
 
-  if (collateralAmount == maxUint256) {
-    collateralAmount = userCollateralBalance;
-  }
+  const isMaxSupplyCollateral = collateralAmount == maxUint256;
 
-  const isSupply = collateralAmount > BigInt(0);
-  const isBorrow = borrowAmount > BigInt(0);
+  const isSupply = collateralAmount > 0n;
+  const isBorrow = borrowAmount > 0n;
 
   const preparedAction = prepareBundle(
     [
@@ -75,7 +79,7 @@ export async function prepareMarketSupplyCollateralAndBorrowAction({
               args: {
                 id: marketId,
                 onBehalf: accountAddress,
-                assets: collateralAmount,
+                assets: isMaxSupplyCollateral ? userCollateralBalance : collateralAmount,
               },
             } as InputBundlerOperation,
           ]
@@ -98,7 +102,7 @@ export async function prepareMarketSupplyCollateralAndBorrowAction({
         : []),
     ],
     accountAddress,
-    isSmartAccount,
+    isContract,
     simulationState,
     `Confirm ${isSupply ? "Supply" : ""}${isSupply && isBorrow ? " & " : ""}${isBorrow ? "Borrow" : ""}`
   );

@@ -6,19 +6,20 @@ import {
   PrepareActionReturnType,
   SimulatedValueChange,
 } from "../helpers";
-import { Address, Client, encodeFunctionData, erc20Abi, maxUint256 } from "viem";
-import { getIsSmartAccount } from "@/data/getIsSmartAccount";
+import { Address, Client, erc20Abi, maxUint256 } from "viem";
+import { getIsContract } from "@/data/getIsContract";
 import { computeLeverageValues } from "./computeLeverageValues";
 import { BundlerCall, BundlerAction, encodeBundle } from "@morpho-org/bundler-sdk-viem";
 import { ActionBundle, populateSubBundle } from "@morpho-org/bundler-sdk-viem";
 import { CHAIN_ID } from "@/config";
 import { readContract } from "viem/actions";
-import { TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 import { createBundle, paraswapBuy } from "../bundler3";
 import { GetParaswapReturnType } from "@/data/paraswap/types";
 import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
 import { fetchMarket } from "@morpho-org/blue-sdk-viem";
+import { prepareInputTransferSubbundle } from "../subbundles/prepareInputTransferSubbundle";
+import { Subbundle } from "../subbundles/types";
 
 interface PrepareMarketLeveragedBorrowActionParameters {
   publicClient: Client;
@@ -56,20 +57,12 @@ export async function prepareMarketLeveragedBorrowAction({
   let market = await fetchMarket(marketId, publicClient);
   const { collateralToken: collateralTokenAddress, loanToken: loanTokenAddress } = market.params;
 
-  const [accountCollateralBalance, allowance] = await Promise.all([
-    readContract(publicClient, {
-      address: collateralTokenAddress,
-      abi: erc20Abi,
-      functionName: "balanceOf",
-      args: [accountAddress],
-    }),
-    readContract(publicClient, {
-      abi: erc20Abi,
-      address: collateralTokenAddress,
-      functionName: "allowance",
-      args: [accountAddress, GENERAL_ADAPTER_1_ADDRESS],
-    }),
-  ]);
+  const accountCollateralBalance = await readContract(publicClient, {
+    address: collateralTokenAddress,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [accountAddress],
+  });
 
   const initialCollateralAmountInternal =
     initialCollateralAmount == maxUint256 ? accountCollateralBalance : initialCollateralAmount;
@@ -87,7 +80,7 @@ export async function prepareMarketLeveragedBorrowAction({
     };
   }
 
-  const [simulationState, isSmartAccount] = await Promise.all([
+  const [simulationState, isContract] = await Promise.all([
     getMarketSimulationStateAccountingForPublicReallocation({
       accountAddress,
       marketId,
@@ -95,7 +88,7 @@ export async function prepareMarketLeveragedBorrowAction({
       allocatingVaultAddresses,
       requestedBorrowAmount: loanAmount,
     }),
-    getIsSmartAccount(publicClient, accountAddress),
+    getIsContract(publicClient, accountAddress),
   ]);
   market = simulationState.getMarket(marketId);
 
@@ -103,27 +96,29 @@ export async function prepareMarketLeveragedBorrowAction({
 
   const positionCollateralBefore = accountPosition.collateral;
   const positionLoanBefore = market.toBorrowAssets(accountPosition.borrowShares);
-  const positionLtvBefore = market.getLtv(accountPosition) ?? BigInt(0);
+  const positionLtvBefore = market.getLtv(accountPosition) ?? 0n;
 
   const requiredSwapCollateralAmount = collateralAmount - initialCollateralAmountInternal;
 
-  // Should use permit2...
-  const collateralTokenApproveTx: ReturnType<TransactionRequest["tx"]> = {
-    to: collateralTokenAddress,
-    data: encodeFunctionData({
-      abi: erc20Abi,
-      functionName: "approve",
-      args: [GENERAL_ADAPTER_1_ADDRESS, initialCollateralAmountInternal],
-    }),
-    value: BigInt(0),
-  };
-
-  // Override simulation state for actions not supported by the simulation SDK
-  accountPosition.collateral += collateralAmount;
-
-  // Use subBundle here to so that it handles any required public reallocation and requirement's (besides aToken approval)
-  let borrowSubBundleEncoded: ActionBundle;
+  let inputTransferSubbundle: Subbundle;
+  let borrowSubBundleEncoded: ActionBundle; // Use subBundle here to so that it handles any required public reallocation and requirement's (besides aToken approval)
   try {
+    inputTransferSubbundle = prepareInputTransferSubbundle({
+      accountAddress,
+      tokenAddress: collateralTokenAddress,
+      amount: initialCollateralAmount,
+      recipientAddress: GENERAL_ADAPTER_1_ADDRESS,
+      config: {
+        accountSupportsSignatures: !isContract,
+        tokenIsRebasing: false,
+        allowWrappingNativeAssets: false,
+      },
+      simulationState,
+    });
+
+    // Simulate the state changes for actions not supported by the Morpho SDK
+    accountPosition.collateral += collateralAmount;
+
     const borrowSubBundle = populateSubBundle(
       {
         type: "Blue_Borrow",
@@ -145,7 +140,7 @@ export async function prepareMarketLeveragedBorrowAction({
       }
     );
 
-    borrowSubBundleEncoded = encodeBundle(borrowSubBundle, simulationState, !isSmartAccount);
+    borrowSubBundleEncoded = encodeBundle(borrowSubBundle, simulationState, !isContract);
   } catch (e) {
     return {
       status: "error",
@@ -179,12 +174,7 @@ export async function prepareMarketLeveragedBorrowAction({
 
     const bundlerCalls: BundlerCall[] = [
       // Move margin from user into GA1
-      BundlerAction.erc20TransferFrom(
-        CHAIN_ID,
-        collateralTokenAddress,
-        initialCollateralAmount,
-        GENERAL_ADAPTER_1_ADDRESS
-      ),
+      ...inputTransferSubbundle.bundlerCalls,
       BundlerAction.morphoSupplyCollateral(
         CHAIN_ID,
         market.params,
@@ -214,17 +204,11 @@ export async function prepareMarketLeveragedBorrowAction({
       ),
       // Collateral will be withdrawn from GA1 here to complete the supply collateral
 
+      // Sweep any remaining collateral from GA1 to user
+      BundlerAction.erc20Transfer(collateralTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
+
       // Use any leftover loan tokens in GA1 to repay the loan to lower LTV
-      BundlerAction.morphoRepay(
-        CHAIN_ID,
-        market.params,
-        maxUint256,
-        BigInt(0),
-        maxSharePriceE27,
-        accountAddress,
-        [],
-        true
-      ),
+      BundlerAction.morphoRepay(CHAIN_ID, market.params, maxUint256, 0n, maxSharePriceE27, accountAddress, [], true),
     ].flat();
 
     return createBundle(bundlerCalls);
@@ -236,24 +220,19 @@ export async function prepareMarketLeveragedBorrowAction({
 
   return {
     status: "success",
-    signatureRequests: borrowSubBundleEncoded.requirements.signatures.map((sig) => ({
-      sign: sig.sign,
-      name: getSignatureRequirementDescription(sig, simulationState),
-    })),
+    signatureRequests: [
+      ...inputTransferSubbundle.signatureRequirements,
+      ...borrowSubBundleEncoded.requirements.signatures.map((sig) => ({
+        sign: sig.sign,
+        name: getSignatureRequirementDescription(sig, simulationState),
+      })),
+    ],
     transactionRequests: [
+      ...inputTransferSubbundle.transactionRequirements,
       ...borrowSubBundleEncoded.requirements.txs.map((tx) => ({
         tx: () => tx.tx,
         name: getTransactionRequirementDescription(tx, simulationState),
       })),
-      //  TODO: should use permit2 if possible...
-      ...(allowance < initialCollateralAmountInternal
-        ? [
-            {
-              name: `Approve Collateral`,
-              tx: () => collateralTokenApproveTx,
-            },
-          ]
-        : []),
       {
         name: "Confirm Multiply",
         tx: getBundleTx,
@@ -261,15 +240,15 @@ export async function prepareMarketLeveragedBorrowAction({
     ],
     positionCollateralChange: {
       before: positionCollateralBefore,
-      after: userPositionAfter?.collateral ?? BigInt(0),
+      after: userPositionAfter?.collateral ?? 0n,
     },
     positionLoanChange: {
       before: positionLoanBefore,
-      after: marketAfter?.toBorrowAssets(userPositionAfter?.borrowShares ?? BigInt(0)) ?? BigInt(0),
+      after: marketAfter?.toBorrowAssets(userPositionAfter?.borrowShares ?? 0n) ?? 0n,
     },
     positionLtvChange: {
       before: positionLtvBefore,
-      after: marketAfter?.getLtv(userPositionAfter ?? { collateral: BigInt(0), borrowShares: BigInt(0) }) ?? BigInt(0),
+      after: marketAfter?.getLtv(userPositionAfter ?? { collateral: 0n, borrowShares: 0n }) ?? 0n,
     },
   };
 }

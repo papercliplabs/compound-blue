@@ -1,7 +1,7 @@
 import { getSimulationState } from "@/data/getSimulationState";
 import { PrepareActionReturnType, SimulatedValueChange } from "./helpers";
 import { Address, Client } from "viem";
-import { getIsSmartAccount } from "@/data/getIsSmartAccount";
+import { getIsContract } from "@/data/getIsContract";
 import { GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
 import { CHAIN_ID } from "@/config";
 import { BundlerAction, BundlerCall } from "@morpho-org/bundler-sdk-viem";
@@ -15,7 +15,7 @@ interface PrepareVaultSupplyActionParameters {
   vaultAddress: Address;
   accountAddress: Address;
   supplyAmount: bigint; // Max uint256 for entire account balanace
-  allowWrappingNativeAssets: boolean;
+  allowWrappingNativeAssets: boolean; // Ignored if the vault asset is not wrapped native
 }
 
 export type PrepareVaultSupplyActionReturnType =
@@ -31,34 +31,35 @@ export async function prepareVaultSupplyBundle({
   supplyAmount,
   allowWrappingNativeAssets = false,
 }: PrepareVaultSupplyActionParameters): Promise<PrepareVaultSupplyActionReturnType> {
-  if (supplyAmount == BigInt(0)) {
+  if (supplyAmount <= 0n) {
     return {
       status: "error",
-      message: "Input validation: Supply amount cannot be 0",
+      message: "Supply amount must be greater than 0",
     };
   }
 
-  const [simulationState, isSmartAccount] = await Promise.all([
+  const [simulationState, isContract] = await Promise.all([
     getSimulationState({
       actionType: "vault",
       accountAddress,
       vaultAddress,
       publicClient,
     }),
-    getIsSmartAccount(publicClient, accountAddress),
+    getIsContract(publicClient, accountAddress),
   ]);
 
   const vault = simulationState.getVault(vaultAddress);
   const positionBalanceBefore = simulationState.getHolding(accountAddress, vaultAddress).balance;
 
   try {
+    // Prepare input transfer, and modify simulation state accordingly
     const inputTransferSubbundle = prepareInputTransferSubbundle({
       accountAddress,
       tokenAddress: vault.underlying,
-      amount: supplyAmount,
+      amount: supplyAmount, // Handles maxUint256
       recipientAddress: GENERAL_ADAPTER_1_ADDRESS,
       config: {
-        accountSupportsSignatures: !isSmartAccount,
+        accountSupportsSignatures: !isContract,
         tokenIsRebasing: false,
         allowWrappingNativeAssets,
       },
@@ -72,7 +73,7 @@ export async function prepareVaultSupplyBundle({
         sender: GENERAL_ADAPTER_1_ADDRESS,
         address: vaultAddress,
         args: {
-          assets: supplyAmount,
+          assets: supplyAmount, // Handles maxUint256
           owner: accountAddress,
         },
       },
@@ -81,14 +82,12 @@ export async function prepareVaultSupplyBundle({
 
     const maxSharePriceE27 = vault.toAssets(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
 
-    function getBundleTx() {
-      const bundlerCalls: BundlerCall[] = [
-        ...inputTransferSubbundle.bundlerCalls,
-        BundlerAction.erc4626Deposit(CHAIN_ID, vault.address, supplyAmount, maxSharePriceE27, accountAddress),
-      ].flat();
+    const bundlerCalls: BundlerCall[] = [
+      ...inputTransferSubbundle.bundlerCalls,
+      BundlerAction.erc4626Deposit(CHAIN_ID, vault.address, supplyAmount, maxSharePriceE27, accountAddress),
+    ].flat();
 
-      return createBundle(bundlerCalls);
-    }
+    const bundle = createBundle(bundlerCalls);
 
     return {
       status: "success",
@@ -96,7 +95,7 @@ export async function prepareVaultSupplyBundle({
       transactionRequests: [
         ...inputTransferSubbundle.transactionRequirements,
         {
-          tx: getBundleTx,
+          tx: () => bundle,
           name: "Confirm Supply",
         },
       ],

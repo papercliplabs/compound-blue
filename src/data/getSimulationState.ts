@@ -36,11 +36,17 @@ type GetSimulationStateVaultTypeParameters = {
 export type GetSimulationStateParameters = {
   publicClient: Client;
   accountAddress: Address;
+  additionalTokenAddresses?: Address[];
 } & (GetSimulationStateMarketTypeParameters | GetSimulationStateVaultTypeParameters);
 
 // Derive simulation state from real time on-chain data
 // Only use this for preparing actions as it is an expensive operation
-export async function getSimulationState({ publicClient, accountAddress, ...params }: GetSimulationStateParameters) {
+export async function getSimulationState({
+  publicClient,
+  accountAddress,
+  additionalTokenAddresses,
+  ...params
+}: GetSimulationStateParameters) {
   let vaultAddresses: Address[] = [];
   let marketIds: MarketId[] = [];
 
@@ -96,7 +102,13 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
   let tokenAddresses: Address[] = [];
   switch (params.actionType) {
     case "vault":
-      tokenAddresses = [vaults[0].asset, vaults[0].address, NATIVE_ADDRESS, WRAPPED_NATIVE_ADDRESS]; // Underliying and the vault share token move
+      tokenAddresses = [
+        vaults[0].asset,
+        vaults[0].address,
+        NATIVE_ADDRESS,
+        WRAPPED_NATIVE_ADDRESS,
+        ...(additionalTokenAddresses ?? []),
+      ]; // Underliying and the vault share token move
       break;
     case "market":
       tokenAddresses = [
@@ -104,6 +116,7 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
         markets[0].params.collateralToken,
         NATIVE_ADDRESS,
         WRAPPED_NATIVE_ADDRESS,
+        ...(additionalTokenAddresses ?? []),
       ];
       break;
   }

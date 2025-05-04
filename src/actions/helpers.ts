@@ -2,7 +2,7 @@ import { SignatureRequest, TransactionRequest } from "@/components/ActionFlowDia
 import { PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION } from "@/config";
 import { getSimulationState } from "@/data/getSimulationState";
 import { WAD } from "@/utils/constants";
-import { MarketId } from "@morpho-org/blue-sdk";
+import { MarketId, MathLib } from "@morpho-org/blue-sdk";
 import {
   encodeBundle,
   finalizeBundle,
@@ -13,6 +13,10 @@ import {
 } from "@morpho-org/bundler-sdk-viem";
 import { MaybeDraft, SimulationResult, SimulationState } from "@morpho-org/simulation-sdk";
 import { Address, Client } from "viem";
+
+// Allow 0.03% buffer for max transfers on rebasing tokens
+// This gives ~1 day grace period for execution if rebasing at 10% APY, which is useful for multisigs (also aligns with bundler permits).
+export const TOKEN_REBASEING_MARGIN = 300000000000000n; // Scaled by WAD
 
 export type PrepareActionReturnType =
   | {
@@ -78,7 +82,7 @@ export function getTransactionRequirementDescription(
 export function prepareBundle(
   inputOps: InputBundlerOperation[],
   accountAddress: Address,
-  isSmartAccount: boolean,
+  isContract: boolean,
   simulationState: SimulationState,
   executeBundleName: string
 ): PrepareMorphoActionReturnType {
@@ -90,7 +94,7 @@ export function prepareBundle(
       },
     });
     operations = finalizeBundle(operations, simulationState, accountAddress);
-    const bundle = encodeBundle(operations, simulationState, !isSmartAccount); // Don't support sigantures for smart accounts
+    const bundle = encodeBundle(operations, simulationState, !isContract); // Don't support sigantures for smart accounts
 
     const signatureRequests = bundle.requirements.signatures.map((sig) => ({
       sign: sig.sign.bind(bundle),
@@ -179,12 +183,14 @@ export async function getMarketSimulationStateAccountingForPublicReallocation({
   accountAddress,
   allocatingVaultAddresses,
   requestedBorrowAmount,
+  additionalTokenAddresses,
 }: {
   publicClient: Client;
   marketId: MarketId;
   accountAddress: Address;
   allocatingVaultAddresses: Address[];
   requestedBorrowAmount: bigint;
+  additionalTokenAddresses?: Address[];
 }) {
   const simulationStateWithoutPublicReallocation = await getSimulationState({
     actionType: "market",
@@ -192,6 +198,7 @@ export async function getMarketSimulationStateAccountingForPublicReallocation({
     marketId,
     publicClient,
     requiresPublicReallocation: false,
+    additionalTokenAddresses,
   });
 
   const market = simulationStateWithoutPublicReallocation.getMarket(marketId);
@@ -211,6 +218,11 @@ export async function getMarketSimulationStateAccountingForPublicReallocation({
       publicClient,
       allocatingVaultAddresses,
       requiresPublicReallocation: true,
+      additionalTokenAddresses,
     });
   }
+}
+
+export function computeAmountWithRebasingMargin(amount: bigint) {
+  return MathLib.mulDivDown(amount, MathLib.WAD + TOKEN_REBASEING_MARGIN, MathLib.WAD);
 }

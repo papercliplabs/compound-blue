@@ -92,7 +92,7 @@ export function useMarketMigrationTableData({ marketSummaries }: { marketSummari
   const [hasLoggedEvent, setHasLoggedEvent] = useState(false);
   useEffect(() => {
     if (data && data.length > 0 && !hasLoggedEvent && address) {
-      trackEvent("found-migratable-market-positions", {
+      void trackEvent("found-migratable-market-positions", {
         address,
         numPositions: data.length,
         totalLoanValueUsd: data.reduce((acc, p) => acc + p.aaveV3LoanReservePosition.aTokenAssetsUsd, 0),

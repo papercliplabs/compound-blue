@@ -1,5 +1,5 @@
 import { describe, expect } from "vitest";
-import { test } from "../../setup";
+import { test } from "../../config";
 import { Address, isAddressEqual, maxUint256, parseEther, parseUnits, zeroAddress } from "viem";
 import { prepareVaultSupplyBundle } from "@/actions/prepareVaultSupplyAction";
 import { executeAction } from "../../helpers/executeAction";
@@ -10,7 +10,7 @@ import { AnvilTestClient } from "@morpho-org/test";
 import { fetchVaultConfig, metaMorphoAbi } from "@morpho-org/blue-sdk-viem";
 import { dealAndSupplyToMorphoMarket, getMorphoVaultPosition } from "../../helpers/morpho";
 import {
-  TEST_ACCOUNT_1,
+  RANDOM_ADDRESS,
   USDC_ADDRESS,
   USDC_VAULT_ADDRESS,
   WETH_USDC_MARKET_ID,
@@ -19,6 +19,7 @@ import {
 import { getBalance, readContract } from "viem/actions";
 import { MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING } from "@/config";
 import { bigIntMax } from "@/utils/bigint";
+import { MathLib } from "@morpho-org/blue-sdk";
 
 interface VaultSupplyTestParameters {
   client: AnvilTestClient;
@@ -210,8 +211,9 @@ describe("prepareVaultSupplyAction", () => {
       });
 
       // Increase the share price by 0.05%, which should be above the acceptable slippage tolerance
-      const donationAmount = (totalAssetsBefore * BigInt(0.0005 * 100000)) / BigInt(100000);
+      const donationAmount = MathLib.mulDivUp(totalAssetsBefore, BigInt(0.0005 * Number(MathLib.WAD)), MathLib.WAD);
 
+      await client.setBalance({ address: RANDOM_ADDRESS, value: parseEther("10") });
       await expect(
         runVaultSupplyTest({
           client,
@@ -226,7 +228,7 @@ describe("prepareVaultSupplyAction", () => {
               WETH_USDC_MARKET_ID,
               donationAmount,
               USDC_VAULT_ADDRESS,
-              TEST_ACCOUNT_1
+              RANDOM_ADDRESS
             );
           },
         })

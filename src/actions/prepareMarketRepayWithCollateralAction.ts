@@ -1,5 +1,6 @@
 import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib, ORACLE_PRICE_SCALE } from "@morpho-org/blue-sdk";
 import {
+  computeAmountWithRebasingMargin,
   getSignatureRequirementDescription,
   getTransactionRequirementDescription,
   PrepareActionReturnType,
@@ -7,7 +8,7 @@ import {
 } from "./helpers";
 import { Address, Client, maxUint256 } from "viem";
 import { getSimulationState } from "@/data/getSimulationState";
-import { getIsSmartAccount } from "@/data/getIsSmartAccount";
+import { getIsContract } from "@/data/getIsContract";
 import {
   BundlerCall,
   BundlerAction,
@@ -15,24 +16,18 @@ import {
   populateSubBundle,
   encodeBundle,
 } from "@morpho-org/bundler-sdk-viem";
-import { CHAIN_ID } from "@/config";
+import { CHAIN_ID, MAX_SLIPPAGE_TOLERANCE_LIMIT } from "@/config";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 import { createBundle, paraswapBuy } from "./bundler3";
 import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
 import { GetParaswapReturnType } from "@/data/paraswap/types";
-
-// 0.03% buffer on full loan repayments to account for accrued interest between now and execution.
-// This gives ~1 day grace period for execution for markets with 10% APY which is useful for multisigs.
-// This also causes some dust leftover loan assets to be sent to the user during full loan repayments.
-const FACTOR_SCALE = 100000;
-const REBASEING_MARGIN = BigInt(100030);
 
 interface PrepareMarketRepayWithCollateralActionParameters {
   publicClient: Client;
   marketId: MarketId;
   accountAddress: Address;
   loanRepayAmount: bigint; // max uint256 for entire position
-  maxSlippageTolerance: number; // (0,1)
+  maxSlippageTolerance: number; // (0,MAX_SLIPPAGE_TOLERANCE_LIMIT)
 }
 
 export type PrepareMarketRepayWithCollateralActionReturnType =
@@ -53,14 +48,20 @@ export async function prepareMarketRepayWithCollateralAction({
   loanRepayAmount,
   maxSlippageTolerance,
 }: PrepareMarketRepayWithCollateralActionParameters): Promise<PrepareMarketRepayWithCollateralActionReturnType> {
-  if (loanRepayAmount <= 0n || maxSlippageTolerance <= 0) {
+  if (loanRepayAmount <= 0n) {
     return {
       status: "error",
-      message: "Loan repay amount and slippage tolerance must be greater than 0.",
+      message: `Loan repay amount must be greater than 0.`,
+    };
+  }
+  if (maxSlippageTolerance <= 0 || maxSlippageTolerance > MAX_SLIPPAGE_TOLERANCE_LIMIT) {
+    return {
+      status: "error",
+      message: `Slippage tolerance must between 0 and ${MAX_SLIPPAGE_TOLERANCE_LIMIT}.`,
     };
   }
 
-  const [simulationState, isSmartAccount] = await Promise.all([
+  const [simulationState, isContract] = await Promise.all([
     getSimulationState({
       actionType: "market",
       accountAddress,
@@ -68,7 +69,7 @@ export async function prepareMarketRepayWithCollateralAction({
       publicClient,
       requiresPublicReallocation: false,
     }),
-    getIsSmartAccount(publicClient, accountAddress),
+    getIsContract(publicClient, accountAddress),
   ]);
 
   const market = simulationState.getMarket(marketId);
@@ -76,7 +77,7 @@ export async function prepareMarketRepayWithCollateralAction({
 
   const positionCollateralBefore = accountPosition.collateral;
   const positionLoanBefore = market.toBorrowAssets(accountPosition.borrowShares);
-  const positionLtvBefore = market.getLtv(accountPosition) ?? BigInt(0);
+  const positionLtvBefore = market.getLtv(accountPosition) ?? 0n;
 
   if (market.price == undefined || market.price == 0n) {
     return {
@@ -89,28 +90,23 @@ export async function prepareMarketRepayWithCollateralAction({
 
   const closingPosition = loanRepayAmount == maxUint256;
 
-  let loanSwapAmount: bigint;
-  if (closingPosition) {
-    // Include a margin to account for accured interest between now and execution
-    // Actual swap will adjust to use true loan amount, but this get's us a maxCollateralSwapAmount needed and is used for quote (upper bound)
-    loanSwapAmount = (positionLoanBefore * REBASEING_MARGIN) / BigInt(FACTOR_SCALE);
-  } else {
-    loanSwapAmount = loanRepayAmount;
-  }
+  // Include a margin to account for accured interest between now and execution if closing
+  // Actual swap will adjust to use true loan amount, but this get's us a maxCollateralSwapAmount needed and is used for quote (upper bound)
+  const loanSwapAmount = closingPosition ? computeAmountWithRebasingMargin(positionLoanBefore) : loanRepayAmount;
 
   // Worst case required collateral amount
   const quoteCollateralAmount = MathLib.mulDivUp(loanSwapAmount, ORACLE_PRICE_SCALE, market.price);
   const maxCollateralSwapAmount = MathLib.mulDivDown(
     quoteCollateralAmount,
-    BigInt(Math.floor((1 + maxSlippageTolerance) * FACTOR_SCALE)),
-    FACTOR_SCALE
+    BigInt(Math.floor((1 + maxSlippageTolerance) * Number(MathLib.WAD))),
+    MathLib.WAD
   );
 
   // Need to move worst case collateral into adapter, so must exist
   if (maxCollateralSwapAmount > positionCollateralBefore) {
     return {
       status: "error",
-      message: "Insufficient collateral with worst case slippage.",
+      message: "Insufficient collateral for worst case slippage.",
     };
   }
 
@@ -134,12 +130,12 @@ export async function prepareMarketRepayWithCollateralAction({
 
   // Override simulation state for actions not supported by the simulation SDK
   if (closingPosition) {
-    accountPosition.borrowShares = BigInt(0);
+    accountPosition.borrowShares = 0n;
   } else {
     accountPosition.borrowShares -= market.toBorrowShares(loanSwapAmount);
   }
 
-  // Use subBundle here to so that it handles any required requirement's
+  // Use subBundle here to so that it handles any requirements (permitting GA1)
   let collateralWithdrawSubBundleEncoded: ActionBundle;
   try {
     const collateralWithdrawSubBundle = populateSubBundle(
@@ -154,15 +150,10 @@ export async function prepareMarketRepayWithCollateralAction({
           assets: closingPosition ? accountPosition.collateral : maxCollateralSwapAmount, // Full collateral withdraw if closing position - bundler SDK has issues with maxUint256, but this works the same
         },
       },
-      simulationState,
-      {
-        publicAllocatorOptions: {
-          enabled: true,
-        },
-      }
+      simulationState
     );
 
-    collateralWithdrawSubBundleEncoded = encodeBundle(collateralWithdrawSubBundle, simulationState, !isSmartAccount);
+    collateralWithdrawSubBundleEncoded = encodeBundle(collateralWithdrawSubBundle, simulationState, !isContract);
   } catch (e) {
     return {
       status: "error",
@@ -182,8 +173,8 @@ export async function prepareMarketRepayWithCollateralAction({
       BundlerAction.morphoRepay(
         CHAIN_ID,
         market.params,
-        closingPosition ? BigInt(0) : loanRepayAmount,
-        closingPosition ? maxUint256 : BigInt(0), // Full repay when closing position
+        closingPosition ? 0n : loanRepayAmount,
+        closingPosition ? maxUint256 : 0n, // Full repay using shares when closing position
         maxSharePriceE27,
         accountAddress,
         // Repay loan callbacks, all actions will happen before Morpho pulls the required loan assets from GA1 (i.e must have required loan assets in GA1 at the end of these callbacks)
@@ -200,7 +191,7 @@ export async function prepareMarketRepayWithCollateralAction({
             paraswapQuote.offsets,
             GENERAL_ADAPTER_1_ADDRESS
           ),
-          // Sweep any leftover collateral assets from paraswap adapter to GA1
+          // Sweep any leftover collateral assets from paraswap adapter to GA1 - exact out, so no leftover loan assets from swap
           BundlerAction.erc20Transfer(
             collateralTokenAddress,
             GENERAL_ADAPTER_1_ADDRESS,
@@ -215,13 +206,13 @@ export async function prepareMarketRepayWithCollateralAction({
         ? [
             // Sweep any leftover collateral assets from GA1 to user
             BundlerAction.erc20Transfer(collateralTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
-            // Sweep any leftover loan assets from GA1 to user
+            // Sweep any leftover loan assets from GA1 to user, expect some dust from the rebasing margin
             BundlerAction.erc20Transfer(loanTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
           ]
         : [
             // Add back to position if it's not being closed
             BundlerAction.morphoSupplyCollateral(CHAIN_ID, market.params, maxUint256, accountAddress, [], true),
-            // There won't be any loan assets leftover since we did an exact buy for partial positions
+            // There won't be any loan assets leftover since we swapped for exact amount needed for partial position (no margin)
           ]),
     ].flat();
 
@@ -252,15 +243,15 @@ export async function prepareMarketRepayWithCollateralAction({
     // TODO: get sim state before and after and use the helper to compute this change
     positionCollateralChange: {
       before: positionCollateralBefore,
-      after: userPositionAfter?.collateral ?? BigInt(0),
+      after: userPositionAfter?.collateral ?? 0n,
     },
     positionLoanChange: {
       before: positionLoanBefore,
-      after: marketAfter?.toBorrowAssets(userPositionAfter?.borrowShares ?? BigInt(0)) ?? BigInt(0),
+      after: marketAfter?.toBorrowAssets(userPositionAfter?.borrowShares ?? 0n) ?? 0n,
     },
     positionLtvChange: {
       before: positionLtvBefore,
-      after: marketAfter?.getLtv(userPositionAfter ?? { collateral: BigInt(0), borrowShares: BigInt(0) }) ?? BigInt(0),
+      after: marketAfter?.getLtv(userPositionAfter ?? { collateral: 0n, borrowShares: 0n }) ?? 0n,
     },
   };
 }

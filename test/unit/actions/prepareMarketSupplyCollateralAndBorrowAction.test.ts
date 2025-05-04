@@ -6,16 +6,11 @@ import { Address, Hex, maxUint256, parseEther, parseUnits } from "viem";
 import { executeAction } from "../../helpers/executeAction";
 import { expectOnlyAllowedApprovals } from "../../helpers/logs";
 import { expectZeroErc20Balances, getErc20BalanceOf } from "../../helpers/erc20";
-import {
-  BUNDLER3_ADDRESS,
-  GENERAL_ADAPTER_1_ADDRESS,
-  MORPHO_BLUE_ADDRESS,
-  SUPPORTED_ADDAPTERS,
-} from "@/utils/constants";
+import { BUNDLER3_ADDRESS, MORPHO_BLUE_ADDRESS, SUPPORTED_ADDAPTERS } from "@/utils/constants";
 import { dealAndSupplyCollateralToMorphoMarket, getMorphoMarketPosition } from "../../helpers/morpho";
 import { describe, expect } from "vitest";
 import { WETH_ADDRESS, WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS, WETH_USDC_MARKET_ID } from "../../helpers/constants";
-import { test } from "../../setup";
+import { test } from "../../config";
 import { bigIntMax } from "@/utils/bigint";
 import { readContract } from "viem/actions";
 

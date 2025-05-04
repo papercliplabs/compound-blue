@@ -8,7 +8,7 @@ import {
 } from "./helpers";
 import { InputBundlerOperation } from "@morpho-org/bundler-sdk-viem";
 import { Address, Client, maxUint256 } from "viem";
-import { getIsSmartAccount } from "@/data/getIsSmartAccount";
+import { getIsContract } from "@/data/getIsContract";
 import { MORPHO_BLUE_ADDRESS } from "@/utils/constants";
 
 interface PrepareMarketRepayAndWithdrawCollateralActionParameters {
@@ -34,14 +34,14 @@ export async function prepareMarketRepayAndWithdrawCollateralAction({
   repayAmount,
   withdrawCollateralAmount,
 }: PrepareMarketRepayAndWithdrawCollateralActionParameters): Promise<PrepareMarketRepayAndWithdrawCollateralActionReturnType> {
-  if (repayAmount == BigInt(0) && withdrawCollateralAmount == BigInt(0)) {
+  if (repayAmount == 0n && withdrawCollateralAmount == 0n) {
     return {
       status: "error",
       message: "Repay and withdraw collateral amounts cannot both be 0",
     };
   }
 
-  const [simulationState, isSmartAccount] = await Promise.all([
+  const [simulationState, isContract] = await Promise.all([
     getSimulationState({
       actionType: "market",
       accountAddress,
@@ -49,19 +49,16 @@ export async function prepareMarketRepayAndWithdrawCollateralAction({
       publicClient,
       requiresPublicReallocation: false,
     }),
-    getIsSmartAccount(publicClient, accountAddress),
+    getIsContract(publicClient, accountAddress),
   ]);
 
   const isMaxRepay = repayAmount == maxUint256;
   const isMaxWithdrawCollateral = withdrawCollateralAmount == maxUint256;
 
   const userPosition = simulationState.getPosition(accountAddress, marketId);
-  if (isMaxWithdrawCollateral) {
-    withdrawCollateralAmount = userPosition.collateral;
-  }
 
-  const isRepay = repayAmount > BigInt(0);
-  const isWithdraw = withdrawCollateralAmount > BigInt(0);
+  const isRepay = repayAmount > 0n;
+  const isWithdraw = withdrawCollateralAmount > 0n;
 
   const preparedAction = prepareBundle(
     [
@@ -91,14 +88,14 @@ export async function prepareMarketRepayAndWithdrawCollateralAction({
                 id: marketId,
                 onBehalf: accountAddress,
                 receiver: accountAddress,
-                assets: withdrawCollateralAmount,
+                assets: isMaxWithdrawCollateral ? userPosition.collateral : withdrawCollateralAmount,
               },
             } as InputBundlerOperation,
           ]
         : []),
     ],
     accountAddress,
-    isSmartAccount,
+    isContract,
     simulationState,
     `Confirm ${isRepay ? "Repay" : ""}${isRepay && isWithdraw ? " & " : ""}${isWithdraw ? "Withdraw" : ""}`
   );

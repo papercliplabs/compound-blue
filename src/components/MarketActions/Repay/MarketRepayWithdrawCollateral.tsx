@@ -129,7 +129,7 @@ export default function MarketRepayWithdrawCollateral({
 
   // Anytime the repayAmount changes, trigger the withdrawCollateralAmount validation since it depends on it
   useEffect(() => {
-    form.trigger("withdrawCollateralAmount");
+    void form.trigger("withdrawCollateralAmount");
   }, [repayAmount, form]);
 
   const onSubmit = useCallback(

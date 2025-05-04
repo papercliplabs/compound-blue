@@ -133,7 +133,7 @@ export default function VaultSupply({
   useEffect(() => {
     // Only if supplyAmount has a value...
     if (form.watch("supplyAmount")) {
-      form.trigger("supplyAmount");
+      void form.trigger("supplyAmount");
     }
   }, [allowWrappingNativeAssets, form]);
 

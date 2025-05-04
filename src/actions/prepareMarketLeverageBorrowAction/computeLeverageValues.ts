@@ -1,9 +1,8 @@
 import { MAX_BORROW_LTV_MARGIN, MAX_SLIPPAGE_TOLERANCE_LIMIT } from "@/config";
 import { descaleBigIntToNumber } from "@/utils/format";
-import { Market } from "@morpho-org/blue-sdk";
+import { Market, MathLib } from "@morpho-org/blue-sdk";
 
 const LEVERAGE_FACTOR_CEILING = 100; // Only clamps if lltv * (1 - S) > 99%
-const FACTOR_SCALE = 10000;
 
 // Inputs:
 //  M: margin / initial collateral amount (M > 0)
@@ -72,11 +71,14 @@ export function computeLeverageValues(
     throw new Error(`LLTV must be at least ${MAX_BORROW_LTV_MARGIN}.`);
   }
 
-  const collateralAmount = (margin * BigInt(Math.floor(leverageFactor * FACTOR_SCALE))) / BigInt(FACTOR_SCALE);
+  const collateralAmount = MathLib.mulDivDown(margin, BigInt(leverageFactor * Number(MathLib.WAD)), MathLib.WAD);
   const additionalCollateralNeeded = collateralAmount - margin;
 
-  const loanAmountInCollateral =
-    (additionalCollateralNeeded * BigInt(Math.ceil((1 + maxSlippageTolerance) * FACTOR_SCALE))) / BigInt(FACTOR_SCALE);
+  const loanAmountInCollateral = MathLib.mulDivUp(
+    additionalCollateralNeeded,
+    BigInt((1 + maxSlippageTolerance) * Number(MathLib.WAD)),
+    MathLib.WAD
+  );
 
   const loanAmount = market.getCollateralValue(loanAmountInCollateral);
   if (loanAmount == undefined) {

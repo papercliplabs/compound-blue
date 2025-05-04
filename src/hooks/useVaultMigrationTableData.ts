@@ -72,7 +72,7 @@ export function useVaultMigrationTableData({ vaultSummaries }: { vaultSummaries:
   const [hasLoggedEvent, setHasLoggedEvent] = useState(false);
   useEffect(() => {
     if (data && data.length > 0 && !hasLoggedEvent && address) {
-      trackEvent("found-migratable-vault-positions", {
+      void trackEvent("found-migratable-vault-positions", {
         address,
         numPositions: data.length,
         totalValueUsd: data.reduce((acc, p) => acc + p.sourcePosition.aTokenAssetsUsd, 0),

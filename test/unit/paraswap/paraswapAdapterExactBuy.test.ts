@@ -47,7 +47,7 @@ async function runParaswapTest({
   // Arrange
 
   // Give the adapter the necessary src tokens
-  client.deal({ erc20: srcTokenAddress, amount: maxSrcTokenAmount, account: PARASWAP_ADAPTER_ADDRESS! });
+  await client.deal({ erc20: srcTokenAddress, amount: maxSrcTokenAmount, account: PARASWAP_ADAPTER_ADDRESS! });
 
   // Act
   let paraswapExactBuyParams: GetParaswapReturnType;

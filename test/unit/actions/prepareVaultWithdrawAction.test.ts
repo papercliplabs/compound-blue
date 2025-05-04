@@ -1,5 +1,5 @@
 import { describe, expect } from "vitest";
-import { test } from "../../setup";
+import { test } from "../../config";
 import { Address, maxUint256, parseUnits, zeroAddress } from "viem";
 import { executeAction } from "../../helpers/executeAction";
 import { expectOnlyAllowedApprovals } from "../../helpers/logs";
