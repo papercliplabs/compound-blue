@@ -1,8 +1,6 @@
 import { polygon } from "viem/chains";
 import { createPublicClient, http } from "viem";
 import { createViemTest } from "@morpho-org/test/vitest";
-import "./helpers/expect";
-import "dotenv/config";
 import { AnvilArgs, createAnvilTestClient, spawnAnvil } from "@morpho-org/test";
 
 export const test = createViemTest(polygon, {
