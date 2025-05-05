@@ -1,13 +1,14 @@
-name: Run Vitest on PRs
-
+name: Vitest Tests
 on:
   pull_request:
     branches:
       - main
       - staging
+  workflow_dispatch: # Adds "Run workflow" button in GitHub UI
 
 jobs:
   test:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     env:
       NEXT_PUBLIC_RPC_URL_1: ${{ secrets.NEXT_PUBLIC_RPC_URL_1 }}
@@ -27,11 +28,11 @@ jobs:
       - name: Restore Foundry RPC cache
         uses: actions/cache/restore@v3
         with:
-          path: ~/.foundry/cache/rpc
-          key: foundry-rpc-${{ github.ref_name }}-v1-${{ github.run_id }}
+          path: ~/.foundry/cache/rpc-vitest
+          key: foundry-rpc-vitest-${{ github.ref_name }}-v1-${{ github.run_id }}
           restore-keys: |
-            foundry-rpc-${{ github.ref_name }}-v1-
-            foundry-rpc--v1-
+            foundry-rpc-vitest-${{ github.ref_name }}-v1-
+            foundry-rpc-vitest--v1-
 
       - uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -44,5 +45,5 @@ jobs:
         if: always()
         uses: actions/cache/save@v3
         with:
-          path: ~/.foundry/cache/rpc
-          key: foundry-rpc-${{ github.ref_name }}-v1-${{ github.run_id }}
+          path: ~/.foundry/cache/rpc-vitest
+          key: foundry-rpc-vitest-${{ github.ref_name }}-v1-${{ github.run_id }}

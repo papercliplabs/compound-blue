@@ -1,0 +1,66 @@
+name: Playwright Tests
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+  workflow_dispatch: # Adds "Run workflow" button in GitHub UI
+
+jobs:
+  test:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    env:
+      WHISK_API_URL: ${{ secrets.WHISK_API_URL }}
+      WHISK_API_KEY: ${{ secrets.WHISK_API_KEY }}
+      NEXT_PUBLIC_URL: ${{ secrets.NEXT_PUBLIC_URL }}
+      NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID }}
+      NEXT_PUBLIC_RPC_URL_1: ${{ secrets.NEXT_PUBLIC_RPC_URL_1 }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Restore Foundry RPC cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ~/.foundry/cache/rpc-playwright
+          key: foundry-rpc-playwright-${{ github.ref_name }}-v1-${{ github.run_id }}
+          restore-keys: |
+            foundry-rpc-playwright-${{ github.ref_name }}-v1-
+            foundry-rpc-playwright--v1-
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+
+      - name: Install Playwright Browsers
+        run: bun run playwright install --with-deps
+
+      - name: Run Codegen
+        run: bun codegen
+
+      - name: Run Playwright tests
+        run: bun run test:playwright
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Save Foundry RPC cache
+        if: always()
+        uses: actions/cache/save@v3
+        with:
+          path: ~/.foundry/cache/rpc-playwright
+          key: foundry-rpc-playwright-${{ github.ref_name }}-v1-${{ github.run_id }}

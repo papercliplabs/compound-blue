@@ -139,7 +139,7 @@ export async function getSimulationState({
   const simulationState = new SimulationState({
     chainId: CHAIN_ID,
     block,
-    global: { feeRecipient: zeroAddress }, // TODO ?
+    global: { feeRecipient: zeroAddress },
     markets: Object.fromEntries(marketIds.map((marketId, i) => [marketId, accruedMarkets[i]])),
     users: Object.fromEntries(userAddresses.map((userAddress, i) => [userAddress, users[i]])),
     tokens: Object.fromEntries(tokenAddresses.map((tokenAddress, i) => [tokenAddress, tokens[i]])),

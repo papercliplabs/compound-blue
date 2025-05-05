@@ -1,6 +1,5 @@
 import { beforeEach } from "vitest";
 import { vi } from "vitest";
-import "dotenv/config";
 import "./helpers/expect";
 
 beforeEach(() => {
