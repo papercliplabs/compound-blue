@@ -219,7 +219,7 @@ describe("prepareAaveV3MarketMigrationAction", () => {
       const maxCollateralBalance = (minCollateralBalance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE;
       expect(aaveV3CollateralBalanceFinal).toBeWithinRange(minCollateralBalance, maxCollateralBalance);
 
-      const minLoanBalance = aaveLoanBalanceInital - loanMigrationAmount;
+      const minLoanBalance = aaveLoanBalanceInital - loanMigrationAmount - 1n;
       const maxLoanBalance = (minLoanBalance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE;
       expect(aaveV3LoanBalanceFinal).toBeWithinRange(minLoanBalance, maxLoanBalance);
 

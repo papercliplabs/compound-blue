@@ -22,13 +22,13 @@ import { prepareInputTransferSubbundle } from "./subbundles/prepareInputTransfer
 // Note: If the transaction is not executed before the margin is consumed from rebasing the following will occur:
 //   * collateralBalance rebases higher than current with margin: Migration execution will fail due to insufficient aToken approval
 //   * loanBalance rebases higher than current with margin: Migration will succeed if there are other collateral assets left in Aave. This will leave the Aave position with some dust borrowing.
-//                                                          This is acceptable as it will be a very rare occurance.
+//                                                          This is acceptable as it will be a VERY rare occurance.
 
 interface PrepareAaveV3MarketMigrationActionParameters {
   publicClient: Client;
   accountAddress: Address;
   marketId: MarketId;
-  collateralTokenAmount: bigint; // Max uint256 for entire AAVE collateral balance (note: aTokens and their underlying have same decimals)
+  collateralTokenAmount: bigint; // Max uint256 for entire AAVE collateral balance (note: aTokens and their underlying have same decimals and are 1:1)
   loanTokenAmount: bigint; // Max uint256 for entire AAVE loan amount
   allocatingVaultAddresses: Address[];
 }
@@ -41,10 +41,10 @@ export async function prepareAaveV3MarketMigrationAction({
   loanTokenAmount,
   allocatingVaultAddresses,
 }: PrepareAaveV3MarketMigrationActionParameters): Promise<PrepareActionReturnType> {
-  if (loanTokenAmount == 0n || collateralTokenAmount == 0n) {
+  if (collateralTokenAmount <= 0n || loanTokenAmount <= 0n) {
     return {
       status: "error",
-      message: "Collateral and loan token amount cannot be 0.",
+      message: "Collateral and loan token amounts must be greater than 0.",
     };
   }
 
@@ -86,9 +86,8 @@ export async function prepareAaveV3MarketMigrationAction({
   const isFullCollateralMigration = collateralTokenAmount == maxUint256;
   const isFullDebtMigration = loanTokenAmount == maxUint256;
 
-  const initialBorrowAmount = isFullDebtMigration
-    ? computeAmountWithRebasingMargin(accountVTokenBalance)
-    : loanTokenAmount;
+  // Borrow a bit more to account for rebasing if full debt migration (diff gets repaid at the end)
+  const borrowAmount = isFullDebtMigration ? computeAmountWithRebasingMargin(accountVTokenBalance) : loanTokenAmount;
 
   const [simulationState, isContract] = await Promise.all([
     getMarketSimulationStateAccountingForPublicReallocation({
@@ -96,7 +95,7 @@ export async function prepareAaveV3MarketMigrationAction({
       marketId,
       publicClient,
       allocatingVaultAddresses,
-      requestedBorrowAmount: initialBorrowAmount,
+      requestedBorrowAmount: borrowAmount,
       additionalTokenAddresses: [aTokenAddress],
     }),
     getIsContract(publicClient, accountAddress),
@@ -114,7 +113,7 @@ export async function prepareAaveV3MarketMigrationAction({
     const inputTransferSubbundle = prepareInputTransferSubbundle({
       accountAddress,
       tokenAddress: aTokenAddress,
-      amount: collateralTokenAmount,
+      amount: collateralTokenAmount, // Handles maxUint256
       recipientAddress: AAVE_V3_MIGRATION_ADAPTER_ADDRESS,
       config: {
         accountSupportsSignatures: !isContract,
@@ -139,7 +138,7 @@ export async function prepareAaveV3MarketMigrationAction({
           id: marketId,
           onBehalf: accountAddress,
           receiver: AAVE_V3_MIGRATION_ADAPTER_ADDRESS,
-          assets: initialBorrowAmount,
+          assets: borrowAmount,
           slippage: DEFAULT_SLIPPAGE_TOLERANCE,
         },
       },
@@ -169,7 +168,7 @@ export async function prepareAaveV3MarketMigrationAction({
             // Take borrow against collateral sending to aaveV3MigrationAdapter.
             ...encodedBorrowBundlerCalls,
             // Use aaveV3MigrationAdapter to repay accounts borrow
-            BundlerAction.aaveV3Repay(CHAIN_ID, loanTokenAddress, maxUint256, accountAddress, 2n),
+            BundlerAction.aaveV3Repay(CHAIN_ID, loanTokenAddress, maxUint256, accountAddress, 2n), // 2 is the rate mode AAVE uses for variable debt (only one used)
             // Skim any left over loan assets from aaveV3MigrationAdapter to GA1 (only occurs for full debt migrations)
             BundlerAction.erc20Transfer(
               loanTokenAddress,
@@ -185,14 +184,14 @@ export async function prepareAaveV3MarketMigrationAction({
         ),
         // Collateral will be withdrawn from GA1 here to complete the supply collateral
 
-        // For full collateral migrations might be left with small amount of collateral in GA1 (<REBASING_MARGIN of collateral amount)
-        // Skip revert handles the case where there is no dust which can occur for low interest collateral assets.
+        // For full collateral migrations might be dust collateral assets in GA1 from rebasing margin.
+        // Use these to supply a bit more collateral.
         ...(isFullCollateralMigration
           ? [BundlerAction.morphoSupplyCollateral(CHAIN_ID, market.params, maxUint256, accountAddress, [], true)]
           : []),
 
-        // For full debt migrations will be left with full loan amount in GA1 (<REBASING_MARGIN of loan amount)
-        // Will always have assets in this case unlike the full collateral migration (except an almost impossible corner case of borrow at exact time interest has accrued to perfectly use margin).
+        // For full debt migrations might be dust loan assets in GA1 from rebasing margin.
+        // Use these to repay a bit of the loan.
         ...(isFullDebtMigration
           ? [BundlerAction.morphoRepay(CHAIN_ID, market.params, maxUint256, 0n, maxSharePriceE27, accountAddress, [])]
           : []),
