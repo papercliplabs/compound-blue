@@ -1,18 +1,18 @@
 "use client";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 import { Hex } from "viem";
-import { ReactNode, useMemo } from "react";
+import { ReactNode } from "react";
 import { Skeleton } from "./ui/skeleton";
 import Metric from "./Metric";
 import { useAccount } from "wagmi";
 import Image from "next/image";
-import NumberFlow from "./ui/NumberFlow";
+import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
 import Apy from "./Apy";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import { MarketId } from "@morpho-org/blue-sdk";
-import { useAccountMarketPosition, useAccountMarketPositions } from "@/hooks/useAccountMarketPosition";
+import { useAccountMarketPosition, useAccountMarketPositionAggregate } from "@/hooks/useAccountMarketPosition";
 
 interface MarketPositionProps {
   market: MarketNonIdle;
@@ -49,7 +49,7 @@ export function AccountMarketPosition({ market }: MarketPositionProps) {
       value: (
         <span className="flex items-center whitespace-pre-wrap">
           <NumberFlow value={marketPosition?.ltv ?? 0} format={{ style: "percent" }} /> /{" "}
-          {formatNumber(marketPosition?.market?.lltv ?? 0, { style: "percent" })}
+          {formatNumber(market.lltv ?? 0, { style: "percent" })}
         </span>
       ),
     },
@@ -76,9 +76,9 @@ export function AccountMarketPosition({ market }: MarketPositionProps) {
   );
 }
 
-export function AccountMarketPositionHighlight({ marketId }: { marketId: Hex }) {
+export function AccountMarketPositionHighlight({ market }: MarketPositionProps) {
   const { address } = useAccount();
-  const { data: marketPosition } = useAccountMarketPosition(marketId);
+  const { data: marketPosition } = useAccountMarketPosition(market.marketId as Hex);
 
   // Hide if not connected
   if (!address || !marketPosition || !marketPosition.market) {
@@ -90,73 +90,54 @@ export function AccountMarketPositionHighlight({ marketId }: { marketId: Hex }) 
       <Metric
         label={<span className="justify-end text-accent-ternary">Borrowing</span>}
         description="Your borrow balance in this market."
+        className="title-3 md:items-end"
       >
-        <span className="title-3">
-          <NumberFlow value={marketPosition.borrowAssetsUsd} format={{ currency: "USD" }} />
-        </span>
+        <NumberFlow value={marketPosition.borrowAssetsUsd} format={{ currency: "USD" }} />
       </Metric>
       <div className="flex items-center gap-1 text-content-secondary label-sm">
-        {marketPosition.market.loanAsset.icon && (
+        {market.loanAsset.icon && (
           <Image
-            src={marketPosition.market.loanAsset.icon}
+            src={market.loanAsset.icon}
             width={12}
             height={12}
-            alt={marketPosition.market.loanAsset.symbol}
+            alt={market.loanAsset.symbol}
             className="rounded-full"
           />
         )}
-        <NumberFlow
-          value={descaleBigIntToNumber(BigInt(marketPosition.borrowAssets), marketPosition.market.loanAsset.decimals)}
-        />
+        <NumberFlow value={descaleBigIntToNumber(BigInt(marketPosition.borrowAssets), market.loanAsset.decimals)} />
       </div>
     </div>
   );
 }
 
 export function AccountMarketPositionAggregate() {
-  const { address } = useAccount();
-  const { data: accountMarketPositions } = useAccountMarketPositions();
-
-  const { totalBorrowUsd, avgApy } = useMemo(() => {
-    const { totalBorrowUsd, avgApy } = Object.values(accountMarketPositions ?? {}).reduce(
-      (acc, marketPosition) => {
-        return {
-          totalBorrowUsd: acc.totalBorrowUsd + marketPosition.borrowAssetsUsd,
-          avgApy: acc.avgApy + (marketPosition.market?.borrowApy.total ?? 0) * marketPosition.borrowAssetsUsd,
-        };
-      },
-      { totalBorrowUsd: 0, avgApy: 0 }
-    );
-
-    return {
-      totalBorrowUsd,
-      avgApy: totalBorrowUsd > 0 ? avgApy / totalBorrowUsd : 0,
-    };
-  }, [accountMarketPositions]);
-
-  // Hide if not connected
-  if (!address) {
-    return null;
-  }
-
+  const { data: accountMarketPositonAggregate, isLoading } = useAccountMarketPositionAggregate();
   return (
     <div className="flex gap-10 md:text-end">
       <Metric
         label={<span className="justify-end text-accent-ternary">Your Borrowing</span>}
         description="Your total borrow balance across all markets."
+        className="title-3 md:items-end"
       >
-        <span className="title-3">
-          <NumberFlow value={totalBorrowUsd} format={{ currency: "USD" }} />
-        </span>
+        <NumberFlowWithLoading
+          value={accountMarketPositonAggregate?.totalBorrowUsd}
+          format={{ currency: "USD" }}
+          isLoading={isLoading}
+          loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
+        />
       </Metric>
 
       <Metric
         label={<span className="justify-end">Avg. Borrow APY</span>}
         description="Your average borrow APY across all markets, including rewards."
+        className="title-3 md:items-end"
       >
-        <span className="title-3">
-          <NumberFlow value={avgApy} format={{ style: "percent" }} />
-        </span>
+        <NumberFlowWithLoading
+          value={accountMarketPositonAggregate?.avgApy}
+          format={{ style: "percent" }}
+          isLoading={isLoading}
+          loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
+        />
       </Metric>
     </div>
   );

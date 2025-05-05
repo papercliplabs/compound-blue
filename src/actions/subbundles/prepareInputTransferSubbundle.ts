@@ -1,16 +1,12 @@
 import { CHAIN_ID, MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING } from "@/config";
 import { bigIntMax, bigIntMin } from "@/utils/bigint";
 import { GENERAL_ADAPTER_1_ADDRESS, SUPPORTED_ADDAPTERS, WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
-import { MathLib, NATIVE_ADDRESS } from "@morpho-org/blue-sdk";
+import { NATIVE_ADDRESS } from "@morpho-org/blue-sdk";
 import { BundlerAction } from "@morpho-org/bundler-sdk-viem";
 import { MaybeDraft, SimulationState } from "@morpho-org/simulation-sdk";
 import { Address, encodeFunctionData, erc20Abi, isAddressEqual, maxUint256 } from "viem";
 import { Subbundle } from "./types";
-
-// Allow 0.03% buffer for max transfers on rebasing tokens
-// This gives ~1 day grace period for execution if rebasing at 10% APY, which is useful for multisigs.
-const REBASEING_MARGIN = BigInt(100030);
-const REBASEING_MARGIN_SCALE = BigInt(100000);
+import { computeAmountWithRebasingMargin } from "../helpers";
 
 interface PrepareInputTransferSubbundleParameters {
   accountAddress: Address;
@@ -54,10 +50,9 @@ export function prepareInputTransferSubbundle({
     throw Error("Insufficient wallet balance.");
   }
 
-  let requiredApprovalAmount = erc20Amount;
-  if (isMaxTransfer && tokenIsRebasing) {
-    requiredApprovalAmount = MathLib.mulDivUp(erc20Amount, REBASEING_MARGIN, REBASEING_MARGIN_SCALE);
-  }
+  // Ignore tokenIsRebasing for wrapped native since it's not
+  const requiredApprovalAmount =
+    isMaxTransfer && tokenIsRebasing && !isWrappedNative ? computeAmountWithRebasingMargin(erc20Amount) : erc20Amount;
 
   // Mofify the simulation state accordingly
   accountErc20Holding.balance -= erc20Amount;

@@ -68,7 +68,7 @@ export default function MarketRepayWithCollateral({
     defaultValues: {
       repayAmount: undefined,
       isMaxRepay: false,
-      maxSlippageTolerance: 0.3,
+      maxSlippageTolerance: 0.5,
     },
   });
 
@@ -143,9 +143,9 @@ export default function MarketRepayWithCollateral({
                 render={({ field: { value, onChange } }) => (
                   <FormItem className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <FormLabel>
+                      <FormLabel className="text-content-secondary">
                         <TooltipPopover>
-                          <TooltipPopoverTrigger className="flex items-center gap-1 text-content-secondary">
+                          <TooltipPopoverTrigger className="flex items-center gap-1">
                             Max Slippage
                             <Info size={16} />
                           </TooltipPopoverTrigger>

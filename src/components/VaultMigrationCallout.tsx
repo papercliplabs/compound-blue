@@ -1,23 +1,21 @@
 "use client";
-import { useMigratableAaveV3SupplyPosition } from "@/hooks/useMigratableAaveV3SupplyPosition";
 import { Button } from "./ui/button";
 import NumberFlow from "./ui/NumberFlow";
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
-import { getAddress } from "viem";
 import VaultMigrationAction from "./MigrationActions/VaultMigrationAction";
 import { useState } from "react";
+import { useVaultMigrationTableData } from "@/hooks/useVaultMigrationTableData";
 
 export default function VaultMigrationCallout({ vault }: { vault: VaultSummary }) {
   const [open, setOpen] = useState(false);
-  const { data: migratablePosition } = useMigratableAaveV3SupplyPosition(getAddress(vault.vaultAddress));
+  const { data: entries } = useVaultMigrationTableData({ vaultSummaries: [vault] });
 
-  if (!migratablePosition) {
+  if (!entries || entries.length == 0) {
     return null;
   }
 
-  const yieldDelta =
-    migratablePosition.destinationVaultPosition.supplyApy.total -
-    migratablePosition.aaveV3ReservePosition.reserve.supplyApy.total;
+  const migrationData = entries[0];
+  const yieldDelta = vault.supplyApy.total - migrationData.sourcePosition.reserve.supplyApy.total;
 
   return (
     <>
@@ -28,19 +26,14 @@ export default function VaultMigrationCallout({ vault }: { vault: VaultSummary }
               Boost your APY by <NumberFlow value={yieldDelta} format={{ style: "percent" }} />
             </span>
           )}
-          <span>Migrate your {migratablePosition.destinationVaultPosition.asset.symbol} from Aave</span>
+          <span>Migrate your {vault.asset.symbol} from Aave</span>
         </div>
         <Button size="sm" onClick={() => setOpen(true)}>
           Migrate
         </Button>
       </div>
 
-      <VaultMigrationAction
-        open={open}
-        onOpenChange={setOpen}
-        migratableAaveV3SupplyPosition={migratablePosition}
-        vault={vault}
-      />
+      <VaultMigrationAction open={open} onOpenChange={setOpen} data={migrationData} />
     </>
   );
 }

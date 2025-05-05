@@ -3,21 +3,21 @@ import { Button } from "./ui/button";
 import NumberFlow from "./ui/NumberFlow";
 import { useState } from "react";
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
-import { useMigratableAaveV3BorrowPosition } from "@/hooks/useMigratableAaveV3BorrowPosition";
-import { MarketId } from "@morpho-org/blue-sdk";
 import MarketMigrationAction from "./MigrationActions/MarketMigrationAction";
+import { useMarketMigrationTableData } from "@/hooks/useMarketMigrationTableData";
 
 export default function MarketMigrationCallout({ market }: { market: MarketSummary }) {
   const [open, setOpen] = useState(false);
-  const { data: migratablePosition } = useMigratableAaveV3BorrowPosition(market.marketId as MarketId);
+  const { data: entries } = useMarketMigrationTableData({ marketSummaries: [market] });
 
-  if (!migratablePosition) {
+  if (!entries || entries.length == 0) {
     return null;
   }
 
+  const migrationData = entries[0];
   const yieldSavings =
-    migratablePosition.aaveV3LoanReservePosition.reserve.borrowApy.total -
-    migratablePosition.destinationMarketPosition.market!.borrowApy.total;
+    migrationData.aaveV3LoanReservePosition.reserve.borrowApy.total -
+    migrationData.destinationMarketPosition.market!.borrowApy.total;
 
   return (
     <>
@@ -35,12 +35,7 @@ export default function MarketMigrationCallout({ market }: { market: MarketSumma
         </Button>
       </div>
 
-      <MarketMigrationAction
-        open={open}
-        onOpenChange={setOpen}
-        migratableAaveV3BorrowPosition={migratablePosition}
-        market={market}
-      />
+      <MarketMigrationAction open={open} onOpenChange={setOpen} migrationData={migrationData} />
     </>
   );
 }

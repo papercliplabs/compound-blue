@@ -6,10 +6,10 @@ import { useAccount, useConnectorClient, usePublicClient, useSwitchChain } from 
 import { CHAIN_ID } from "@/config";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { estimateGas, sendTransaction, waitForTransactionReceipt } from "viem/actions";
-import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
 import { revalidateDynamicPages } from "@/utils/revalidateDynamicPages";
 import { trackEvent } from "@/data/trackEvent";
 import { safeFetch } from "@/utils/fetch";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type ActionFlowState = "review" | "active" | "success" | "failed";
 export type ActionState = "pending-wallet" | "pending-transaction";
@@ -71,7 +71,6 @@ export function ActionFlowProvider({
   const [lastTransactionHash, setLastTransactionHash] = useState<Hex | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { triggerFastPolling } = useAccountDataPollingContext();
   const { chainId } = useAccount();
   const { data: client } = useConnectorClient();
   const { connector } = useAccount();
@@ -79,6 +78,7 @@ export function ActionFlowProvider({
   const { openChainModal } = useChainModal();
   const publicClient = usePublicClient();
   const { switchChainAsync } = useSwitchChain();
+  const queryClient = useQueryClient();
 
   const startFlow = useCallback(async () => {
     // Must be connected
@@ -140,7 +140,7 @@ export function ActionFlowProvider({
             // Should never really happen, but if it does let's let the user try to proceed with fallback, and track it
             const errorMessage = error instanceof Error ? error.message : String(error);
             gasEstimateWithBuffer = FALLBACK_GAS_ESTIMATE;
-            trackEvent("tx-gas-estimate-failed", {
+            void trackEvent("tx-gas-estimate-failed", {
               accountAddress: client.account.address,
               connector: connectorName,
               error: errorMessage,
@@ -150,7 +150,7 @@ export function ActionFlowProvider({
 
           const hash = await sendTransaction(client, { ...txReq, gas: gasEstimateWithBuffer });
           setLastTransactionHash(hash);
-          trackEvent("transaction", { hash, status: "pending", connector: connectorName, name: step.name });
+          void trackEvent("transaction", { hash, status: "pending", connector: connectorName, name: step.name });
 
           // Uses public client instead so polling happens through our RPC provider
           // Not the users wallet provider, which may be unreliable
@@ -164,10 +164,15 @@ export function ActionFlowProvider({
           });
 
           if (receipt.status == "success") {
-            trackEvent("transaction", { hash, status: "success", connector: connectorName, name: step.name });
+            void trackEvent("transaction", { hash, status: "success", connector: connectorName, name: step.name });
             setActiveStep((step) => step + 1);
+
+            // Trigger data revalidation
+            void revalidateDynamicPages();
+            void queryClient.invalidateQueries({ type: "all" });
+            void queryClient.refetchQueries({ type: "all" });
           } else {
-            trackEvent("transaction", { hash, status: "failed", connector: connectorName, name: step.name });
+            void trackEvent("transaction", { hash, status: "failed", connector: connectorName, name: step.name });
             setFlowState("failed");
             return;
           }
@@ -177,17 +182,13 @@ export function ActionFlowProvider({
         const errorMessage = error instanceof Error ? error.message : String(error);
         setError(errorMessage);
         setFlowState("review");
-        trackEvent("transaction-flow-error", {
+        void trackEvent("transaction-flow-error", {
           accountAddress: client.account.address,
           connector: connectorName,
           error: errorMessage,
         });
         return;
       }
-
-      // Trigger data refetches
-      revalidateDynamicPages();
-      triggerFastPolling();
 
       setFlowState("success");
       flowCompletionCb?.();
@@ -209,7 +210,7 @@ export function ActionFlowProvider({
     flowCompletionCb,
     switchChainAsync,
     connector,
-    triggerFastPolling,
+    queryClient,
   ]);
 
   return (

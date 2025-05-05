@@ -63,7 +63,9 @@ export default async function MarketPage({ params }: { params: Promise<{ marketI
           </Suspense>
         </div>
 
-        <AccountMarketPositionHighlight marketId={marketId} />
+        <Suspense fallback={null}>
+          <AccountMarketPositonHighlightWrapper marketId={marketId} />
+        </Suspense>
       </section>
 
       <div className="flex w-full flex-col gap-5 lg:flex-row">
@@ -382,6 +384,16 @@ function UnsupportedMarket() {
       <BackButton />
     </div>
   );
+}
+
+async function AccountMarketPositonHighlightWrapper({ marketId }: { marketId: Hex }) {
+  const market = await getMarket(marketId);
+
+  if (!isNonIdleMarket(market)) {
+    return null;
+  }
+
+  return <AccountMarketPositionHighlight market={market} />;
 }
 
 export const dynamic = "force-static";

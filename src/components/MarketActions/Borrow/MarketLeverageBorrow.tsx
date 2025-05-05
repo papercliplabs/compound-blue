@@ -36,7 +36,7 @@ const MIN_MULTIPLIER = 1.1;
 // maxSlippageTolerance in (0,1)
 function computeMaxMultiplier(lltv: number, maxSlippageTolerance: number) {
   const maxLeverageFactor = computeMaxLeverageFactor(lltv, maxSlippageTolerance);
-  const maxMultiplier = (maxLeverageFactor - 1) / (1 - maxSlippageTolerance);
+  const maxMultiplier = (maxLeverageFactor - 1) * (1 + maxSlippageTolerance);
   return Math.trunc(maxMultiplier * 100) / 100;
 }
 
@@ -102,7 +102,7 @@ export default function MarketLeverageBorrow({
       initialCollateralAmount: undefined,
       isMaxCollateral: false,
       multiplier: 2,
-      maxSlippageTolerance: 0.3,
+      maxSlippageTolerance: 0.5,
     },
   });
 
@@ -118,7 +118,7 @@ export default function MarketLeverageBorrow({
 
   // Anytime the maxSlippageTolerance changes, trigger the multiplier validation since it depends on it
   useEffect(() => {
-    form.trigger("multiplier");
+    void form.trigger("multiplier");
   }, [maxSlippageTolerance, form]);
 
   // Clear the form on flow completion
@@ -150,7 +150,7 @@ export default function MarketLeverageBorrow({
         ? maxUint256
         : parseUnits(numberToString(initialCollateralAmount), market.collateralAsset.decimals);
 
-      const leverageFactor = multiplier * (1 - maxSlippageTolerance / 100) + 1;
+      const leverageFactor = multiplier / (1 + maxSlippageTolerance / 100) + 1;
 
       const action = await prepareMarketLeveragedBorrowAction({
         publicClient,
@@ -223,9 +223,9 @@ export default function MarketLeverageBorrow({
                 render={({ field: { value, onChange } }) => (
                   <FormItem className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <FormLabel>
+                      <FormLabel className="text-content-secondary">
                         <TooltipPopover>
-                          <TooltipPopoverTrigger className="flex items-center gap-1 text-content-secondary">
+                          <TooltipPopoverTrigger className="flex items-center gap-1">
                             Max Slippage
                             <Info size={16} />
                           </TooltipPopoverTrigger>

@@ -69,7 +69,7 @@ export default function VaultAllocationTable({ allocations }: TableProps) {
     <Table
       columns={columns}
       data={allocations}
-      initialSortKey="marketSupplyShare"
+      initialSort={[{ id: "marketSupplyShare", desc: true }]}
       rowAction={(row) => ({ type: "link", href: `/${row.vault.vaultAddress}` })}
     />
   );

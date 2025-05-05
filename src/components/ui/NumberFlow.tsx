@@ -1,15 +1,20 @@
+"use client";
 import { cn } from "@/utils/shadcn";
 import NumberFlowReact from "@number-flow/react";
-import { ComponentProps } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { ComponentProps, ReactNode } from "react";
 
 const MAX_USD_VALUE = 1e12;
 
-export default function NumberFlow({
-  value,
-  format,
-  className,
-  ...props
-}: { value: number } & ComponentProps<typeof NumberFlowReact>) {
+type NumberFlowProps = {
+  value?: number;
+} & Omit<ComponentProps<typeof NumberFlowReact>, "value">;
+
+export default function NumberFlow({ className, format, value, ...props }: NumberFlowProps) {
+  if (value == undefined) {
+    return <span className={cn("text-content-secondary", className)}>-</span>;
+  }
+
   const currency = format?.currency;
   const isPercent = format?.style === "percent";
   const {
@@ -46,5 +51,33 @@ export default function NumberFlow({
       {prefix}
       <NumberFlowReact value={value} format={formatOptions} {...props} className="inline-flex items-center" />
     </span>
+  );
+}
+
+interface NumberFlowWithLoadingProps extends NumberFlowProps {
+  isLoading: boolean;
+  loadingContent: ReactNode;
+}
+
+const crossFadeVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+};
+
+export function NumberFlowWithLoading({ isLoading, loadingContent, ...props }: NumberFlowWithLoadingProps) {
+  return (
+    <AnimatePresence initial={false} mode="popLayout">
+      <motion.div
+        variants={crossFadeVariants}
+        initial="hidden"
+        animate="visible"
+        exit="hidden"
+        key={isLoading ? "loading" : "content"}
+        transition={{ type: "spring", duration: 0.3, bounce: 0 }}
+        className="flex items-center"
+      >
+        {isLoading ? loadingContent : <NumberFlow {...props} />}
+      </motion.div>
+    </AnimatePresence>
   );
 }

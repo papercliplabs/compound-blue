@@ -5,32 +5,33 @@ import Image from "next/image";
 import { formatNumber } from "@/utils/format";
 import { Table } from "./Table";
 import Apy from "../Apy";
-import { useMemo } from "react";
-import NumberFlow from "../ui/NumberFlow";
-import { useAccountMarketPositions } from "@/hooks/useAccountMarketPosition";
+import { NumberFlowWithLoading } from "../ui/NumberFlow";
 import MarketAvailableLiquidity from "../MarketAvailableLiquidity";
+import { Skeleton } from "../ui/skeleton";
+import clsx from "clsx";
+import { BorrowTableEntry, useBorrowTableData } from "@/hooks/useBorrowTableData";
 
 interface TableProps {
   marketSummaries: MarketSummary[];
 }
 
-export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv: number }>[] = [
+export const columns: ColumnDef<BorrowTableEntry>[] = [
   {
     accessorKey: "loanAsset.symbol",
     header: "Loan Asset",
     cell: ({ row }) => {
-      const market = row.original;
+      const { marketSummary } = row.original;
 
       return (
         <div className="flex items-center gap-3">
           <Image
-            src={market.loanAsset.icon ?? ""}
+            src={marketSummary.loanAsset.icon ?? ""}
             width={36}
             height={36}
             className="shrink-0 rounded-full border"
-            alt={market.loanAsset.symbol}
+            alt={marketSummary.loanAsset.symbol}
           />
-          <span className="label-lg">{market.loanAsset.symbol}</span>
+          <span className="label-lg">{marketSummary.loanAsset.symbol}</span>
         </div>
       );
     },
@@ -43,18 +44,18 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
     accessorKey: "collateralAsset.symbol",
     header: "Collateral Asset",
     cell: ({ row }) => {
-      const market = row.original;
+      const { marketSummary } = row.original;
 
-      return market.collateralAsset ? (
+      return marketSummary.collateralAsset ? (
         <div className="flex items-center gap-3">
           <Image
-            src={market.collateralAsset.icon ?? ""}
+            src={marketSummary.collateralAsset.icon ?? ""}
             width={36}
             height={36}
             className="shrink-0 rounded-full border"
-            alt={market.collateralAsset.symbol}
+            alt={marketSummary.collateralAsset.symbol}
           />
-          <span className="label-lg">{market.collateralAsset.symbol}</span>
+          <span className="label-lg">{marketSummary.collateralAsset.symbol}</span>
         </div>
       ) : (
         "N/A"
@@ -66,10 +67,20 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
     minSize: 160,
   },
   {
-    accessorKey: "userBorrowUsd",
+    id: "userBorrowUsd",
+    accessorFn: (row) => row.position?.borrowAssetsUsd ?? 0,
     header: "Your Borrow",
     cell: ({ row }) => {
-      return <NumberFlow value={row.original.userBorrowUsd} format={{ currency: "USD" }} />;
+      const { position, isPositionLoading } = row.original;
+      return (
+        <NumberFlowWithLoading
+          value={position?.borrowAssetsUsd}
+          format={{ currency: "USD" }}
+          isLoading={isPositionLoading}
+          loadingContent={<Skeleton className="h-[24px] w-[60px]" />}
+          className={clsx(position?.borrowAssetsUsd == 0 && "text-content-secondary")}
+        />
+      );
     },
     minSize: 160,
   },
@@ -77,11 +88,17 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
     accessorKey: "userLtv",
     header: "Your LTV / LLTV",
     cell: ({ row }) => {
-      const market = row.original;
+      const { marketSummary, position, isPositionLoading } = row.original;
       return (
         <span className="flex items-center gap-1">
-          <NumberFlow value={row.original.userLtv} format={{ style: "percent", minimumFractionDigits: 1 }} /> /{" "}
-          {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 1 })}
+          <NumberFlowWithLoading
+            value={position?.ltv}
+            format={{ style: "percent", minimumFractionDigits: 1 }}
+            isLoading={isPositionLoading}
+            loadingContent={<Skeleton className="h-[24px] w-[60px]" />}
+            className={clsx(position?.ltv == 0 && "text-content-secondary")}
+          />{" "}
+          / {formatNumber(marketSummary.lltv, { style: "percent", minimumFractionDigits: 1 })}
         </span>
       );
     },
@@ -92,31 +109,29 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
   },
   {
     accessorKey: "liquidityAssetsUsd",
+    accessorFn: (row) =>
+      row.marketSummary.liquidityAssetsUsd + row.marketSummary.publicAllocatorSharedLiquidityAssetsUsd,
     header: "Liquidity",
     cell: ({ row }) => {
-      const market = row.original;
+      const { marketSummary } = row.original;
       return (
         <MarketAvailableLiquidity
-          liquidityAssetUsd={market.liquidityAssetsUsd}
-          publicAllocatorSharedLiquidityAssetsUsd={market.publicAllocatorSharedLiquidityAssetsUsd}
+          liquidityAssetUsd={marketSummary.liquidityAssetsUsd}
+          publicAllocatorSharedLiquidityAssetsUsd={marketSummary.publicAllocatorSharedLiquidityAssetsUsd}
         />
       );
     },
     meta: {
       tooltip: "The total assets available to be borrowed, including via public reallocation.",
     },
-    sortingFn: (rowA, rowB) =>
-      rowA.original.liquidityAssetsUsd +
-      rowA.original.publicAllocatorSharedLiquidityAssetsUsd -
-      (rowB.original.liquidityAssetsUsd + rowB.original.publicAllocatorSharedLiquidityAssetsUsd),
     minSize: 140,
   },
   {
     accessorKey: "borrowApy.total",
     header: "Borrow APY",
     cell: ({ row }) => {
-      const market = row.original;
-      return <Apy type="borrow" apy={market.borrowApy} />;
+      const { marketSummary } = row.original;
+      return <Apy type="borrow" apy={marketSummary.borrowApy} />;
     },
     meta: {
       tooltip: "The total borrow APY including rewards.",
@@ -125,24 +140,17 @@ export const columns: ColumnDef<MarketSummary & { userBorrowUsd: number; userLtv
   },
 ];
 
-export default function BorrowTableClient({ marketSummaries }: TableProps) {
-  // Inject user position
-  const { data: accountMarketPositions } = useAccountMarketPositions();
-
-  const marketSummariesWithUserPositions = useMemo(() => {
-    return marketSummaries.map((market) => {
-      const userBorrowUsd = accountMarketPositions?.[market.marketId]?.borrowAssetsUsd ?? 0;
-      const userLtv = accountMarketPositions?.[market.marketId]?.ltv ?? 0;
-      return { ...market, userBorrowUsd, userLtv };
-    });
-  }, [marketSummaries, accountMarketPositions]);
-
+export default function BorrowTable({ marketSummaries }: TableProps) {
+  const borrowTableData = useBorrowTableData({ marketSummaries });
   return (
     <Table
       columns={columns}
-      data={marketSummariesWithUserPositions}
-      initialSortKey="liquidityAssetsUsd"
-      rowAction={(row) => ({ type: "link", href: `/borrow/${row.marketId}` })}
+      data={borrowTableData}
+      initialSort={[
+        { id: "userBorrowUsd", desc: true },
+        { id: "liquidityAssetsUsd", desc: true },
+      ]}
+      rowAction={(row) => ({ type: "link", href: `/borrow/${row.marketSummary.marketId}` })}
     />
   );
 }

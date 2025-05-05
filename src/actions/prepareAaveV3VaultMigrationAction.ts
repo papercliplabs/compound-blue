@@ -1,122 +1,108 @@
 import { DEFAULT_SLIPPAGE_TOLERANCE, MathLib } from "@morpho-org/blue-sdk";
 import { PrepareActionReturnType } from "./helpers";
-import { Address, Client, encodeFunctionData, erc20Abi, maxUint256 } from "viem";
-import { BundlerAction } from "@morpho-org/bundler-sdk-viem";
+import { Address, Client, maxUint256 } from "viem";
+import { BundlerAction, BundlerCall } from "@morpho-org/bundler-sdk-viem";
 import { AAVE_V3_POOL_ADDRESS, CHAIN_ID } from "@/config";
-import { TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 import { getSimulationState } from "@/data/getSimulationState";
 import { readContract } from "viem/actions";
 import { aaveV3PoolAbi } from "@/abis/aaveV3PoolAbi";
 import { AAVE_V3_MIGRATION_ADAPTER_ADDRESS, GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
-
-const REBASEING_MARGIN = BigInt(100030);
-const REBASEING_MARGIN_SCALE = BigInt(100000);
+import { prepareInputTransferSubbundle } from "./subbundles/prepareInputTransferSubbundle";
+import { getIsContract } from "@/data/getIsContract";
+import { createBundle } from "./bundler3";
+import { fetchVault } from "@morpho-org/blue-sdk-viem";
 
 interface PrepareAaveV3VaultMigrationActionParameters {
   publicClient: Client;
-  accountAddress: Address;
   vaultAddress: Address;
+  accountAddress: Address;
   amount: bigint; // Max uint256 for entire account balance
 }
 
 export async function prepareAaveV3VaultMigrationAction({
   publicClient,
-  accountAddress,
   vaultAddress,
+  accountAddress,
   amount,
 }: PrepareAaveV3VaultMigrationActionParameters): Promise<PrepareActionReturnType> {
-  const simulationState = await getSimulationState({
-    actionType: "vault",
-    accountAddress,
-    vaultAddress,
-    publicClient,
-  });
+  if (amount <= 0n) {
+    return {
+      status: "error",
+      message: "Amount must be greater than 0",
+    };
+  }
 
-  const vault = simulationState.getVault(vaultAddress);
-
+  const vaultAssetAddress = (await fetchVault(vaultAddress, publicClient)).asset;
   const aTokenAddress = await readContract(publicClient, {
     address: AAVE_V3_POOL_ADDRESS,
     abi: aaveV3PoolAbi,
     functionName: "getReserveAToken",
-    args: [vault.asset],
+    args: [vaultAssetAddress],
   });
 
-  const [allowance, balance] = await Promise.all([
-    readContract(publicClient, {
-      abi: erc20Abi,
-      address: aTokenAddress,
-      functionName: "allowance",
-      args: [accountAddress, GENERAL_ADAPTER_1_ADDRESS],
+  const [simulationState, isContract] = await Promise.all([
+    getSimulationState({
+      actionType: "vault",
+      accountAddress,
+      vaultAddress,
+      publicClient,
+      additionalTokenAddresses: [aTokenAddress],
     }),
-    readContract(publicClient, {
-      abi: erc20Abi,
-      address: aTokenAddress,
-      functionName: "balanceOf",
-      args: [accountAddress],
-    }),
+    getIsContract(publicClient, accountAddress),
   ]);
 
-  const maxSharePriceE27 = vault.toAssets(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
+  const vault = simulationState.getVault(vaultAddress);
 
-  // Since aTokens are rebasing, exact approval for max transfers is not possible.
-  // So, in this case we require allowance of the actual balance with a margin to account for rebasing.
-  const requiredAllowance = amount == maxUint256 ? (balance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE : amount;
-
-  // Could use permit2, but AAVE doesn't use permit2, and the assumption is the user likely will only do this once, so direct approval is actually more user friendly (2 steps instead of 3).
-  // aTokens do support permit, which would be best, but keeping simple for now.
-  const aTokenMaxApproveTx: ReturnType<TransactionRequest["tx"]> = {
-    to: aTokenAddress,
-    data: encodeFunctionData({
-      abi: erc20Abi,
-      functionName: "approve",
-      args: [GENERAL_ADAPTER_1_ADDRESS, requiredAllowance],
-    }),
-    value: BigInt(0),
-  };
-
-  const bundle = BundlerAction.encodeBundle(CHAIN_ID, [
-    {
-      // Move users aToken into aaveV3MigrationAdapter
-      type: "erc20TransferFrom",
-      args: [aTokenAddress, amount, AAVE_V3_MIGRATION_ADAPTER_ADDRESS],
-    },
-    {
-      // Redeem aTokens for underlying and send to GA1
-      type: "aaveV3Withdraw",
-      args: [
-        vault.asset,
-        maxUint256, // Max to use all aTokens in the adapter
-        GENERAL_ADAPTER_1_ADDRESS,
-      ],
-    },
-    {
-      // Deposit underlying into vault and send shares to the calling account
-      type: "erc4626Deposit",
-      args: [
-        vaultAddress,
-        maxUint256, // Max to use all underlying tokens in the adapter
-        maxSharePriceE27,
-        accountAddress, // Calling account is the receiver of the vault shares
-      ],
-    },
-  ]);
-
-  return {
-    status: "success",
-    signatureRequests: [],
-    transactionRequests: [
-      ...(allowance < requiredAllowance
-        ? [
-            {
-              name: "Approve aTokens",
-              tx: () => aTokenMaxApproveTx,
-            },
-          ]
-        : []),
-      {
-        name: "Confirm Migration",
-        tx: () => bundle,
+  try {
+    const inputTransferSubbundle = prepareInputTransferSubbundle({
+      accountAddress,
+      tokenAddress: aTokenAddress,
+      amount, // Handles maxUint256
+      recipientAddress: AAVE_V3_MIGRATION_ADAPTER_ADDRESS,
+      config: {
+        accountSupportsSignatures: !isContract,
+        tokenIsRebasing: true, // Is rebasing, this will handle extra approval for full migrations
+        allowWrappingNativeAssets: false,
       },
-    ],
-  };
+      simulationState,
+    });
+
+    const maxSharePriceE27 = vault.toAssets(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
+
+    function getBundleTx() {
+      const bundlerCalls: BundlerCall[] = [
+        // Transfer aTokens into migration adapter
+        ...inputTransferSubbundle.bundlerCalls,
+        // Redeem aTokens for underlying and send to GA1
+        BundlerAction.aaveV3Withdraw(CHAIN_ID, vault.asset, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
+        // Deposit underlying into vault and send shares to the calling account
+        BundlerAction.erc4626Deposit(
+          CHAIN_ID,
+          vaultAddress, // Max to use all underlying tokens in the adapter
+          maxUint256,
+          maxSharePriceE27,
+          accountAddress
+        ),
+      ].flat();
+
+      return createBundle(bundlerCalls);
+    }
+
+    return {
+      status: "success",
+      signatureRequests: [...inputTransferSubbundle.signatureRequirements],
+      transactionRequests: [
+        ...inputTransferSubbundle.transactionRequirements,
+        {
+          name: "Confirm Migration",
+          tx: getBundleTx,
+        },
+      ],
+    };
+  } catch (e) {
+    return {
+      status: "error",
+      message: `Simulation Error: ${(e instanceof Error ? e.message : JSON.stringify(e)).split("0x")[0]}`,
+    };
+  }
 }

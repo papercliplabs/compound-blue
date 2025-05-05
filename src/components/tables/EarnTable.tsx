@@ -5,38 +5,48 @@ import { VaultSummary } from "@/data/whisk/getVaultSummaries";
 import { formatNumber } from "@/utils/format";
 import Apy from "../Apy";
 import RowIcons from "../RowIcons";
-import { useMemo } from "react";
-import { getAddress } from "viem";
-import NumberFlow from "../ui/NumberFlow";
-import { useAccountVaultPositions } from "@/hooks/useAccountVaultPosition";
+import { NumberFlowWithLoading } from "../ui/NumberFlow";
 import { VaultIdentifier } from "../VaultIdentifier";
+import { Skeleton } from "../ui/skeleton";
+import clsx from "clsx";
+import { EarnTableEntry, useEarnTableData } from "@/hooks/useEarnTableData";
 
 interface TableProps {
   vaultSummaries: VaultSummary[];
 }
 
-export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = [
+export const columns: ColumnDef<EarnTableEntry>[] = [
   {
     accessorKey: "name",
     header: "Vault Name",
     cell: ({ row }) => {
-      const vault = row.original;
-      return <VaultIdentifier name={vault.name} metadata={vault.metadata} asset={vault.asset} />;
+      const { vaultSummary } = row.original;
+      return <VaultIdentifier name={vaultSummary.name} metadata={vaultSummary.metadata} asset={vaultSummary.asset} />;
     },
     minSize: 240,
   },
   {
-    accessorKey: "userDepositsUsd",
+    id: "userDepositsUsd",
+    accessorFn: (row) => row.position?.supplyAssetsUsd ?? 0,
     header: "Your Deposits",
     cell: ({ row }) => {
-      return <NumberFlow value={row.original.userDepositsUsd} format={{ currency: "USD" }} />;
+      const { position, isPositionLoading } = row.original;
+      return (
+        <NumberFlowWithLoading
+          value={position?.supplyAssetsUsd}
+          format={{ currency: "USD" }}
+          isLoading={isPositionLoading}
+          loadingContent={<Skeleton className="h-[24px] w-[60px]" />}
+          className={clsx(position?.supplyAssetsUsd == 0 && "text-content-secondary")}
+        />
+      );
     },
     minSize: 160,
   },
   {
     accessorKey: "supplyAssetsUsd",
     header: "Total Deposits",
-    cell: ({ row }) => formatNumber(row.original.supplyAssetsUsd, { currency: "USD" }),
+    cell: ({ row }) => formatNumber(row.original.vaultSummary.supplyAssetsUsd, { currency: "USD" }),
     meta: {
       tooltip: "The total assets deposited.",
     },
@@ -45,7 +55,7 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
   {
     accessorKey: "liquidityAssetsUsd",
     header: "Liquidity",
-    cell: ({ row }) => formatNumber(row.original.liquidityAssetsUsd, { currency: "USD" }),
+    cell: ({ row }) => formatNumber(row.original.vaultSummary.liquidityAssetsUsd, { currency: "USD" }),
     minSize: 120,
     meta: {
       tooltip: "The available assets to be withdrawn or reallocated.",
@@ -55,10 +65,10 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
     accessorKey: "marketAllocations",
     header: "Collateral",
     cell: ({ row }) => {
-      const vault = row.original;
+      const { vaultSummary } = row.original;
       return (
         <RowIcons
-          icons={vault.marketAllocations
+          icons={vaultSummary.marketAllocations
             .filter((allocation) => allocation.market.collateralAsset)
             .map((allocation) => ({
               src: allocation.market.collateralAsset!.icon ?? "",
@@ -71,15 +81,16 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
     meta: {
       tooltip: "The collateral asset exposure through market allocations.",
     },
-    sortingFn: (rowA, rowB) => rowA.original.marketAllocations.length - rowB.original.marketAllocations.length,
+    sortingFn: (rowA, rowB) =>
+      rowA.original.vaultSummary.marketAllocations.length - rowB.original.vaultSummary.marketAllocations.length,
     minSize: 160,
   },
   {
     accessorKey: "supplyApy.total",
     header: "Supply APY",
     cell: ({ row }) => {
-      const vault = row.original;
-      return <Apy type="supply" apy={vault.supplyApy} />;
+      const { vaultSummary } = row.original;
+      return <Apy type="supply" apy={vaultSummary.supplyApy} />;
     },
     meta: {
       tooltip: "The total supply APY including rewards and fees.",
@@ -89,21 +100,16 @@ export const columns: ColumnDef<VaultSummary & { userDepositsUsd: number }>[] = 
 ];
 
 export default function EarnTable({ vaultSummaries }: TableProps) {
-  const { data: accountVaultPositions } = useAccountVaultPositions();
-
-  const vaultSummariesWithUserPositions = useMemo(() => {
-    return vaultSummaries.map((vault) => {
-      const userDepositsUsd = accountVaultPositions?.[getAddress(vault.vaultAddress)]?.supplyAssetsUsd ?? 0;
-      return { ...vault, userDepositsUsd };
-    });
-  }, [vaultSummaries, accountVaultPositions]);
-
+  const earnTableData = useEarnTableData({ vaultSummaries });
   return (
     <Table
       columns={columns}
-      data={vaultSummariesWithUserPositions}
-      initialSortKey="supplyAssetsUsd"
-      rowAction={(row) => ({ type: "link", href: `/${row.vaultAddress}` })}
+      data={earnTableData}
+      initialSort={[
+        { id: "userDepositsUsd", desc: true },
+        { id: "supplyAssetsUsd", desc: true },
+      ]}
+      rowAction={(row) => ({ type: "link", href: `/${row.vaultSummary.vaultAddress}` })}
     />
   );
 }

@@ -6,43 +6,31 @@ import { Address } from "viem";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
-  query getVaultPosition($chainId: Number!, $vaultAddress: String!, $accountAddress: String!) {
-    morphoVaultPosition(chainId: $chainId, vaultAddress: $vaultAddress, accountAddress: $accountAddress) {
-      vaultAddress
-      asset {
-        address
-        symbol
-        icon
-        decimals
+  query getVaultPositions($chainId: Number!, $vaultAddresses: [String!]!, $accountAddress: String!) {
+    morphoVaultPositions(chainId: $chainId, vaultAddresses: $vaultAddresses, accountAddress: $accountAddress) {
+      vault {
+        vaultAddress
+
+        # Used for aggregation
+        supplyApy {
+          total
+        }
       }
+
       supplyAssets
       supplyAssetsUsd
-      supplyApy {
-        total
-        base
-        rewards {
-          asset {
-            symbol
-            icon
-          }
-          apr
-        }
-        performanceFee
-      }
     }
   }
 `);
 
 export const getAccountVaultPositions = cacheAndCatch(async (accountAddress: Address) => {
-  const vaultPositions = await Promise.all(
-    WHITELISTED_VAULT_ADDRESSES.map((vaultAddress) =>
-      whiskClient.request(query, { chainId: CHAIN_ID, vaultAddress, accountAddress })
-    )
-  );
+  const accountVaultPositions = await whiskClient.request(query, {
+    chainId: CHAIN_ID,
+    vaultAddresses: WHITELISTED_VAULT_ADDRESSES,
+    accountAddress,
+  });
   return Object.fromEntries(
-    vaultPositions
-      .filter((position) => position.morphoVaultPosition)
-      .map((position) => [position.morphoVaultPosition!.vaultAddress, position.morphoVaultPosition!])
+    accountVaultPositions.morphoVaultPositions.map((position) => [position.vault.vaultAddress, position])
   );
 }, "getAccountVaultPositions");
 

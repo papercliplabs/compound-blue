@@ -3,16 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { safeFetch } from "@/utils/fetch";
 import { useAccount } from "wagmi";
 import { AccountRewards } from "@/data/whisk/getAccountRewards";
-import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
+import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
 
 export function useAccountRewards() {
-  const { pollingInterval, revalidateSignal } = useAccountDataPollingContext();
   const { address } = useAccount();
   return useQuery({
-    queryKey: ["account-rewards", address, revalidateSignal],
-    queryFn: async () => safeFetch<AccountRewards>(`/api/account/${address}/rewards`),
+    queryKey: ["account-rewards", address],
+    queryFn: async () => safeFetch<AccountRewards>(`/api/account/${address}/rewards`, {}, true),
     enabled: !!address,
-    refetchInterval: pollingInterval,
-    placeholderData: (prev) => prev,
+    refetchInterval: ACCOUNT_STATE_POLLING_INTERVAL_MS,
   });
 }

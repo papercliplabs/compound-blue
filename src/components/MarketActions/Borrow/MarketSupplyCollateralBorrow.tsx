@@ -25,7 +25,7 @@ import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import PoweredByMorpho from "../../ui/icons/PoweredByMorpho";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
-import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
+import { AccountMarketPosition } from "@/data/whisk/getAccountMarketPositions";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { MetricChange } from "../../MetricChange";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
@@ -86,7 +86,7 @@ export default function MarketSupplyCollateralBorrow({
           if (!userPosition) {
             return true;
           }
-          const newBorrowMax = computeNewBorrowMax(data.supplyCollateralAmount ?? 0, userPosition);
+          const newBorrowMax = computeNewBorrowMax(market, data.supplyCollateralAmount ?? 0, userPosition);
           return (data.borrowAmount ?? 0) <= newBorrowMax;
         },
         {
@@ -94,7 +94,7 @@ export default function MarketSupplyCollateralBorrow({
           path: ["borrowAmount"],
         }
       );
-  }, [descaledCollateralTokenBalance, userPosition]);
+  }, [descaledCollateralTokenBalance, userPosition, market]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
@@ -115,12 +115,12 @@ export default function MarketSupplyCollateralBorrow({
 
   // Anytime the supplyCollateralAmount changes, trigger the borrowAmount validation since it depends on it
   useEffect(() => {
-    form.trigger("borrowAmount");
+    void form.trigger("borrowAmount");
   }, [supplyCollateralAmount, form]);
 
   const descaledBorrowMax = useMemo(() => {
-    return computeNewBorrowMax(supplyCollateralAmount, userPosition);
-  }, [userPosition, supplyCollateralAmount]);
+    return computeNewBorrowMax(market, supplyCollateralAmount, userPosition);
+  }, [userPosition, supplyCollateralAmount, market]);
 
   const onSubmit = useCallback(
     async (values: z.infer<typeof formSchema>) => {
@@ -327,16 +327,15 @@ export default function MarketSupplyCollateralBorrow({
   );
 }
 
-function computeNewBorrowMax(newCollateral: number, position?: AccountMarketPositions[number]): number {
-  if (!position?.market?.collateralAsset) {
+function computeNewBorrowMax(market: MarketNonIdle, newCollateral: number, position?: AccountMarketPosition): number {
+  if (!position) {
     return 0;
   }
 
-  const currentCollateral = descaleBigIntToNumber(position.collateralAssets, position.market.collateralAsset.decimals);
-  const currentLoan = descaleBigIntToNumber(position.borrowAssets, position.market.loanAsset.decimals);
+  const currentCollateral = descaleBigIntToNumber(position.collateralAssets, market.collateralAsset.decimals);
+  const currentLoan = descaleBigIntToNumber(position.borrowAssets, market.loanAsset.decimals);
   const newTotalCollateral = currentCollateral + newCollateral;
-  const maxLoan =
-    newTotalCollateral * position.market.collateralPriceInLoanAsset * (position.market.lltv - MAX_BORROW_LTV_MARGIN);
+  const maxLoan = newTotalCollateral * market.collateralPriceInLoanAsset * (market.lltv - MAX_BORROW_LTV_MARGIN);
 
   return Math.max(maxLoan - currentLoan, 0);
 }

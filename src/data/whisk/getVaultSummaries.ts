@@ -5,8 +5,8 @@ import { CHAIN_ID, WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 
 const query = graphql(`
-  query getVaultSummary($chainId: Number!, $address: String!) {
-    morphoVault(chainId: $chainId, address: $address) {
+  query getVaultSummarys($chainId: Number!, $addresses: [String!]!) {
+    morphoVaults(chainId: $chainId, addresses: $addresses) {
       vaultAddress
       name
       metadata {
@@ -47,10 +47,11 @@ const query = graphql(`
 `);
 
 export const getVaultSummaries = cacheAndCatch(async () => {
-  const vaultSummaries = await Promise.all(
-    WHITELISTED_VAULT_ADDRESSES.map((address) => whiskClient.request(query, { chainId: CHAIN_ID, address }))
-  );
-  return vaultSummaries.filter((summary) => summary.morphoVault).map((summary) => summary.morphoVault!);
+  const vaultSummaries = await whiskClient.request(query, {
+    chainId: CHAIN_ID,
+    addresses: WHITELISTED_VAULT_ADDRESSES,
+  });
+  return vaultSummaries.morphoVaults;
 }, "getVaultSummaries");
 
 export type VaultSummary = NonNullable<Awaited<ReturnType<typeof getVaultSummaries>>>[number];

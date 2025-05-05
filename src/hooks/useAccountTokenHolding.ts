@@ -2,18 +2,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { safeFetch } from "@/utils/fetch";
 import { useAccount } from "wagmi";
-import { useAccountDataPollingContext } from "@/providers/AccountDataPollingProvider";
 import { Address } from "viem";
 import { AccountTokenHolding } from "@/data/whisk/getAccountTokenHolding";
 
+import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
 export function useAccountTokenHolding(tokenAddress: Address) {
-  const { pollingInterval, revalidateSignal } = useAccountDataPollingContext();
   const { address } = useAccount();
   return useQuery({
-    queryKey: ["user-token-holding", tokenAddress, address, revalidateSignal],
-    queryFn: async () => safeFetch<AccountTokenHolding>(`/api/account/${address}/holding/${tokenAddress}`),
+    queryKey: ["user-token-holding", tokenAddress, address],
+    queryFn: async () => safeFetch<AccountTokenHolding>(`/api/account/${address}/holding/${tokenAddress}`, {}, true),
     enabled: !!address,
-    refetchInterval: pollingInterval,
-    placeholderData: (prev) => prev,
+    refetchInterval: ACCOUNT_STATE_POLLING_INTERVAL_MS,
   });
 }

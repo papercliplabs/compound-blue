@@ -2,22 +2,7 @@ import { ContractMethodV6 } from "@paraswap/sdk";
 import { SupportedContractMethod } from "./types";
 import { ParaswapOffsets } from "./types";
 
-export const SUPPORTED_CONTRACT_METHODS = [
-  // ContractMethodV6.swapExactAmountIn,
-  ContractMethodV6.swapExactAmountOut,
-
-  // Tried to enable swapExactAmountOutOnUniswapV3, but also throws the same CERT error as the DEX's highlited below - messaged paraswap team
-  // ContractMethodV6.swapExactAmountInOnUniswapV2,
-  // ContractMethodV6.swapExactAmountOutOnUniswapV2,
-  // ContractMethodV6.swapExactAmountInOnUniswapV3,
-  // ContractMethodV6.swapExactAmountOutOnUniswapV3,
-  // ContractMethodV6.swapExactAmountInOnBalancerV2,
-  // ContractMethodV6.swapExactAmountOutOnBalancerV2,
-  // ContractMethodV6.swapExactAmountInOnCurveV1,
-  // ContractMethodV6.swapExactAmountInOnCurveV2,
-  // ContractMethodV6.swapExactAmountInOnCurveV1,
-  // ContractMethodV6.swapOnAugustusRFQTryBatchFill,
-] as const;
+export const SUPPORTED_CONTRACT_METHODS = [ContractMethodV6.swapExactAmountOut] as const;
 
 // https://api.paraswap.io/adapters/list/1
 export const SUPPORTED_DEXS = [
@@ -76,16 +61,18 @@ export const SUPPORTED_DEXS = [
 ] as const;
 
 export const OFFSET_LOOKUP_TABLE: Record<SupportedContractMethod, ParaswapOffsets> = {
-  // [ContractMethodV6.swapExactAmountIn]: {
-  //   exactAmount: BigInt(4 + 3 * 32),
-  //   limitAmount: BigInt(4 + 4 * 32),
-  //   quotedAmount: BigInt(4 + 5 * 32),
-  // },
   [ContractMethodV6.swapExactAmountOut]: {
     exactAmount: BigInt(4 + 4 * 32),
     limitAmount: BigInt(4 + 3 * 32),
     quotedAmount: BigInt(4 + 5 * 32),
   },
+
+  // Other offsets which are not used (leaving for future if needed)
+  // [ContractMethodV6.swapExactAmountIn]: {
+  //   exactAmount: BigInt(4 + 3 * 32),
+  //   limitAmount: BigInt(4 + 4 * 32),
+  //   quotedAmount: BigInt(4 + 5 * 32),
+  // },
   // [ContractMethodV6.swapExactAmountOutOnUniswapV2]: {
   //   exactAmount: BigInt(4 + 3 * 32),
   //   limitAmount: BigInt(4 + 2 * 32),

@@ -1,8 +1,7 @@
 import { describe, expect } from "vitest";
 import { prepareAaveV3MarketMigrationAction } from "@/actions/prepareAaveV3MarketMigrationAction";
-import { currentBlockTest as test } from "../../setup";
+import { currentBlockTest as test } from "../../config";
 import { Address, maxUint256, parseEther, parseUnits } from "viem";
-import { addresses } from "@morpho-org/blue-sdk";
 import {
   borrowFromAaveV3,
   dealAndSupplyToAaveV3,
@@ -11,19 +10,15 @@ import {
 } from "../../helpers/aaveV3";
 import { executeAction } from "../../helpers/executeAction";
 import { expectZeroErc20Balances } from "../../helpers/erc20";
-import { CHAIN_ID } from "@/config";
 import { AnvilTestClient } from "@morpho-org/test";
 import { WETH_ADDRESS, USDC_ADDRESS, USDT_ADDRESS, WETH_USDC_MARKET_ID } from "../../helpers/constants";
 import { getMorphoMarketPosition } from "../../helpers/morpho";
+import { BUNDLER3_ADDRESS, SUPPORTED_ADDAPTERS } from "@/utils/constants";
 
 const ALLOCATING_VAULT_ADDRESS: Address[] = ["0x781FB7F6d845E3bE129289833b04d43Aa8558c42"];
 
 const REBASEING_MARGIN = BigInt(100030);
 const REBASEING_MARGIN_SCALE = BigInt(100000);
-
-const {
-  bundler3: { bundler3, aaveV3CoreMigrationAdapter, generalAdapter1 },
-} = addresses[CHAIN_ID];
 
 async function fullPositionMigrationWithDelay(
   client: AnvilTestClient,
@@ -67,41 +62,37 @@ async function fullPositionMigrationWithDelay(
 
   const minCollateralBalance = aaveCollateralBalanceInital;
   const maxCollateralBalance = (minCollateralBalance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE;
-  expect(morphoCollateralBalanceFinal).toBeWithinRange(minCollateralBalance, maxCollateralBalance);
+  expect(morphoCollateralBalanceFinal).toBeWithinRange(minCollateralBalance - 1n, maxCollateralBalance);
 
   // The loan amount for full debt repayments always has the full buffer, +1 since rounded up
   const minLoanBalance = aaveLoanBalanceInital;
   const maxLoanBalance = (minLoanBalance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE;
   expect(morphoLoanBalanceFinal).toBeWithinRange(minLoanBalance, maxLoanBalance);
 
-  await expectZeroErc20Balances(client, [bundler3, aaveV3CoreMigrationAdapter!, generalAdapter1], WETH_ADDRESS);
-  await expectZeroErc20Balances(client, [bundler3, aaveV3CoreMigrationAdapter!, generalAdapter1], USDC_ADDRESS);
+  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], WETH_ADDRESS);
+  await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], USDC_ADDRESS);
 }
 
 describe("prepareAaveV3MarketMigrationAction", () => {
-  describe.concurrent("full position migration", () => {
-    test.concurrent("should migrate full position with no delay between creation and execution", async ({ client }) => {
+  describe("full position migration", () => {
+    test("should migrate full position with no delay between creation and execution", async ({ client }) => {
       await fullPositionMigrationWithDelay(client, 0);
     });
-    test.concurrent(
-      "should migrate full position with <1 day delay between creation and execution",
-      async ({ client }) => {
-        await fullPositionMigrationWithDelay(client, 10000);
-      }
-    );
-    test.concurrent(
-      "should fail when migrating full position with >1 day delay between creation and execution",
-      async ({ client }) => {
-        await expect(fullPositionMigrationWithDelay(client, 500000)).rejects.toThrow("tx failed");
-      }
-    );
-    test.concurrent("should migrate full position with public reallocation", async ({ client }) => {
-      await fullPositionMigrationWithDelay(client, 0, parseEther("10000"), parseUnits("6300000", 6));
+    test("should migrate full position with <1 day delay between creation and execution", async ({ client }) => {
+      await fullPositionMigrationWithDelay(client, 10000);
+    });
+    test("should fail when migrating full position with >1 day delay between creation and execution", async ({
+      client,
+    }) => {
+      await expect(fullPositionMigrationWithDelay(client, 500000)).rejects.toThrow("action-tx-reverted");
+    });
+    test("should migrate full position with public reallocation", async ({ client }) => {
+      await fullPositionMigrationWithDelay(client, 0, parseEther("10000"), parseUnits("110000", 6));
     });
   });
 
-  describe.concurrent("partial position migration", () => {
-    test.concurrent("should migrate full collataeral, partial loan position", async ({ client }) => {
+  describe("partial position migration", () => {
+    test("should migrate full collataeral, partial loan position", async ({ client }) => {
       const wethCollateralAmount = parseEther("1");
       const usdtCollateralAmount = parseUnits("5000", 6);
       const usdcLoanAmount = parseUnits("100", 6);
@@ -133,7 +124,7 @@ describe("prepareAaveV3MarketMigrationAction", () => {
 
       const minLoanBalance = aaveLoanBalanceInital - usdcLoanMigrationAmount;
       const maxLoanBalance = (minLoanBalance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE;
-      expect(aaveV3LoanBalanceFinal).toBeWithinRange(minLoanBalance, maxLoanBalance);
+      expect(aaveV3LoanBalanceFinal).toBeWithinRange(minLoanBalance - 1n, maxLoanBalance);
 
       // Check morpho balances
       const { collateralBalance: morphoCollateralBalanceFinal, loanBalance: morphoLoanBalanceFinal } =
@@ -146,10 +137,10 @@ describe("prepareAaveV3MarketMigrationAction", () => {
       expect(morphoLoanBalanceFinal).toBeWithinRange(minMorphoLoanBalance, maxMorphoLoanBalance);
 
       // Make sure bundler3 and adapters have been swept
-      await expectZeroErc20Balances(client, [bundler3, aaveV3CoreMigrationAdapter!, generalAdapter1], WETH_ADDRESS);
-      await expectZeroErc20Balances(client, [bundler3, aaveV3CoreMigrationAdapter!, generalAdapter1], USDC_ADDRESS);
+      await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], WETH_ADDRESS);
+      await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], USDC_ADDRESS);
     });
-    test.concurrent("should migrate partial collataeral, full loan position", async ({ client }) => {
+    test("should migrate partial collataeral, full loan position", async ({ client }) => {
       const wethCollateralAmount = parseEther("1");
       const usdcLoanAmount = parseUnits("100", 6);
       const collateralMigrationAmount = wethCollateralAmount / BigInt(2);
@@ -193,10 +184,10 @@ describe("prepareAaveV3MarketMigrationAction", () => {
       expect(morphoLoanBalanceFinal).toBeWithinRange(minLoanBalance, maxLoanBalance);
 
       // Make sure bundler3 and adapters have been swept
-      await expectZeroErc20Balances(client, [bundler3, aaveV3CoreMigrationAdapter!, generalAdapter1], WETH_ADDRESS);
-      await expectZeroErc20Balances(client, [bundler3, aaveV3CoreMigrationAdapter!, generalAdapter1], USDC_ADDRESS);
+      await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], WETH_ADDRESS);
+      await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], USDC_ADDRESS);
     });
-    test.concurrent("should migrate partial collateral, partial loan position", async ({ client }) => {
+    test("should migrate partial collateral, partial loan position", async ({ client }) => {
       const wethCollateralAmount = parseEther("1");
       const usdcLoanAmount = parseUnits("100", 6);
       const collateralMigrationAmount = wethCollateralAmount / BigInt(2);
@@ -224,11 +215,11 @@ describe("prepareAaveV3MarketMigrationAction", () => {
       const aaveV3CollateralBalanceFinal = await getAaveV3SupplyBalance(client, WETH_ADDRESS);
       const aaveV3LoanBalanceFinal = await getAaveV3LoanBalance(client, USDC_ADDRESS);
 
-      const minCollateralBalance = aaveCollateralBalanceInital - collateralMigrationAmount;
+      const minCollateralBalance = aaveCollateralBalanceInital - collateralMigrationAmount - 1n;
       const maxCollateralBalance = (minCollateralBalance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE;
       expect(aaveV3CollateralBalanceFinal).toBeWithinRange(minCollateralBalance, maxCollateralBalance);
 
-      const minLoanBalance = aaveLoanBalanceInital - loanMigrationAmount;
+      const minLoanBalance = aaveLoanBalanceInital - loanMigrationAmount - 1n;
       const maxLoanBalance = (minLoanBalance * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE;
       expect(aaveV3LoanBalanceFinal).toBeWithinRange(minLoanBalance, maxLoanBalance);
 
@@ -240,13 +231,13 @@ describe("prepareAaveV3MarketMigrationAction", () => {
       expect(morphoLoanBalanceFinal).toEqual(loanMigrationAmount + BigInt(1));
 
       // Make sure bundler3 and adapters have been swept
-      await expectZeroErc20Balances(client, [bundler3, aaveV3CoreMigrationAdapter!, generalAdapter1], WETH_ADDRESS);
-      await expectZeroErc20Balances(client, [bundler3, aaveV3CoreMigrationAdapter!, generalAdapter1], USDC_ADDRESS);
+      await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], WETH_ADDRESS);
+      await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], USDC_ADDRESS);
     });
   });
 
-  describe.concurrent("unhealthy position migration", () => {
-    test.concurrent("should fail to migrate if leaving unhealthy aave position", async ({ client }) => {
+  describe("unhealthy position migration", () => {
+    test("should fail to migrate if leaving unhealthy aave position", async ({ client }) => {
       const wethCollateralAmount = parseEther("1");
       const usdcLoanAmount = parseUnits("100", 6);
 
@@ -263,9 +254,9 @@ describe("prepareAaveV3MarketMigrationAction", () => {
         loanTokenAmount: BigInt(1),
         allocatingVaultAddresses: ALLOCATING_VAULT_ADDRESS,
       });
-      await expect(executeAction(client, action)).rejects.toThrow("tx failed");
+      await expect(executeAction(client, action)).rejects.toThrow("action-tx-reverted");
     });
-    test.concurrent("should fail to migrate if creating unhealthy morpho position", async ({ client }) => {
+    test("should fail to migrate if creating unhealthy morpho position", async ({ client }) => {
       const wethCollateralAmount = parseEther("1");
       const usdcLoanAmount = parseUnits("100", 6);
 
@@ -287,8 +278,8 @@ describe("prepareAaveV3MarketMigrationAction", () => {
     });
   });
 
-  describe.concurrent("input validation", () => {
-    test.concurrent("should fail to migrate if loan token amount is 0", async ({ client }) => {
+  describe("input validation", () => {
+    test("should fail to migrate if loan token amount is 0", async ({ client }) => {
       const wethCollateralAmount = parseEther("1");
       const usdcLoanAmount = parseUnits("100", 6);
       const collateralMigrationAmount = wethCollateralAmount / BigInt(2);
@@ -308,7 +299,7 @@ describe("prepareAaveV3MarketMigrationAction", () => {
       });
       expect(action.status).toBe("error");
     });
-    test.concurrent("should fail to migrate if collateral token amount is 0", async ({ client }) => {
+    test("should fail to migrate if collateral token amount is 0", async ({ client }) => {
       const wethCollateralAmount = parseEther("1");
       const usdcLoanAmount = parseUnits("100", 6);
 

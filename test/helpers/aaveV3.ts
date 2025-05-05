@@ -10,7 +10,7 @@ export async function dealAndSupplyToAaveV3(
   amount: bigint,
   enableCollateral: boolean
 ) {
-  client.deal({
+  await client.deal({
     erc20: assetAddress,
     amount,
   });

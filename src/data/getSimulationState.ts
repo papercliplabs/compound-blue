@@ -2,12 +2,12 @@ import { CHAIN_ID } from "@/config";
 import { SUPPORTED_ADDAPTERS, WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
 import { Holding, MarketId, NATIVE_ADDRESS, Position, VaultMarketConfig, VaultUser } from "@morpho-org/blue-sdk";
 import {
+  fetchAccrualVault,
   fetchHolding,
   fetchMarket,
   fetchPosition,
   fetchToken,
   fetchUser,
-  fetchVault,
   fetchVaultMarketConfig,
   fetchVaultUser,
 } from "@morpho-org/blue-sdk-viem";
@@ -36,11 +36,17 @@ type GetSimulationStateVaultTypeParameters = {
 export type GetSimulationStateParameters = {
   publicClient: Client;
   accountAddress: Address;
+  additionalTokenAddresses?: Address[];
 } & (GetSimulationStateMarketTypeParameters | GetSimulationStateVaultTypeParameters);
 
 // Derive simulation state from real time on-chain data
 // Only use this for preparing actions as it is an expensive operation
-export async function getSimulationState({ publicClient, accountAddress, ...params }: GetSimulationStateParameters) {
+export async function getSimulationState({
+  publicClient,
+  accountAddress,
+  additionalTokenAddresses,
+  ...params
+}: GetSimulationStateParameters) {
   let vaultAddresses: Address[] = [];
   let marketIds: MarketId[] = [];
 
@@ -56,7 +62,7 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
       break;
   }
 
-  const vaults = await Promise.all(vaultAddresses.map((vaultAddress) => fetchVault(vaultAddress, publicClient)));
+  const vaults = await Promise.all(vaultAddresses.map((vaultAddress) => fetchAccrualVault(vaultAddress, publicClient)));
 
   // Add markets from the vault queues
   marketIds = Array.from(
@@ -96,7 +102,13 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
   let tokenAddresses: Address[] = [];
   switch (params.actionType) {
     case "vault":
-      tokenAddresses = [vaults[0].asset, vaults[0].address, NATIVE_ADDRESS, WRAPPED_NATIVE_ADDRESS]; // Underliying and the vault share token move
+      tokenAddresses = [
+        vaults[0].asset,
+        vaults[0].address,
+        NATIVE_ADDRESS,
+        WRAPPED_NATIVE_ADDRESS,
+        ...(additionalTokenAddresses ?? []),
+      ]; // Underliying and the vault share token move
       break;
     case "market":
       tokenAddresses = [
@@ -104,6 +116,7 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
         markets[0].params.collateralToken,
         NATIVE_ADDRESS,
         WRAPPED_NATIVE_ADDRESS,
+        ...(additionalTokenAddresses ?? []),
       ];
       break;
   }
@@ -119,17 +132,18 @@ export async function getSimulationState({ publicClient, accountAddress, ...para
     ),
   ]);
 
-  // Accrue interest on all markets
+  // Accrue interest on all markets and markets
   const accruedMarkets = markets.map((market) => market.accrueInterest(block.timestamp));
+  const accruedVaults = vaults.map((vault) => vault.accrueInterest(block.timestamp));
 
   const simulationState = new SimulationState({
     chainId: CHAIN_ID,
     block,
-    global: { feeRecipient: zeroAddress }, // TODO ?
+    global: { feeRecipient: zeroAddress },
     markets: Object.fromEntries(marketIds.map((marketId, i) => [marketId, accruedMarkets[i]])),
     users: Object.fromEntries(userAddresses.map((userAddress, i) => [userAddress, users[i]])),
     tokens: Object.fromEntries(tokenAddresses.map((tokenAddress, i) => [tokenAddress, tokens[i]])),
-    vaults: Object.fromEntries(vaultAddresses.map((vaultAddress, i) => [vaultAddress, vaults[i]])),
+    vaults: Object.fromEntries(vaultAddresses.map((vaultAddress, i) => [vaultAddress, accruedVaults[i]])),
 
     positions: positionParams.reduce(
       (acc, { userAddress, marketId }, i) => {

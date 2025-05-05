@@ -6,7 +6,7 @@ import { trackEvent } from "@/data/trackEvent";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    trackEvent("app-error", { message: error.message });
+    void trackEvent("app-error", { message: error.message });
     console.error(error);
   }, [error]);
 

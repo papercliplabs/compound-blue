@@ -2,7 +2,7 @@ import { getSimulationState } from "@/data/getSimulationState";
 import { DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
 import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } from "./helpers";
 import { Address, Client, maxUint256 } from "viem";
-import { getIsSmartAccount } from "@/data/getIsSmartAccount";
+import { getIsContract } from "@/data/getIsContract";
 
 interface PrepareVaultWithdrawActionParameters {
   publicClient: Client;
@@ -26,21 +26,21 @@ export async function prepareVaultWithdrawBundle({
   accountAddress,
   withdrawAmount,
 }: PrepareVaultWithdrawActionParameters): Promise<PrepareVaultWithdrawActionReturnType> {
-  if (withdrawAmount == BigInt(0)) {
+  if (withdrawAmount <= 0n) {
     return {
       status: "error",
-      message: "Input validation: Withdraw amount cannot be 0",
+      message: "Withdraw amount must be greater than 0.",
     };
   }
 
-  const [simulationState, isSmartAccount] = await Promise.all([
+  const [simulationState, isContract] = await Promise.all([
     getSimulationState({
       actionType: "vault",
       accountAddress,
       vaultAddress,
       publicClient,
     }),
-    getIsSmartAccount(publicClient, accountAddress),
+    getIsContract(publicClient, accountAddress),
   ]);
 
   const userShareBalance = simulationState.getHolding(accountAddress, vaultAddress).balance;
@@ -53,7 +53,7 @@ export async function prepareVaultWithdrawBundle({
         sender: accountAddress,
         address: vaultAddress,
         args: {
-          // Use shares if a max withdraw to prevent dust, ideally would use maxUint256, but SDK has issue
+          // Use shares if a max withdraw to prevent dust
           ...(isMaxWithdraw ? { shares: userShareBalance } : { assets: withdrawAmount }),
           owner: accountAddress,
           receiver: accountAddress,
@@ -62,23 +62,17 @@ export async function prepareVaultWithdrawBundle({
       },
     ],
     accountAddress,
-    isSmartAccount,
+    isContract,
     simulationState,
     "Confirm Withdraw"
   );
 
   if (preparedAction.status == "success") {
-    const positionBalanceBefore = preparedAction.initialSimulationState.getHolding(
-      accountAddress,
-      vaultAddress
-    ).balance;
-    const positionBalanceAfter = preparedAction.finalSimulationState.getHolding(accountAddress, vaultAddress).balance;
-
     return {
       ...preparedAction,
       positionBalanceChange: {
-        before: positionBalanceBefore,
-        after: positionBalanceAfter,
+        before: preparedAction.initialSimulationState.getHolding(accountAddress, vaultAddress).balance,
+        after: preparedAction.finalSimulationState.getHolding(accountAddress, vaultAddress).balance,
       },
     };
   } else {

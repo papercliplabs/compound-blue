@@ -70,7 +70,7 @@ export async function getParaswapExactBuy({
     `https://api.paraswap.io/prices?${priceParams.toString()}`
   );
   if (!priceData) {
-    throw new Error("Failed to get paraswap quote");
+    throw new Error("Failed to find swap quote respecting slippage tolerance");
   }
   const priceRoute = priceData.priceRoute;
 
@@ -106,7 +106,7 @@ export async function getParaswapExactBuy({
   );
 
   if (!transactionData) {
-    throw new Error("Failed to get paraswap quote");
+    throw new Error("Failed to find swap quote respecting slippage tolerance");
   }
 
   return {
