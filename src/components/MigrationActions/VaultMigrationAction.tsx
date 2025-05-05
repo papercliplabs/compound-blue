@@ -214,8 +214,14 @@ export default function VaultMigrationAction({
                   <div className="flex flex-col gap-5">{simContent}</div>
 
                   <div className="flex min-w-0 flex-col gap-2">
-                    <Button type="submit" className="w-full" disabled={simulatingBundle || !form.formState.isValid}>
-                      {migrateAmount == 0 ? "Enter Amount" : simulatingBundle ? "Simulating..." : "Review Migration"}
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={simulatingBundle || !form.formState.isValid}
+                      isLoading={simulatingBundle}
+                      loadingMessage="Simulating"
+                    >
+                      {migrateAmount == 0 ? "Enter Amount" : "Review Migration"}
                     </Button>
                     {preparedAction?.status == "error" && (
                       <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
