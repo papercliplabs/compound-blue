@@ -13,10 +13,3 @@ export const wagmiConfig = getDefaultConfig({
   appUrl: process.env.NEXT_PUBLIC_URL!,
   appIcon: `${process.env.NEXT_PUBLIC_URL}/icon.png`,
 });
-
-// wagmiConfig.connectors = [
-//   ...wagmiConfig.connectors,
-//   mock({
-//     accounts: ["0xD11C5194EfEF0b836277EA149cfe23d178b60242"],
-//   }),
-// ];

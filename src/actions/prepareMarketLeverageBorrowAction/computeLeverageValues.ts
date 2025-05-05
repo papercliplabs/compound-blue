@@ -1,6 +1,7 @@
 import { MAX_BORROW_LTV_MARGIN, MAX_SLIPPAGE_TOLERANCE_LIMIT } from "@/config";
 import { descaleBigIntToNumber } from "@/utils/format";
 import { Market, MathLib } from "@morpho-org/blue-sdk";
+import { computeAmountWithSlippageSurplus } from "../helpers";
 
 const LEVERAGE_FACTOR_CEILING = 100; // Only clamps if lltv * (1 - S) > 99%
 
@@ -74,22 +75,18 @@ export function computeLeverageValues(
   const collateralAmount = MathLib.mulDivDown(margin, BigInt(leverageFactor * Number(MathLib.WAD)), MathLib.WAD);
   const additionalCollateralNeeded = collateralAmount - margin;
 
-  const loanAmountInCollateral = MathLib.mulDivUp(
-    additionalCollateralNeeded,
-    BigInt((1 + maxSlippageTolerance) * Number(MathLib.WAD)),
-    MathLib.WAD
-  );
-
-  const loanAmount = market.getCollateralValue(loanAmountInCollateral);
-  if (loanAmount == undefined) {
+  const quoteLoanAmount = market.getCollateralValue(additionalCollateralNeeded);
+  if (quoteLoanAmount == undefined) {
     throw new Error("Oracle issue: unable to price collateral in the loan asset.");
   }
 
-  const ltv = Number(loanAmount) / Number(market.getCollateralValue(collateralAmount));
+  const loanAmountWithSlippage = computeAmountWithSlippageSurplus(quoteLoanAmount, maxSlippageTolerance);
+
+  const ltv = Number(loanAmountWithSlippage) / Number(market.getCollateralValue(collateralAmount));
 
   return {
     collateralAmount,
-    loanAmount,
+    loanAmount: loanAmountWithSlippage,
     ltv,
   };
 }

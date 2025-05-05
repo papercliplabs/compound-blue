@@ -226,3 +226,8 @@ export async function getMarketSimulationStateAccountingForPublicReallocation({
 export function computeAmountWithRebasingMargin(amount: bigint) {
   return MathLib.mulDivDown(amount, MathLib.WAD + TOKEN_REBASEING_MARGIN, MathLib.WAD);
 }
+
+// maxSlippageTolerance is a percentage [0,1]
+export function computeAmountWithSlippageSurplus(amount: bigint, maxSlippageTolerance: number) {
+  return MathLib.mulDivDown(amount, BigInt(Math.floor((1 + maxSlippageTolerance) * Number(MathLib.WAD))), MathLib.WAD);
+}

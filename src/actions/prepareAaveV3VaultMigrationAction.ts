@@ -14,17 +14,24 @@ import { fetchVault } from "@morpho-org/blue-sdk-viem";
 
 interface PrepareAaveV3VaultMigrationActionParameters {
   publicClient: Client;
-  accountAddress: Address;
   vaultAddress: Address;
+  accountAddress: Address;
   amount: bigint; // Max uint256 for entire account balance
 }
 
 export async function prepareAaveV3VaultMigrationAction({
   publicClient,
-  accountAddress,
   vaultAddress,
+  accountAddress,
   amount,
 }: PrepareAaveV3VaultMigrationActionParameters): Promise<PrepareActionReturnType> {
+  if (amount <= 0n) {
+    return {
+      status: "error",
+      message: "Amount must be greater than 0",
+    };
+  }
+
   const vaultAssetAddress = (await fetchVault(vaultAddress, publicClient)).asset;
   const aTokenAddress = await readContract(publicClient, {
     address: AAVE_V3_POOL_ADDRESS,
@@ -62,22 +69,24 @@ export async function prepareAaveV3VaultMigrationAction({
 
     const maxSharePriceE27 = vault.toAssets(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
 
-    const bundlerCalls: BundlerCall[] = [
-      // Handle all input token transfers
-      ...inputTransferSubbundle.bundlerCalls,
-      // Redeem aTokens for underlying and send to GA1
-      BundlerAction.aaveV3Withdraw(CHAIN_ID, vault.asset, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
-      // Deposit underlying into vault and send shares to the calling account
-      BundlerAction.erc4626Deposit(
-        CHAIN_ID,
-        vaultAddress, // Max to use all underlying tokens in the adapter
-        maxUint256,
-        maxSharePriceE27,
-        accountAddress
-      ),
-    ].flat();
+    function getBundleTx() {
+      const bundlerCalls: BundlerCall[] = [
+        // Transfer aTokens into migration adapter
+        ...inputTransferSubbundle.bundlerCalls,
+        // Redeem aTokens for underlying and send to GA1
+        BundlerAction.aaveV3Withdraw(CHAIN_ID, vault.asset, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
+        // Deposit underlying into vault and send shares to the calling account
+        BundlerAction.erc4626Deposit(
+          CHAIN_ID,
+          vaultAddress, // Max to use all underlying tokens in the adapter
+          maxUint256,
+          maxSharePriceE27,
+          accountAddress
+        ),
+      ].flat();
 
-    const bundle = createBundle(bundlerCalls);
+      return createBundle(bundlerCalls);
+    }
 
     return {
       status: "success",
@@ -86,7 +95,7 @@ export async function prepareAaveV3VaultMigrationAction({
         ...inputTransferSubbundle.transactionRequirements,
         {
           name: "Confirm Migration",
-          tx: () => bundle,
+          tx: getBundleTx,
         },
       ],
     };

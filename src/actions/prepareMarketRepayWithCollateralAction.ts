@@ -1,6 +1,7 @@
 import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib, ORACLE_PRICE_SCALE } from "@morpho-org/blue-sdk";
 import {
   computeAmountWithRebasingMargin,
+  computeAmountWithSlippageSurplus,
   getSignatureRequirementDescription,
   getTransactionRequirementDescription,
   PrepareActionReturnType,
@@ -9,18 +10,11 @@ import {
 import { Address, Client, maxUint256 } from "viem";
 import { getSimulationState } from "@/data/getSimulationState";
 import { getIsContract } from "@/data/getIsContract";
-import {
-  BundlerCall,
-  BundlerAction,
-  ActionBundle,
-  populateSubBundle,
-  encodeBundle,
-} from "@morpho-org/bundler-sdk-viem";
+import { BundlerCall, BundlerAction, populateSubBundle, encodeBundle } from "@morpho-org/bundler-sdk-viem";
 import { CHAIN_ID, MAX_SLIPPAGE_TOLERANCE_LIMIT } from "@/config";
 import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 import { createBundle, paraswapBuy } from "./bundler3";
 import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
-import { GetParaswapReturnType } from "@/data/paraswap/types";
 
 interface PrepareMarketRepayWithCollateralActionParameters {
   publicClient: Client;
@@ -91,16 +85,11 @@ export async function prepareMarketRepayWithCollateralAction({
   const closingPosition = loanRepayAmount == maxUint256;
 
   // Include a margin to account for accured interest between now and execution if closing
-  // Actual swap will adjust to use true loan amount, but this get's us a maxCollateralSwapAmount needed and is used for quote (upper bound)
   const loanSwapAmount = closingPosition ? computeAmountWithRebasingMargin(positionLoanBefore) : loanRepayAmount;
 
   // Worst case required collateral amount
   const quoteCollateralAmount = MathLib.mulDivUp(loanSwapAmount, ORACLE_PRICE_SCALE, market.price);
-  const maxCollateralSwapAmount = MathLib.mulDivDown(
-    quoteCollateralAmount,
-    BigInt(Math.floor((1 + maxSlippageTolerance) * Number(MathLib.WAD))),
-    MathLib.WAD
-  );
+  const maxCollateralSwapAmount = computeAmountWithSlippageSurplus(quoteCollateralAmount, maxSlippageTolerance);
 
   // Need to move worst case collateral into adapter, so must exist
   if (maxCollateralSwapAmount > positionCollateralBefore) {
@@ -110,10 +99,9 @@ export async function prepareMarketRepayWithCollateralAction({
     };
   }
 
-  let paraswapQuote: GetParaswapReturnType;
   try {
     // Exact buy of loan assets
-    paraswapQuote = await getParaswapExactBuy({
+    const paraswapQuote = await getParaswapExactBuy({
       publicClient: publicClient,
       accountAddress: PARASWAP_ADAPTER_ADDRESS, // User is the paraswap adapter
       srcTokenAddress: collateralTokenAddress,
@@ -121,23 +109,14 @@ export async function prepareMarketRepayWithCollateralAction({
       maxSrcTokenAmount: maxCollateralSwapAmount,
       exactDestTokenAmount: loanSwapAmount,
     });
-  } catch {
-    return {
-      status: "error",
-      message: `No swap route found respecting slippage tolerance.`,
-    };
-  }
 
-  // Override simulation state for actions not supported by the simulation SDK
-  if (closingPosition) {
-    accountPosition.borrowShares = 0n;
-  } else {
-    accountPosition.borrowShares -= market.toBorrowShares(loanSwapAmount);
-  }
+    // Override simulation state for actions not supported by the simulation SDK
+    if (closingPosition) {
+      accountPosition.borrowShares = 0n;
+    } else {
+      accountPosition.borrowShares -= market.toBorrowShares(loanSwapAmount);
+    }
 
-  // Use subBundle here to so that it handles any requirements (permitting GA1)
-  let collateralWithdrawSubBundleEncoded: ActionBundle;
-  try {
     const collateralWithdrawSubBundle = populateSubBundle(
       {
         type: "Blue_WithdrawCollateral",
@@ -153,105 +132,111 @@ export async function prepareMarketRepayWithCollateralAction({
       simulationState
     );
 
-    collateralWithdrawSubBundleEncoded = encodeBundle(collateralWithdrawSubBundle, simulationState, !isContract);
+    const collateralWithdrawSubBundleEncoded = encodeBundle(collateralWithdrawSubBundle, simulationState, !isContract);
+
+    const maxSharePriceE27 = market.toSupplyShares(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
+
+    function getBundleTx() {
+      const encodedWithdrawCollateralBundlerCalls = collateralWithdrawSubBundleEncoded.actions.map((action) =>
+        BundlerAction.encode(CHAIN_ID, action)
+      );
+
+      const bundlerCalls: BundlerCall[] = [
+        // Repay loan
+        BundlerAction.morphoRepay(
+          CHAIN_ID,
+          market.params,
+          closingPosition ? 0n : loanRepayAmount, // Assets
+          closingPosition ? maxUint256 : 0n, // Shares - full repay using shares when closing position
+          maxSharePriceE27,
+          accountAddress,
+          // Repay loan callbacks, all actions will happen before Morpho pulls the required loan assets from GA1 (i.e must have required loan assets in GA1 at the end of these callbacks)
+          [
+            // Withdraw max required collateral to Paraswap adapter
+            ...encodedWithdrawCollateralBundlerCalls,
+            // Swap collateral to the exact amount of loan assets, sending to GA1
+            // Note that we can't use paraswapBuyDebt here since we don't have any remaining debt (already called morphoRepay)
+            paraswapBuy(
+              paraswapQuote.augustus,
+              paraswapQuote.calldata,
+              collateralTokenAddress,
+              loanTokenAddress,
+              paraswapQuote.offsets,
+              GENERAL_ADAPTER_1_ADDRESS
+            ),
+            // Sweep any leftover collateral assets from paraswap adapter to GA1 - exact out, so no leftover loan assets from swap
+            BundlerAction.erc20Transfer(
+              collateralTokenAddress,
+              GENERAL_ADAPTER_1_ADDRESS,
+              maxUint256,
+              PARASWAP_ADAPTER_ADDRESS
+            ),
+          ].flat()
+        ),
+        // Loan assets will be withdrawn from GA1 here to complete the repay
+
+        ...(closingPosition
+          ? [
+              // Sweep any leftover collateral assets from GA1 to user
+              BundlerAction.erc20Transfer(
+                collateralTokenAddress,
+                accountAddress,
+                maxUint256,
+                GENERAL_ADAPTER_1_ADDRESS
+              ),
+              // Sweep any leftover loan assets from GA1 to user, expect some dust from the rebasing margin
+              BundlerAction.erc20Transfer(loanTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
+            ]
+          : [
+              // Add back to position if it's not being closed
+              // Allow this to revert since it will do so if there are no collateral assets to sweep which occurs if the swap consumes full slippage tolerance
+              BundlerAction.morphoSupplyCollateral(CHAIN_ID, market.params, maxUint256, accountAddress, [], true),
+              // There won't be any loan assets leftover since we swapped for exact amount needed for partial position (no margin)
+            ]),
+      ].flat();
+
+      return createBundle(bundlerCalls);
+    }
+
+    const simulationStateAfter =
+      collateralWithdrawSubBundleEncoded.steps?.[collateralWithdrawSubBundleEncoded.steps.length - 1];
+    const marketAfter = simulationStateAfter?.getMarket(marketId);
+    const userPositionAfter = simulationStateAfter?.getPosition(accountAddress, marketId);
+
+    return {
+      status: "success",
+      signatureRequests: collateralWithdrawSubBundleEncoded.requirements.signatures.map((sig) => ({
+        sign: sig.sign,
+        name: getSignatureRequirementDescription(sig, simulationState),
+      })),
+      transactionRequests: [
+        ...collateralWithdrawSubBundleEncoded.requirements.txs.map((tx) => ({
+          tx: () => tx.tx,
+          name: getTransactionRequirementDescription(tx, simulationState),
+        })),
+        {
+          name: "Confirm Repay",
+          tx: getBundleTx,
+        },
+      ],
+      // TODO: can clean up by getting sim state before and after and use the helper to compute this change
+      positionCollateralChange: {
+        before: positionCollateralBefore,
+        after: userPositionAfter?.collateral ?? 0n,
+      },
+      positionLoanChange: {
+        before: positionLoanBefore,
+        after: marketAfter?.toBorrowAssets(userPositionAfter?.borrowShares ?? 0n) ?? 0n,
+      },
+      positionLtvChange: {
+        before: positionLtvBefore,
+        after: marketAfter?.getLtv(userPositionAfter ?? { collateral: 0n, borrowShares: 0n }) ?? 0n,
+      },
+    };
   } catch (e) {
     return {
       status: "error",
       message: `Simulation Error: ${(e instanceof Error ? e.message : JSON.stringify(e)).split("0x")[0]}`,
     };
   }
-
-  const maxSharePriceE27 = market.toSupplyShares(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
-
-  function getBundleTx() {
-    const encodedWithdrawCollateralBundlerCalls = collateralWithdrawSubBundleEncoded.actions.map((action) =>
-      BundlerAction.encode(CHAIN_ID, action)
-    );
-
-    const bundlerCalls: BundlerCall[] = [
-      // Repay loan
-      BundlerAction.morphoRepay(
-        CHAIN_ID,
-        market.params,
-        closingPosition ? 0n : loanRepayAmount,
-        closingPosition ? maxUint256 : 0n, // Full repay using shares when closing position
-        maxSharePriceE27,
-        accountAddress,
-        // Repay loan callbacks, all actions will happen before Morpho pulls the required loan assets from GA1 (i.e must have required loan assets in GA1 at the end of these callbacks)
-        [
-          // Withdraw max required collateral to Paraswap adapter
-          ...encodedWithdrawCollateralBundlerCalls,
-          // Swap collateral to the exact amount of loan assets, sending to GA1
-          // Note that we can't use paraswapBuyDebt here since we don't have any remaining debt (already called morphoRepay)
-          paraswapBuy(
-            paraswapQuote.augustus,
-            paraswapQuote.calldata,
-            collateralTokenAddress,
-            loanTokenAddress,
-            paraswapQuote.offsets,
-            GENERAL_ADAPTER_1_ADDRESS
-          ),
-          // Sweep any leftover collateral assets from paraswap adapter to GA1 - exact out, so no leftover loan assets from swap
-          BundlerAction.erc20Transfer(
-            collateralTokenAddress,
-            GENERAL_ADAPTER_1_ADDRESS,
-            maxUint256,
-            PARASWAP_ADAPTER_ADDRESS
-          ),
-        ].flat()
-      ),
-      // Loan assets will be withdrawn from GA1 here to complete the repay
-
-      ...(closingPosition
-        ? [
-            // Sweep any leftover collateral assets from GA1 to user
-            BundlerAction.erc20Transfer(collateralTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
-            // Sweep any leftover loan assets from GA1 to user, expect some dust from the rebasing margin
-            BundlerAction.erc20Transfer(loanTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
-          ]
-        : [
-            // Add back to position if it's not being closed
-            BundlerAction.morphoSupplyCollateral(CHAIN_ID, market.params, maxUint256, accountAddress, [], true),
-            // There won't be any loan assets leftover since we swapped for exact amount needed for partial position (no margin)
-          ]),
-    ].flat();
-
-    return createBundle(bundlerCalls);
-  }
-
-  const simulationStateAfter =
-    collateralWithdrawSubBundleEncoded.steps?.[collateralWithdrawSubBundleEncoded.steps.length - 1];
-  const marketAfter = simulationStateAfter?.getMarket(marketId);
-  const userPositionAfter = simulationStateAfter?.getPosition(accountAddress, marketId);
-
-  return {
-    status: "success",
-    signatureRequests: collateralWithdrawSubBundleEncoded.requirements.signatures.map((sig) => ({
-      sign: sig.sign,
-      name: getSignatureRequirementDescription(sig, simulationState),
-    })),
-    transactionRequests: [
-      ...collateralWithdrawSubBundleEncoded.requirements.txs.map((tx) => ({
-        tx: () => tx.tx,
-        name: getTransactionRequirementDescription(tx, simulationState),
-      })),
-      {
-        name: "Confirm Repay",
-        tx: getBundleTx,
-      },
-    ],
-    // TODO: get sim state before and after and use the helper to compute this change
-    positionCollateralChange: {
-      before: positionCollateralBefore,
-      after: userPositionAfter?.collateral ?? 0n,
-    },
-    positionLoanChange: {
-      before: positionLoanBefore,
-      after: marketAfter?.toBorrowAssets(userPositionAfter?.borrowShares ?? 0n) ?? 0n,
-    },
-    positionLtvChange: {
-      before: positionLtvBefore,
-      after: marketAfter?.getLtv(userPositionAfter ?? { collateral: 0n, borrowShares: 0n }) ?? 0n,
-    },
-  };
 }

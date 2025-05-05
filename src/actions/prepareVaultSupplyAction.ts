@@ -82,12 +82,14 @@ export async function prepareVaultSupplyBundle({
 
     const maxSharePriceE27 = vault.toAssets(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
 
-    const bundlerCalls: BundlerCall[] = [
-      ...inputTransferSubbundle.bundlerCalls,
-      BundlerAction.erc4626Deposit(CHAIN_ID, vault.address, supplyAmount, maxSharePriceE27, accountAddress),
-    ].flat();
+    function getBundleTx() {
+      const bundlerCalls: BundlerCall[] = [
+        ...inputTransferSubbundle.bundlerCalls,
+        BundlerAction.erc4626Deposit(CHAIN_ID, vault.address, supplyAmount, maxSharePriceE27, accountAddress),
+      ].flat();
 
-    const bundle = createBundle(bundlerCalls);
+      return createBundle(bundlerCalls);
+    }
 
     return {
       status: "success",
@@ -95,7 +97,7 @@ export async function prepareVaultSupplyBundle({
       transactionRequests: [
         ...inputTransferSubbundle.transactionRequirements,
         {
-          tx: () => bundle,
+          tx: getBundleTx,
           name: "Confirm Supply",
         },
       ],

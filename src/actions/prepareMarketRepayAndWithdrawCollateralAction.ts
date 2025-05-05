@@ -34,6 +34,12 @@ export async function prepareMarketRepayAndWithdrawCollateralAction({
   repayAmount,
   withdrawCollateralAmount,
 }: PrepareMarketRepayAndWithdrawCollateralActionParameters): Promise<PrepareMarketRepayAndWithdrawCollateralActionReturnType> {
+  if (repayAmount < 0n || withdrawCollateralAmount < 0n) {
+    return {
+      status: "error",
+      message: "Repay and withdraw collateral amounts cannot be negative",
+    };
+  }
   if (repayAmount == 0n && withdrawCollateralAmount == 0n) {
     return {
       status: "error",
