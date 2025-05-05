@@ -90,7 +90,7 @@ export function AccountMarketPositionHighlight({ market }: MarketPositionProps) 
       <Metric
         label={<span className="justify-end text-accent-ternary">Borrowing</span>}
         description="Your borrow balance in this market."
-        className="items-end title-3"
+        className="title-3 md:items-end"
       >
         <NumberFlow value={marketPosition.borrowAssetsUsd} format={{ currency: "USD" }} />
       </Metric>
@@ -117,7 +117,7 @@ export function AccountMarketPositionAggregate() {
       <Metric
         label={<span className="justify-end text-accent-ternary">Your Borrowing</span>}
         description="Your total borrow balance across all markets."
-        className="items-end title-3"
+        className="title-3 md:items-end"
       >
         <NumberFlowWithLoading
           value={accountMarketPositonAggregate?.totalBorrowUsd}
@@ -130,7 +130,7 @@ export function AccountMarketPositionAggregate() {
       <Metric
         label={<span className="justify-end">Avg. Borrow APY</span>}
         description="Your average borrow APY across all markets, including rewards."
-        className="items-end title-3"
+        className="title-3 md:items-end"
       >
         <NumberFlowWithLoading
           value={accountMarketPositonAggregate?.avgApy}

@@ -61,7 +61,7 @@ export function AccountVaultPositionHighlight({ vault }: { vault: Vault }) {
       <Metric
         label={<span className="justify-end text-accent-secondary">Supplying</span>}
         description="Your supply balance in this vault."
-        className="items-end title-3"
+        className="title-3 md:items-end"
       >
         <NumberFlow value={vaultPosition.supplyAssetsUsd} format={{ currency: "USD" }} />
       </Metric>
@@ -85,7 +85,7 @@ export function AccountVaultPositionAggregate() {
       <Metric
         label={<span className="justify-end text-accent-secondary">Your Deposits</span>}
         description="Your total deposit balance across all vaults."
-        className="items-end title-3"
+        className="title-3 md:items-end"
       >
         <NumberFlowWithLoading
           value={accountVaultPositionAggregate?.totalSupplyUsd}
@@ -98,7 +98,7 @@ export function AccountVaultPositionAggregate() {
       <Metric
         label={<span className="justify-end">Avg. Earn APY</span>}
         description="Your average supply APY across all vaults, including rewards and fees."
-        className="items-end title-3"
+        className="title-3 md:items-end"
       >
         <NumberFlowWithLoading
           value={accountVaultPositionAggregate?.avgApy}
