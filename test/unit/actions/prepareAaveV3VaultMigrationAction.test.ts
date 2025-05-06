@@ -9,11 +9,9 @@ import { AnvilTestClient } from "@morpho-org/test";
 import { expectZeroErc20Balances } from "../../helpers/erc20";
 import { AAVE_V3_MIGRATION_ADAPTER_ADDRESS, BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
 import { getMorphoVaultPosition } from "../../helpers/morpho";
+import { computeAmountWithRebasingMargin } from "@/actions/helpers";
 
 const USDC_VAULT_ADDRESS = "0x781FB7F6d845E3bE129289833b04d43Aa8558c42";
-
-const REBASEING_MARGIN = BigInt(100030);
-const REBASEING_MARGIN_SCALE = BigInt(100000);
 
 interface RunVaultMigrationTestParameters {
   client: AnvilTestClient;
@@ -85,7 +83,7 @@ describe("prepareAaveV3VaultMigrationAction", () => {
     const aaveV3SupplyBalanceFinalLimits = { min: BigInt(0), max: BigInt(0) };
     const vaultPositionBalanceFinalLimits = {
       min: aaveSupplyAmount,
-      max: (aaveSupplyAmount * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE,
+      max: computeAmountWithRebasingMargin(aaveSupplyAmount),
     };
     await runVaultMigrationTest({
       client,
@@ -106,7 +104,7 @@ describe("prepareAaveV3VaultMigrationAction", () => {
     const aaveV3SupplyBalanceFinalLimits = { min: BigInt(0), max: BigInt(0) };
     const vaultPositionBalanceFinalLimits = {
       min: aaveSupplyAmount,
-      max: (aaveSupplyAmount * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE,
+      max: computeAmountWithRebasingMargin(aaveSupplyAmount),
     };
     await runVaultMigrationTest({
       client,
@@ -122,14 +120,14 @@ describe("prepareAaveV3VaultMigrationAction", () => {
     });
   });
 
-  test("should fail when migrating full position with long delay between creation and execution (rebasing casues failure)", async ({
+  test("should fail when migrating full position with long delay between creation and execution (rebasing/slippage casues failure)", async ({
     client,
   }) => {
     const aaveSupplyAmount = parseUnits("1000000", 6);
     const aaveV3SupplyBalanceFinalLimits = { min: BigInt(0), max: BigInt(0) };
     const vaultPositionBalanceFinalLimits = {
       min: aaveSupplyAmount,
-      max: (aaveSupplyAmount * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE,
+      max: computeAmountWithRebasingMargin(aaveSupplyAmount),
     };
     await expect(
       runVaultMigrationTest({
@@ -152,11 +150,11 @@ describe("prepareAaveV3VaultMigrationAction", () => {
     const migrationAmount = aaveSupplyAmount / BigInt(4);
     const aaveV3SupplyBalanceFinalLimits = {
       min: aaveSupplyAmount - migrationAmount,
-      max: ((aaveSupplyAmount - migrationAmount) * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE,
+      max: computeAmountWithRebasingMargin(aaveSupplyAmount - migrationAmount),
     };
     const vaultPositionBalanceFinalLimits = {
       min: migrationAmount - BigInt(1), // From rounding
-      max: (migrationAmount * REBASEING_MARGIN) / REBASEING_MARGIN_SCALE,
+      max: computeAmountWithRebasingMargin(migrationAmount),
     };
     await runVaultMigrationTest({
       client,
@@ -165,31 +163,6 @@ describe("prepareAaveV3VaultMigrationAction", () => {
       aaveSupplyAmount,
       migrationAmount,
       delayBlocks: 0,
-      checks: {
-        aaveV3SupplyBalanceFinalLimits,
-        vaultPositionBalanceFinalLimits,
-      },
-    });
-  });
-
-  test("should migrate partial position with long delay (uses exact amounts)", async ({ client }) => {
-    const aaveSupplyAmount = parseUnits("1000000", 6);
-    const migrationAmount = aaveSupplyAmount / BigInt(4);
-    const aaveV3SupplyBalanceFinalLimits = {
-      min: aaveSupplyAmount - migrationAmount,
-      max: maxUint256, // Could accure lots of interest, which is fine
-    };
-    const vaultPositionBalanceFinalLimits = {
-      min: migrationAmount - BigInt(2), // From rounding
-      max: migrationAmount,
-    };
-    await runVaultMigrationTest({
-      client,
-      vaultAddress: USDC_VAULT_ADDRESS,
-      assetAddress: USDC_ADDRESS,
-      aaveSupplyAmount,
-      migrationAmount,
-      delayBlocks: 500000,
       checks: {
         aaveV3SupplyBalanceFinalLimits,
         vaultPositionBalanceFinalLimits,

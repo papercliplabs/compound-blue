@@ -22,6 +22,18 @@ Start the development server
 bun dev
 ```
 
+Run tests
+```bash
+# Run all tests
+bun run test
+
+# Vitest only
+bun run test:vitest
+
+# Playwright only
+bun run test:playwright
+```
+
 Build
 ```bash
 bun run build
