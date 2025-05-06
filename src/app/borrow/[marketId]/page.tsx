@@ -6,8 +6,8 @@ import { ReactNode, Suspense } from "react";
 import { Skeleton, Skeletons } from "@/components/ui/skeleton";
 import { formatNumber } from "@/utils/format";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import Apy from "@/components/Apy";
-import Metric from "@/components/Metric";
+import Apy, { ApyTooltipContent } from "@/components/Apy";
+import Metric, { Metric as MetricComponent } from "@/components/Metric";
 import VaultAllocationTable from "@/components/tables/VaultAllocationTable";
 import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
 import Image from "next/image";
@@ -18,7 +18,7 @@ import { notFound } from "next/navigation";
 import { WHITELISTED_MARKET_IDS } from "@/config";
 import BackButton from "@/components/BackButton";
 import { AccountMarketPosition, AccountMarketPositionHighlight } from "@/components/AccountMarketPosition";
-import MarketAvailableLiquidity from "@/components/MarketAvailableLiquidity";
+import MarketAvailableLiquidity, { MarketAvailableLiquidityTooltip } from "@/components/MarketAvailableLiquidity";
 import NumberFlow from "@/components/ui/NumberFlow";
 import { MarketIcon } from "@/components/MarketIdentifier";
 import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "@/components/ui/tooltipPopover";
@@ -193,36 +193,47 @@ async function MarketState({ marketId }: { marketId: Hex }) {
     return null;
   }
 
-  const metrics: { label: string; description: string; value: ReactNode }[] = [
+  const metrics: { label: string; tooltip: ReactNode; value: ReactNode }[] = [
     {
       label: "Total Deposits",
-      description: "The total amount of assets currently deposited into the market.",
-      value: <NumberFlow value={market.supplyAssetsUsd} format={{ currency: "USD" }} />,
+      tooltip: "The total amount of assets currently deposited into the market.",
+      value: <NumberFlow className="title-3" value={market.supplyAssetsUsd} format={{ currency: "USD" }} />,
     },
     {
       label: "Available Liquidity",
-      description:
-        "The total amount of assets available for borrowing, including liquidity that can be reallocated from other markets through the public allocator.",
-      value: (
-        <MarketAvailableLiquidity
+      tooltip: (
+        <MarketAvailableLiquidityTooltip
           liquidityAssetUsd={market.liquidityAssetsUsd}
           publicAllocatorSharedLiquidityAssetsUsd={market.publicAllocatorSharedLiquidityAssetsUsd}
+        />
+      ),
+      value: (
+        <MarketAvailableLiquidity
+          className="title-3"
+          liquidityAssetUsd={market.liquidityAssetsUsd}
+          publicAllocatorSharedLiquidityAssetsUsd={market.publicAllocatorSharedLiquidityAssetsUsd}
+          showTooltip={false}
         />
       ),
     },
     {
       label: "Borrow APY",
-      description: "The annual percent yield (APY) payed for borrowing from this market, including rewards.",
-      value: <Apy type="borrow" apy={market.borrowApy} />,
+      tooltip: <ApyTooltipContent apy={market.borrowApy} type="borrow" />,
+      value: <Apy className="title-3" type="borrow" apy={market.borrowApy} showTooltip={false} />,
     },
   ];
 
   return (
     <div className="flex flex-wrap justify-between gap-x-8 gap-y-4">
       {metrics.map((metric, i) => (
-        <Metric key={i} label={metric.label} description={metric.description} className="flex-1">
-          <span className="title-3">{metric.value}</span>
-        </Metric>
+        <div key={i} className="flex-1">
+          <TooltipPopover>
+            <TooltipPopoverTrigger>
+              <MetricComponent label={metric.label}>{metric.value}</MetricComponent>
+            </TooltipPopoverTrigger>
+            <TooltipPopoverContent>{metric.tooltip}</TooltipPopoverContent>
+          </TooltipPopover>
+        </div>
       ))}
     </div>
   );
