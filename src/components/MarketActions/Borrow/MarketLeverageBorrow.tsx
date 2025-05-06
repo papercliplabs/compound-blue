@@ -279,8 +279,10 @@ export default function MarketLeverageBorrow({
                   type="submit"
                   className="w-full bg-accent-ternary"
                   disabled={simulatingBundle || initialCollateralAmount == 0 || !form.formState.isValid}
+                  isLoading={simulatingBundle}
+                  loadingMessage="Simulating"
                 >
-                  {initialCollateralAmount == 0 ? "Enter Amount" : simulatingBundle ? "Simulating..." : "Review"}
+                  {initialCollateralAmount == 0 ? "Enter Amount" : "Review"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
