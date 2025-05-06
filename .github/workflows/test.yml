@@ -1,4 +1,5 @@
-name: Playwright Tests
+name: Test
+
 on:
   pull_request:
     branches:
@@ -6,17 +7,53 @@ on:
       - staging
   workflow_dispatch: # Adds "Run workflow" button in GitHub UI
 
-jobs:
-  test:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    env:
-      WHISK_API_URL: ${{ secrets.WHISK_API_URL }}
-      WHISK_API_KEY: ${{ secrets.WHISK_API_KEY }}
-      NEXT_PUBLIC_URL: ${{ secrets.NEXT_PUBLIC_URL }}
-      NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID }}
-      NEXT_PUBLIC_RPC_URL_1: ${{ secrets.NEXT_PUBLIC_RPC_URL_1 }}
+env:
+  WHISK_API_URL: ${{ secrets.WHISK_API_URL }}
+  WHISK_API_KEY: ${{ secrets.WHISK_API_KEY }}
+  NEXT_PUBLIC_URL: ${{ secrets.NEXT_PUBLIC_URL }}
+  NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID }}
+  NEXT_PUBLIC_RPC_URL_1: ${{ secrets.NEXT_PUBLIC_RPC_URL_1 }}
 
+jobs:
+  vitest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Restore Foundry RPC cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ~/.foundry/cache/rpc-vitest
+          key: foundry-rpc-vitest-${{ github.ref_name }}-v1-${{ github.run_id }}
+          restore-keys: |
+            foundry-rpc-vitest-${{ github.ref_name }}-v1-
+            foundry-rpc-vitest--v1-
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+
+      - name: Run tests
+        run: bun run vitest run
+
+      - name: Save Foundry RPC cache
+        if: always()
+        uses: actions/cache/save@v3
+        with:
+          path: ~/.foundry/cache/rpc-vitest
+          key: foundry-rpc-vitest-${{ github.ref_name }}-v1-${{ github.run_id }}
+
+  playwright:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
