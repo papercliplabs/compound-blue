@@ -18,6 +18,7 @@ import { WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import BackButton from "@/components/BackButton";
 import { AccountVaultPosition, AccountVaultPositionHighlight } from "@/components/AccountVaultPosition";
 import NumberFlow from "@/components/ui/NumberFlow";
+import RiskTier from "@/components/RiskTier";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Vault",
@@ -150,11 +151,7 @@ async function VaultMetadata({ vaultAddress }: { vaultAddress: Address }) {
         />
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="inline title-2">{vault.name}</h1>
-          {vault.metadata?.riskTier && (
-            <span className="inline h-[20px] w-fit rounded-[4px] bg-button-neutral px-1 text-content-secondary label-md">
-              {vault.metadata.riskTier.toUpperCase()}
-            </span>
-          )}
+          {vault.metadata?.riskTier && <RiskTier tier={vault.metadata.riskTier} />}
         </div>
       </div>
       {vault.metadata?.description && (
