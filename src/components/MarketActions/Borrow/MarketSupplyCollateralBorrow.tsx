@@ -210,12 +210,10 @@ export default function MarketSupplyCollateralBorrow({
                   disabled={
                     simulatingBundle || (borrowAmount == 0 && supplyCollateralAmount == 0) || !form.formState.isValid
                   }
+                  isLoading={simulatingBundle}
+                  loadingMessage="Simulating"
                 >
-                  {borrowAmount == 0 && supplyCollateralAmount == 0
-                    ? "Enter Amount"
-                    : simulatingBundle
-                      ? "Simulating..."
-                      : "Review"}
+                  {borrowAmount == 0 && supplyCollateralAmount == 0 ? "Enter Amount" : "Review"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">

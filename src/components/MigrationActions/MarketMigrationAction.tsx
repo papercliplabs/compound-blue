@@ -360,12 +360,10 @@ export default function MarketMigrationAction({
                         aaveLtvHealth == "unhealthy" ||
                         morphoLtvHealth == "unhealthy"
                       }
+                      isLoading={simulatingBundle}
+                      loadingMessage="Simulating"
                     >
-                      {collateralMigrateAmount == 0 && loanMigrateAmount == 0
-                        ? "Enter Amount"
-                        : simulatingBundle
-                          ? "Simulating..."
-                          : "Review Migration"}
+                      {collateralMigrateAmount == 0 && loanMigrateAmount == 0 ? "Enter Amount" : "Review Migration"}
                     </Button>
                     {preparedAction?.status == "error" && (
                       <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
