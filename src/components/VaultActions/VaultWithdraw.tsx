@@ -129,8 +129,14 @@ export default function VaultWithdraw({
               />
 
               <div className="flex min-w-0 flex-col gap-2">
-                <Button type="submit" className="w-full" disabled={simulatingBundle || !form.formState.isValid}>
-                  {withdrawAmount == 0 ? "Enter Amount" : simulatingBundle ? "Simulating..." : "Review Withdraw"}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={simulatingBundle || !form.formState.isValid}
+                  isLoading={simulatingBundle}
+                  loadingMessage="Simulating"
+                >
+                  {withdrawAmount == 0 ? "Enter Amount" : "Review Withdraw"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">

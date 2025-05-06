@@ -210,12 +210,10 @@ export default function MarketRepayWithdrawCollateral({
                   type="submit"
                   className="w-full bg-accent-ternary"
                   disabled={simulatingBundle || (repayAmount == 0 && withdrawCollateralAmount == 0)}
+                  isLoading={simulatingBundle}
+                  loadingMessage="Simulating"
                 >
-                  {repayAmount == 0 && withdrawCollateralAmount == 0
-                    ? "Enter Amount"
-                    : simulatingBundle
-                      ? "Simulating..."
-                      : "Review"}
+                  {repayAmount == 0 && withdrawCollateralAmount == 0 ? "Enter Amount" : "Review"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
