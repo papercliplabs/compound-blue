@@ -180,7 +180,7 @@ export default function MarketLeverageBorrow({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <fieldset disabled={simulatingBundle || open} style={{ all: "unset", width: "100%" }}>
-            <div className="flex w-full flex-col gap-7 overflow-hidden">
+            <div className="flex w-full flex-col gap-7">
               <AssetFormField
                 control={form.control}
                 name="initialCollateralAmount"
