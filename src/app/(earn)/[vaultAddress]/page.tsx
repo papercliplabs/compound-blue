@@ -1,7 +1,7 @@
-import Apy from "@/components/Apy";
+import Apy, { ApyTooltipContent } from "@/components/Apy";
 import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
 import MarketAllocationTable from "@/components/tables/MarketAllocationTable";
-import Metric from "@/components/Metric";
+import Metric, { Metric as MetricComponent } from "@/components/Metric";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton, Skeletons } from "@/components/ui/skeleton";
 import { getVault } from "@/data/whisk/getVault";
@@ -19,6 +19,7 @@ import BackButton from "@/components/BackButton";
 import { AccountVaultPosition, AccountVaultPositionHighlight } from "@/components/AccountVaultPosition";
 import NumberFlow from "@/components/ui/NumberFlow";
 import RiskTier from "@/components/RiskTier";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "@/components/ui/tooltipPopover";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Vault",
@@ -168,30 +169,35 @@ async function VaultState({ vaultAddress }: { vaultAddress: Address }) {
     return null;
   }
 
-  const metrics: { label: string; description: string; value: ReactNode }[] = [
+  const metrics: { label: string; tooltip: ReactNode; value: ReactNode }[] = [
     {
       label: "Total Deposits",
-      description: "The total amount of assets currently deposited into the vault.",
-      value: <NumberFlow value={vault.supplyAssetsUsd} format={{ currency: "USD" }} />,
+      tooltip: "The total amount of assets currently deposited into the vault.",
+      value: <NumberFlow className="title-3" value={vault.supplyAssetsUsd} format={{ currency: "USD" }} />,
     },
     {
       label: "Available Liquidity",
-      description: "The available assets that can be withdrawn or reallocated.",
-      value: <NumberFlow value={vault.liquidityAssetsUsd} format={{ currency: "USD" }} />,
+      tooltip: "The available assets that can be withdrawn or reallocated.",
+      value: <NumberFlow className="title-3" value={vault.liquidityAssetsUsd} format={{ currency: "USD" }} />,
     },
     {
       label: "APY",
-      description: "The annual percent yield (APY) earned by depositing into this vault, including rewards and fees.",
-      value: <Apy type="supply" apy={vault.supplyApy} />,
+      tooltip: <ApyTooltipContent type="supply" apy={vault.supplyApy} />,
+      value: <Apy className="title-3" type="supply" apy={vault.supplyApy} showTooltip={false} />,
     },
   ];
 
   return (
     <div className="flex flex-wrap justify-between gap-x-8 gap-y-4">
       {metrics.map((metric, i) => (
-        <Metric key={i} label={metric.label} description={metric.description} className="flex-1">
-          <span className="title-3">{metric.value}</span>
-        </Metric>
+        <div key={i} className="flex-1">
+          <TooltipPopover>
+            <TooltipPopoverTrigger>
+              <MetricComponent label={metric.label}>{metric.value}</MetricComponent>
+            </TooltipPopoverTrigger>
+            <TooltipPopoverContent>{metric.tooltip}</TooltipPopoverContent>
+          </TooltipPopover>
+        </div>
       ))}
     </div>
   );
