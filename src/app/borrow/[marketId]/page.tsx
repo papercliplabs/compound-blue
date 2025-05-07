@@ -1,27 +1,28 @@
-import { getMarket, isNonIdleMarket } from "@/data/whisk/getMarket";
-import Link from "next/link";
-import { getAddress, Hex, isHex, zeroAddress } from "viem";
 import { ArrowLeft, Info } from "lucide-react";
+import { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ReactNode, Suspense } from "react";
-import { Skeleton, Skeletons } from "@/components/ui/skeleton";
-import { formatNumber } from "@/utils/format";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Hex, getAddress, isHex, zeroAddress } from "viem";
+
+import { AccountMarketPosition, AccountMarketPositionHighlight } from "@/components/AccountMarketPosition";
 import Apy, { ApyTooltipContent } from "@/components/Apy";
+import BackButton from "@/components/BackButton";
+import IrmChart from "@/components/IrmChart";
+import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
+import MarketActions from "@/components/MarketActions";
+import MarketAvailableLiquidity, { MarketAvailableLiquidityTooltip } from "@/components/MarketAvailableLiquidity";
+import { MarketIcon } from "@/components/MarketIdentifier";
 import { Metric, MetricWithTooltip } from "@/components/Metric";
 import VaultAllocationTable from "@/components/tables/VaultAllocationTable";
-import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
-import Image from "next/image";
-import IrmChart from "@/components/IrmChart";
-import MarketActions from "@/components/MarketActions";
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { WHITELISTED_MARKET_IDS } from "@/config";
-import BackButton from "@/components/BackButton";
-import { AccountMarketPosition, AccountMarketPositionHighlight } from "@/components/AccountMarketPosition";
-import MarketAvailableLiquidity, { MarketAvailableLiquidityTooltip } from "@/components/MarketAvailableLiquidity";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import NumberFlow from "@/components/ui/NumberFlow";
-import { MarketIcon } from "@/components/MarketIdentifier";
-import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "@/components/ui/tooltipPopover";
+import { Skeleton, Skeletons } from "@/components/ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "@/components/ui/tooltipPopover";
+import { WHITELISTED_MARKET_IDS } from "@/config";
+import { getMarket, isNonIdleMarket } from "@/data/whisk/getMarket";
+import { formatNumber } from "@/utils/format";
 import { isAssetVaultShare } from "@/utils/isAssetVaultShare";
 
 export const metadata: Metadata = {

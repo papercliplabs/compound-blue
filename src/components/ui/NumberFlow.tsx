@@ -1,8 +1,9 @@
 "use client";
-import { cn } from "@/utils/shadcn";
 import NumberFlowReact from "@number-flow/react";
 import { AnimatePresence, motion } from "motion/react";
 import { ComponentProps, ReactNode } from "react";
+
+import { cn } from "@/utils/shadcn";
 
 const MAX_USD_VALUE = 1e12;
 

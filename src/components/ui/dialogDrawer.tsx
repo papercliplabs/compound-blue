@@ -1,9 +1,11 @@
 "use client";
-import { useResponsiveContext } from "@/providers/ResponsiveProvider";
-import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "./dialog";
-import { Drawer, DrawerTrigger, DrawerContent, DrawerTitle } from "./drawer";
 import { HTMLAttributes, ReactNode, useMemo, useState } from "react";
 import { createContext, useContext } from "react";
+
+import { useResponsiveContext } from "@/providers/ResponsiveProvider";
+
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./dialog";
+import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "./drawer";
 
 const DialogDrawerContext = createContext<{ dismissible?: boolean }>({});
 

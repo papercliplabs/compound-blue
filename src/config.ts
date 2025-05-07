@@ -1,4 +1,4 @@
-import { Address, fallback, Hex, http, getAddress, parseEther } from "viem";
+import { Address, Hex, fallback, getAddress, http, parseEther } from "viem";
 import { polygon } from "viem/chains";
 
 // Chain the app will support, all addresses below should be on this chain.

@@ -1,23 +1,26 @@
 import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib } from "@morpho-org/blue-sdk";
+import { fetchMarket } from "@morpho-org/blue-sdk-viem";
+import { BundlerAction, BundlerCall, encodeBundle } from "@morpho-org/bundler-sdk-viem";
+import { populateSubBundle } from "@morpho-org/bundler-sdk-viem";
+import { Address, Client, erc20Abi, maxUint256 } from "viem";
+import { readContract } from "viem/actions";
+
+import { CHAIN_ID } from "@/config";
+import { getIsContract } from "@/data/getIsContract";
+import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
+import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
+
+import { createBundle, paraswapBuy } from "../bundler3";
 import {
+  PrepareActionReturnType,
+  SimulatedValueChange,
   getMarketSimulationStateAccountingForPublicReallocation,
   getSignatureRequirementDescription,
   getTransactionRequirementDescription,
-  PrepareActionReturnType,
-  SimulatedValueChange,
 } from "../helpers";
-import { Address, Client, erc20Abi, maxUint256 } from "viem";
-import { getIsContract } from "@/data/getIsContract";
-import { computeLeverageValues } from "./computeLeverageValues";
-import { BundlerCall, BundlerAction, encodeBundle } from "@morpho-org/bundler-sdk-viem";
-import { populateSubBundle } from "@morpho-org/bundler-sdk-viem";
-import { CHAIN_ID } from "@/config";
-import { readContract } from "viem/actions";
-import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
-import { createBundle, paraswapBuy } from "../bundler3";
-import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
-import { fetchMarket } from "@morpho-org/blue-sdk-viem";
 import { prepareInputTransferSubbundle } from "../subbundles/prepareInputTransferSubbundle";
+
+import { computeLeverageValues } from "./computeLeverageValues";
 
 interface PrepareMarketLeveragedBorrowActionParameters {
   publicClient: Client;

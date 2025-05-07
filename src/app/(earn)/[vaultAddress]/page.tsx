@@ -1,25 +1,26 @@
-import Apy, { ApyTooltipContent } from "@/components/Apy";
-import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
-import MarketAllocationTable from "@/components/tables/MarketAllocationTable";
-import { Metric, MetricWithTooltip } from "@/components/Metric";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton, Skeletons } from "@/components/ui/skeleton";
-import { getVault } from "@/data/whisk/getVault";
-import { formatNumber } from "@/utils/format";
 import { ArrowLeft } from "lucide-react";
+import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ReactNode, Suspense } from "react";
 import { Address, getAddress } from "viem";
-import VaultActions from "@/components/VaultActions";
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { WHITELISTED_VAULT_ADDRESSES } from "@/config";
-import BackButton from "@/components/BackButton";
+
 import { AccountVaultPosition, AccountVaultPositionHighlight } from "@/components/AccountVaultPosition";
-import NumberFlow from "@/components/ui/NumberFlow";
+import Apy, { ApyTooltipContent } from "@/components/Apy";
+import BackButton from "@/components/BackButton";
+import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
+import { Metric, MetricWithTooltip } from "@/components/Metric";
 import RiskTier from "@/components/RiskTier";
+import MarketAllocationTable from "@/components/tables/MarketAllocationTable";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import NumberFlow from "@/components/ui/NumberFlow";
+import { Skeleton, Skeletons } from "@/components/ui/skeleton";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "@/components/ui/tooltipPopover";
+import VaultActions from "@/components/VaultActions";
+import { WHITELISTED_VAULT_ADDRESSES } from "@/config";
+import { getVault } from "@/data/whisk/getVault";
+import { formatNumber } from "@/utils/format";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Vault",

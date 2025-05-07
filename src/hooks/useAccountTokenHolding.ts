@@ -1,11 +1,11 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { safeFetch } from "@/utils/fetch";
-import { useAccount } from "wagmi";
 import { Address } from "viem";
-import { AccountTokenHolding } from "@/data/whisk/getAccountTokenHolding";
+import { useAccount } from "wagmi";
 
 import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
+import { AccountTokenHolding } from "@/data/whisk/getAccountTokenHolding";
+import { safeFetch } from "@/utils/fetch";
 export function useAccountTokenHolding(tokenAddress: Address) {
   const { address } = useAccount();
   return useQuery({

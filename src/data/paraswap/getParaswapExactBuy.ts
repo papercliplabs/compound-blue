@@ -1,8 +1,10 @@
-import { CHAIN_ID, PARASWAP_PARTNER_ADDRESS, PARASWAP_PARTNER_NAME } from "@/config";
-import { TransactionParams, OptimalRate, SwapSide } from "@paraswap/sdk";
-import { Address, Client, erc20Abi, getAddress, Hex } from "viem";
+import { OptimalRate, SwapSide, TransactionParams } from "@paraswap/sdk";
+import { Address, Client, Hex, erc20Abi, getAddress } from "viem";
 import { readContract } from "viem/actions";
+
+import { CHAIN_ID, PARASWAP_PARTNER_ADDRESS, PARASWAP_PARTNER_NAME } from "@/config";
 import { safeFetch } from "@/utils/fetch";
+
 import { OFFSET_LOOKUP_TABLE, SUPPORTED_CONTRACT_METHODS, SUPPORTED_DEXS } from "./config";
 import { GetParaswapReturnType, SupportedContractMethod } from "./types";
 import { SupportedDex } from "./types";

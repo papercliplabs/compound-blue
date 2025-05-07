@@ -1,15 +1,20 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
-import { MarketSummary } from "@/data/whisk/getMarketSummaries";
-import Image from "next/image";
-import { formatNumber } from "@/utils/format";
-import { Table } from "./Table";
-import Apy from "../Apy";
-import { NumberFlowWithLoading } from "../ui/NumberFlow";
-import MarketAvailableLiquidity from "../MarketAvailableLiquidity";
-import { Skeleton } from "../ui/skeleton";
 import clsx from "clsx";
+import Image from "next/image";
+
+import { MarketSummary } from "@/data/whisk/getMarketSummaries";
 import { BorrowTableEntry, useBorrowTableData } from "@/hooks/useBorrowTableData";
+import { formatNumber } from "@/utils/format";
+
+import Apy from "../Apy";
+import MarketAvailableLiquidity from "../MarketAvailableLiquidity";
+import { NumberFlowWithLoading } from "../ui/NumberFlow";
+import { Skeleton } from "../ui/skeleton";
+
+import { Table } from "./Table";
+
+
 
 interface TableProps {
   marketSummaries: MarketSummary[];

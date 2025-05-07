@@ -1,12 +1,15 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Table } from "./Table";
-import { formatAddress } from "@/utils/format";
-import { Market } from "@/data/whisk/getMarket";
 import { getAddress } from "viem";
+
+import { Market } from "@/data/whisk/getMarket";
+import { formatAddress } from "@/utils/format";
+
 import TotalSupplyWithCap from "../TotalSupplyWithCap";
 import NumberFlow from "../ui/NumberFlow";
 import { VaultIdentifier } from "../VaultIdentifier";
+
+import { Table } from "./Table";
 
 interface TableProps {
   allocations: Market["vaultAllocations"];

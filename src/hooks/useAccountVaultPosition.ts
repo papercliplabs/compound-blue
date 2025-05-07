@@ -1,12 +1,13 @@
 "use client";
-import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
-import { AccountVaultPosition, AccountVaultPositions } from "@/data/whisk/getAccountVaultPositions";
-import { VaultSummary } from "@/data/whisk/getVaultSummaries";
-import { safeFetch } from "@/utils/fetch";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Address, getAddress } from "viem";
 import { useAccount } from "wagmi";
+
+import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
+import { AccountVaultPosition, AccountVaultPositions } from "@/data/whisk/getAccountVaultPositions";
+import { VaultSummary } from "@/data/whisk/getVaultSummaries";
+import { safeFetch } from "@/utils/fetch";
 
 export function useAccountVaultPositions() {
   const { address } = useAccount();

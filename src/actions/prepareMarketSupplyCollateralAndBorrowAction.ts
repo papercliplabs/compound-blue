@@ -1,15 +1,17 @@
 import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId } from "@morpho-org/blue-sdk";
-import {
-  computeMarketPositionChange,
-  getMarketSimulationStateAccountingForPublicReallocation,
-  MarketPositionChange,
-  prepareBundle,
-  PrepareMorphoActionReturnType,
-} from "./helpers";
 import { InputBundlerOperation } from "@morpho-org/bundler-sdk-viem";
 import { Address, Client, maxUint256 } from "viem";
+
 import { getIsContract } from "@/data/getIsContract";
 import { MORPHO_BLUE_ADDRESS } from "@/utils/constants";
+
+import {
+  MarketPositionChange,
+  PrepareMorphoActionReturnType,
+  computeMarketPositionChange,
+  getMarketSimulationStateAccountingForPublicReallocation,
+  prepareBundle,
+} from "./helpers";
 
 interface PrepareMarketSupplyCollateralAndBorrowActionParameters {
   publicClient: Client;
