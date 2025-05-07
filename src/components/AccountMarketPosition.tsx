@@ -3,7 +3,7 @@ import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 import { Hex } from "viem";
 import { ReactNode } from "react";
 import { Skeleton } from "./ui/skeleton";
-import Metric from "./Metric";
+import { MetricWithTooltip } from "./Metric";
 import { useAccount } from "wagmi";
 import Image from "next/image";
 import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
@@ -87,13 +87,13 @@ export function AccountMarketPositionHighlight({ market }: MarketPositionProps) 
 
   return (
     <div className="flex flex-col md:items-end md:text-end">
-      <Metric
+      <MetricWithTooltip
         label={<span className="justify-end text-accent-ternary">Borrowing</span>}
-        description="Your borrow balance in this market."
+        tooltip="Your borrow balance in this market."
         className="title-3 md:items-end"
       >
         <NumberFlow value={marketPosition.borrowAssetsUsd} format={{ currency: "USD" }} />
-      </Metric>
+      </MetricWithTooltip>
       <div className="flex items-center gap-1 text-content-secondary label-sm">
         {market.loanAsset.icon && (
           <Image
@@ -114,9 +114,9 @@ export function AccountMarketPositionAggregate() {
   const { data: accountMarketPositonAggregate, isLoading } = useAccountMarketPositionAggregate();
   return (
     <div className="flex gap-10 md:text-end">
-      <Metric
+      <MetricWithTooltip
         label={<span className="justify-end text-accent-ternary">Your Borrowing</span>}
-        description="Your total borrow balance across all markets."
+        tooltip="Your total borrow balance across all markets."
         className="title-3 md:items-end"
       >
         <NumberFlowWithLoading
@@ -125,11 +125,11 @@ export function AccountMarketPositionAggregate() {
           isLoading={isLoading}
           loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
         />
-      </Metric>
+      </MetricWithTooltip>
 
-      <Metric
+      <MetricWithTooltip
         label={<span className="justify-end">Avg. Borrow APY</span>}
-        description="Your average borrow APY across all markets, including rewards."
+        tooltip="Your average borrow APY across all markets, including rewards."
         className="title-3 md:items-end"
       >
         <NumberFlowWithLoading
@@ -138,7 +138,7 @@ export function AccountMarketPositionAggregate() {
           isLoading={isLoading}
           loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
         />
-      </Metric>
+      </MetricWithTooltip>
     </div>
   );
 }

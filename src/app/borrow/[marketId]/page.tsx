@@ -7,7 +7,7 @@ import { Skeleton, Skeletons } from "@/components/ui/skeleton";
 import { formatNumber } from "@/utils/format";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Apy, { ApyTooltipContent } from "@/components/Apy";
-import Metric, { Metric as MetricComponent } from "@/components/Metric";
+import { Metric, MetricWithTooltip } from "@/components/Metric";
 import VaultAllocationTable from "@/components/tables/VaultAllocationTable";
 import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
 import Image from "next/image";
@@ -229,7 +229,7 @@ async function MarketState({ marketId }: { marketId: Hex }) {
         <div key={i} className="flex-1">
           <TooltipPopover>
             <TooltipPopoverTrigger>
-              <MetricComponent label={metric.label}>{metric.value}</MetricComponent>
+              <Metric label={metric.label}>{metric.value}</Metric>
             </TooltipPopoverTrigger>
             <TooltipPopoverContent>{metric.tooltip}</TooltipPopoverContent>
           </TooltipPopover>
@@ -278,9 +278,9 @@ async function MarketIrm({ marketId }: { marketId: Hex }) {
     <div className="flex flex-col justify-between gap-8 lg:flex-row">
       <div className="flex flex-col justify-between gap-6 md:flex-row lg:flex-col">
         {metrics.map((metric, i) => (
-          <Metric key={i} label={metric.label} description={metric.description} className="flex-1">
+          <MetricWithTooltip key={i} label={metric.label} tooltip={metric.description} className="flex-1">
             <span className="title-5">{metric.value}</span>
-          </Metric>
+          </MetricWithTooltip>
         ))}
       </div>
       {market.irm.curve && <IrmChart data={market.irm.curve} currentUtilization={market.utilization} />}
@@ -360,9 +360,9 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
   return (
     <div className="grid grid-cols-1 gap-y-8 md:grid-cols-3 md:gap-y-10">
       {metrics.map((metric, i) => (
-        <Metric key={i} label={metric.label} description={metric.description}>
+        <MetricWithTooltip key={i} label={metric.label} tooltip={metric.description}>
           <span className="title-5">{metric.value}</span>
-        </Metric>
+        </MetricWithTooltip>
       ))}
     </div>
   );

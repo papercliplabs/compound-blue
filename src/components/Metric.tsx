@@ -8,16 +8,10 @@ export type MetricProps = {
 } & React.ComponentProps<"div">;
 
 export type MetricWithTooltipProps = {
-  description: string;
+  tooltip: ReactNode;
 } & MetricProps;
 
-export default function MetricWithTooltip({
-  label,
-  children,
-  description,
-  className,
-  ...props
-}: MetricWithTooltipProps) {
+export function MetricWithTooltip({ label, children, tooltip, className, ...props }: MetricWithTooltipProps) {
   return (
     <div className={cn("flex flex-col gap-1", className)} {...props}>
       <TooltipPopover>
@@ -26,7 +20,7 @@ export default function MetricWithTooltip({
             {children}
           </Metric>
         </TooltipPopoverTrigger>
-        <TooltipPopoverContent>{description}</TooltipPopoverContent>
+        <TooltipPopoverContent>{tooltip}</TooltipPopoverContent>
       </TooltipPopover>
     </div>
   );

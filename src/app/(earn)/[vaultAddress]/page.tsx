@@ -1,7 +1,7 @@
 import Apy, { ApyTooltipContent } from "@/components/Apy";
 import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
 import MarketAllocationTable from "@/components/tables/MarketAllocationTable";
-import Metric, { Metric as MetricComponent } from "@/components/Metric";
+import { Metric, MetricWithTooltip } from "@/components/Metric";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton, Skeletons } from "@/components/ui/skeleton";
 import { getVault } from "@/data/whisk/getVault";
@@ -193,7 +193,7 @@ async function VaultState({ vaultAddress }: { vaultAddress: Address }) {
         <div key={i} className="flex-1">
           <TooltipPopover>
             <TooltipPopoverTrigger>
-              <MetricComponent label={metric.label}>{metric.value}</MetricComponent>
+              <Metric label={metric.label}>{metric.value}</Metric>
             </TooltipPopoverTrigger>
             <TooltipPopoverContent>{metric.tooltip}</TooltipPopoverContent>
           </TooltipPopover>
@@ -260,9 +260,9 @@ async function VaultInfo({ vaultAddress }: { vaultAddress: Address }) {
   return (
     <div className="grid grid-cols-1 gap-y-8 md:grid-cols-3 md:gap-y-10">
       {metrics.map((metric, i) => (
-        <Metric key={i} label={metric.label} description={metric.description}>
+        <MetricWithTooltip key={i} label={metric.label} tooltip={metric.description}>
           <span className="title-5">{metric.value}</span>
-        </Metric>
+        </MetricWithTooltip>
       ))}
     </div>
   );
