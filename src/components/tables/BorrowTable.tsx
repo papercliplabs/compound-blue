@@ -17,30 +17,6 @@ interface TableProps {
 
 export const columns: ColumnDef<BorrowTableEntry>[] = [
   {
-    accessorKey: "loanAsset.symbol",
-    header: "Loan Asset",
-    cell: ({ row }) => {
-      const { marketSummary } = row.original;
-
-      return (
-        <div className="flex items-center gap-3">
-          <Image
-            src={marketSummary.loanAsset.icon ?? ""}
-            width={36}
-            height={36}
-            className="shrink-0 rounded-full border"
-            alt={marketSummary.loanAsset.symbol}
-          />
-          <span className="label-lg">{marketSummary.loanAsset.symbol}</span>
-        </div>
-      );
-    },
-    meta: {
-      tooltip: "The borrowable asset.",
-    },
-    minSize: 160,
-  },
-  {
     accessorKey: "collateralAsset.symbol",
     header: "Collateral Asset",
     cell: ({ row }) => {
@@ -63,6 +39,30 @@ export const columns: ColumnDef<BorrowTableEntry>[] = [
     },
     meta: {
       tooltip: "The asset used as collateral for loans.",
+    },
+    minSize: 160,
+  },
+  {
+    accessorKey: "loanAsset.symbol",
+    header: "Loan Asset",
+    cell: ({ row }) => {
+      const { marketSummary } = row.original;
+
+      return (
+        <div className="flex items-center gap-3">
+          <Image
+            src={marketSummary.loanAsset.icon ?? ""}
+            width={36}
+            height={36}
+            className="shrink-0 rounded-full border"
+            alt={marketSummary.loanAsset.symbol}
+          />
+          <span className="label-lg">{marketSummary.loanAsset.symbol}</span>
+        </div>
+      );
+    },
+    meta: {
+      tooltip: "The borrowable asset.",
     },
     minSize: 160,
   },
