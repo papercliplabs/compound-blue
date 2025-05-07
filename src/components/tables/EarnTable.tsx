@@ -17,7 +17,7 @@ interface TableProps {
 
 export const columns: ColumnDef<EarnTableEntry>[] = [
   {
-    accessorKey: "name",
+    accessorKey: "vaultSummary.name",
     header: "Vault Name",
     cell: ({ row }) => {
       const { vaultSummary } = row.original;
@@ -44,7 +44,8 @@ export const columns: ColumnDef<EarnTableEntry>[] = [
     minSize: 160,
   },
   {
-    accessorKey: "supplyAssetsUsd",
+    id: "supplyAssetsUsd",
+    accessorKey: "vaultSummary.supplyAssetsUsd",
     header: "Total Deposits",
     cell: ({ row }) => formatNumber(row.original.vaultSummary.supplyAssetsUsd, { currency: "USD" }),
     meta: {
@@ -53,7 +54,7 @@ export const columns: ColumnDef<EarnTableEntry>[] = [
     minSize: 160,
   },
   {
-    accessorKey: "liquidityAssetsUsd",
+    accessorKey: "vaultSummary.liquidityAssetsUsd",
     header: "Liquidity",
     cell: ({ row }) => formatNumber(row.original.vaultSummary.liquidityAssetsUsd, { currency: "USD" }),
     minSize: 120,
@@ -86,7 +87,7 @@ export const columns: ColumnDef<EarnTableEntry>[] = [
     minSize: 160,
   },
   {
-    accessorKey: "supplyApy.total",
+    accessorKey: "vaultSummary.supplyApy.total",
     header: "Supply APY",
     cell: ({ row }) => {
       const { vaultSummary } = row.original;

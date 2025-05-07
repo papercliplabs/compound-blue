@@ -17,7 +17,7 @@ interface TableProps {
 
 export const columns: ColumnDef<BorrowTableEntry>[] = [
   {
-    accessorKey: "collateralAsset.symbol",
+    accessorKey: "marketSummary.collateralAsset.symbol",
     header: "Collateral Asset",
     cell: ({ row }) => {
       const { marketSummary } = row.original;
@@ -43,7 +43,7 @@ export const columns: ColumnDef<BorrowTableEntry>[] = [
     minSize: 160,
   },
   {
-    accessorKey: "loanAsset.symbol",
+    accessorKey: "marketSummary.loanAsset.symbol",
     header: "Loan Asset",
     cell: ({ row }) => {
       const { marketSummary } = row.original;
@@ -85,7 +85,7 @@ export const columns: ColumnDef<BorrowTableEntry>[] = [
     minSize: 160,
   },
   {
-    accessorKey: "userLtv",
+    accessorKey: "position.ltv",
     header: "Your LTV / LLTV",
     cell: ({ row }) => {
       const { marketSummary, position, isPositionLoading } = row.original;
@@ -127,7 +127,7 @@ export const columns: ColumnDef<BorrowTableEntry>[] = [
     minSize: 140,
   },
   {
-    accessorKey: "borrowApy.total",
+    accessorKey: "marketSummary.borrowApy.total",
     header: "Borrow APY",
     cell: ({ row }) => {
       const { marketSummary } = row.original;
