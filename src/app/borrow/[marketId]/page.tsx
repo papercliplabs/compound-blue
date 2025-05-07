@@ -163,9 +163,19 @@ async function MarketMetadata({ marketId }: { marketId: Hex }) {
       />
       <div className="flex items-center gap-4">
         <h1 className="whitespace-nowrap title-2">{market.name}</h1>
-        <div className="rounded-[4px] bg-button-neutral px-1 text-content-secondary label-lg">
-          {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 0 })}
-        </div>
+        <TooltipPopover>
+          <TooltipPopoverTrigger>
+            <div className="rounded-[4px] bg-button-neutral px-1 text-content-secondary label-lg">
+              {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 0 })}
+            </div>
+          </TooltipPopoverTrigger>
+          <TooltipPopoverContent>
+            <p>
+              The liquidation loan-to-value (LLTV) threshold sets the limit at which positions become eligible for
+              liquidation.
+            </p>
+          </TooltipPopoverContent>
+        </TooltipPopover>
       </div>
       {collateralRehypothecation && (
         <TooltipPopover>
