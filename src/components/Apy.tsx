@@ -7,7 +7,6 @@ import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "./
 import NumberFlow from "./ui/NumberFlow";
 
 interface ApyProps extends HTMLAttributes<HTMLDivElement> {
-  type: "supply" | "borrow";
   apy: {
     base: number;
     rewards: {
@@ -20,6 +19,8 @@ interface ApyProps extends HTMLAttributes<HTMLDivElement> {
     performanceFee?: number;
     total: number;
   };
+  showTooltip?: boolean;
+  type: "supply" | "borrow";
 }
 
 const APY_TOOLTIP_CONTENT: Record<ApyProps["type"], { title: string; description: string }> = {
@@ -31,25 +32,43 @@ const APY_TOOLTIP_CONTENT: Record<ApyProps["type"], { title: string; description
     title: "Borrow APY",
     description: "The annual percent yield (APY) paid by borrowing from this market.",
   },
-};
+} as const;
 
-export default function Apy({ type, apy, className }: ApyProps) {
+export function ApyTooltipContent({ apy, type }: { apy: ApyProps["apy"]; type: ApyProps["type"] }) {
+  return (
+    <div className="flex max-w-[320px] flex-col gap-4">
+      <div className="label-md">{APY_TOOLTIP_CONTENT[type].title}</div>
+      <div className="text-content-primary/50 paragraph-sm">{APY_TOOLTIP_CONTENT[type].description}</div>
+      <ApyBreakdown {...apy} />
+    </div>
+  );
+}
+
+export function ApyTrigger({ className, total }: { total: number } & React.ComponentProps<"div">) {
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <NumberFlow value={total} format={{ style: "percent" }} />
+      <Sparkle className="h-5 w-5" />
+    </div>
+  );
+}
+
+export default function Apy({ type, apy, className, showTooltip = true }: ApyProps) {
   if (apy.rewards.length == 0) {
     return formatNumber(apy.total, { style: "percent" });
   }
 
-  return (
+  return showTooltip ? (
     <TooltipPopover>
-      <TooltipPopoverTrigger className={cn("flex items-center gap-2", className)}>
-        <NumberFlow value={apy.total} format={{ style: "percent" }} />
-        <Sparkle className="h-5 w-5" />
+      <TooltipPopoverTrigger>
+        <ApyTrigger className={className} total={apy.total} />
       </TooltipPopoverTrigger>
-      <TooltipPopoverContent className="flex max-w-[320px] flex-col gap-4">
-        <div className="label-md">{APY_TOOLTIP_CONTENT[type].title}</div>
-        <div className="text-content-primary/50 paragraph-sm">{APY_TOOLTIP_CONTENT[type].description}</div>
-        <ApyBreakdown {...apy} />
+      <TooltipPopoverContent>
+        <ApyTooltipContent apy={apy} type={type} />
       </TooltipPopoverContent>
     </TooltipPopover>
+  ) : (
+    <ApyTrigger className={className} total={apy.total} />
   );
 }
 
