@@ -1,22 +1,35 @@
 import { cn } from "@/utils/shadcn";
-import { HTMLAttributes, ReactNode } from "react";
+import { ReactNode } from "react";
 import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "./ui/tooltipPopover";
 
-export interface MetricProps extends HTMLAttributes<HTMLDivElement> {
+export type MetricProps = {
   label: ReactNode;
-  description: string;
   children: ReactNode;
-}
+} & React.ComponentProps<"div">;
 
-export default function Metric({ label, description, children, className, ...props }: MetricProps) {
+export type MetricWithTooltipProps = {
+  tooltip: ReactNode;
+} & MetricProps;
+
+export function MetricWithTooltip({ label, children, tooltip, className, ...props }: MetricWithTooltipProps) {
   return (
     <div className={cn("flex flex-col gap-1", className)} {...props}>
       <TooltipPopover>
-        <TooltipPopoverTrigger className="label-md w-fit whitespace-nowrap text-content-secondary">
-          {label}
+        <TooltipPopoverTrigger>
+          <Metric label={label} className={className}>
+            {children}
+          </Metric>
         </TooltipPopoverTrigger>
-        <TooltipPopoverContent>{description}</TooltipPopoverContent>
+        <TooltipPopoverContent>{tooltip}</TooltipPopoverContent>
       </TooltipPopover>
+    </div>
+  );
+}
+
+export function Metric({ label, children, className, ...props }: MetricProps) {
+  return (
+    <div className={cn("flex flex-col gap-1 text-left text-content-primary", className)} {...props}>
+      <p className="w-fit whitespace-nowrap text-content-secondary label-md">{label}</p>
       {children}
     </div>
   );
