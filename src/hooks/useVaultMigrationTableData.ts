@@ -1,13 +1,15 @@
 "use client";
+import { useEffect, useMemo, useState } from "react";
+import { getAddress, isAddressEqual } from "viem";
+import { useAccount } from "wagmi";
+
+import { trackEvent } from "@/data/trackEvent";
+import { AaveV3ReservePosition } from "@/data/whisk/getAaveV3MarketPosition";
+import { AccountVaultPosition } from "@/data/whisk/getAccountVaultPositions";
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
+
 import { useAaveV3MarketPosition } from "./useAaveV3MarketPosition";
 import { useAccountVaultPositions } from "./useAccountVaultPosition";
-import { AccountVaultPosition } from "@/data/whisk/getAccountVaultPositions";
-import { AaveV3ReservePosition } from "@/data/whisk/getAaveV3MarketPosition";
-import { useEffect, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
-import { getAddress, isAddressEqual } from "viem";
-import { trackEvent } from "@/data/trackEvent";
 
 export interface VaultMigrationTableEntry {
   sourcePosition: AaveV3ReservePosition;

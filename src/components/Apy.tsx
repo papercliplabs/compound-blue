@@ -1,10 +1,12 @@
-import { formatNumber } from "@/utils/format";
 import Image from "next/image";
 import { HTMLAttributes, ReactNode } from "react";
-import Sparkle from "./ui/icons/Sparkle";
+
+import { formatNumber } from "@/utils/format";
 import { cn } from "@/utils/shadcn";
-import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "./ui/tooltipPopover";
+
+import Sparkle from "./ui/icons/Sparkle";
 import NumberFlow from "./ui/NumberFlow";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 
 interface ApyProps extends HTMLAttributes<HTMLDivElement> {
   apy: {

@@ -1,7 +1,9 @@
-import { formatNumber } from "@/utils/format";
-import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
-import NumberFlow from "./ui/NumberFlow";
 import { ComponentProps } from "react";
+
+import { formatNumber } from "@/utils/format";
+
+import NumberFlow from "./ui/NumberFlow";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 
 type MarketAvailableLiquidityProps = {
   liquidityAssetUsd: number;

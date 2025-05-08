@@ -1,17 +1,19 @@
 "use client";
-import { cn } from "@/utils/shadcn";
 import {
   ColumnDef,
-  getCoreRowModel,
-  getSortedRowModel,
   RowData,
   SortingState,
+  getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { flexRender } from "@tanstack/react-table";
 import Link from "next/link";
 import { HTMLAttributes, useEffect, useRef, useState } from "react";
-import { flexRender } from "@tanstack/react-table";
 import { ScrollSync, ScrollSyncPane } from "react-scroll-sync";
+
+import { cn } from "@/utils/shadcn";
+
 import SortIcon from "../ui/icons/Sort";
 import "@tanstack/react-table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";

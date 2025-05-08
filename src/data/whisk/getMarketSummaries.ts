@@ -1,7 +1,8 @@
-import { graphql } from "@/generated/gql/whisk";
-import { whiskClient } from "./client";
 import { CHAIN_ID, WHITELISTED_MARKET_IDS } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
+import { graphql } from "@/generated/gql/whisk";
+
+import { whiskClient } from "./client";
 
 const query = graphql(`
   query getMarketSummary($chainId: Number!, $marketIds: [String!]!) {

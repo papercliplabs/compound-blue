@@ -1,10 +1,11 @@
 "use client";
-import { cn } from "@/utils/shadcn";
 import clsx from "clsx";
 import { ArrowRight } from "lucide-react";
+import { motion } from "motion/react";
 import { HTMLAttributes } from "react";
 import { ReactNode } from "react";
-import { motion } from "motion/react";
+
+import { cn } from "@/utils/shadcn";
 
 interface MetricChangeProps extends HTMLAttributes<HTMLDivElement> {
   name: string;

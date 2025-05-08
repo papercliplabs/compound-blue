@@ -1,7 +1,7 @@
-import { polygon } from "viem/chains";
-import { createPublicClient, http } from "viem";
-import { createViemTest } from "@morpho-org/test/vitest";
 import { AnvilArgs, createAnvilTestClient, spawnAnvil } from "@morpho-org/test";
+import { createViemTest } from "@morpho-org/test/vitest";
+import { createPublicClient, http } from "viem";
+import { polygon } from "viem/chains";
 
 export const test = createViemTest(polygon, {
   forkUrl: process.env.NEXT_PUBLIC_RPC_URL_1!,

@@ -1,15 +1,18 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Table } from "./Table";
+import clsx from "clsx";
+
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
+import { EarnTableEntry, useEarnTableData } from "@/hooks/useEarnTableData";
 import { formatNumber } from "@/utils/format";
+
 import Apy from "../Apy";
 import RowIcons from "../RowIcons";
 import { NumberFlowWithLoading } from "../ui/NumberFlow";
-import { VaultIdentifier } from "../VaultIdentifier";
 import { Skeleton } from "../ui/skeleton";
-import clsx from "clsx";
-import { EarnTableEntry, useEarnTableData } from "@/hooks/useEarnTableData";
+import { VaultIdentifier } from "../VaultIdentifier";
+
+import { Table } from "./Table";
 
 interface TableProps {
   vaultSummaries: VaultSummary[];

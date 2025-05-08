@@ -1,9 +1,10 @@
-import { MarketSummary } from "@/data/whisk/getMarketSummaries";
-import Image from "next/image";
-import { cn } from "@/utils/shadcn";
 import clsx from "clsx";
+import Image from "next/image";
 import { HTMLAttributes } from "react";
+
+import { MarketSummary } from "@/data/whisk/getMarketSummaries";
 import { formatNumber } from "@/utils/format";
+import { cn } from "@/utils/shadcn";
 
 interface MarketIdentifierProps {
   name: MarketSummary["name"];

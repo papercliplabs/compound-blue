@@ -1,9 +1,11 @@
 import "server-only";
-import { graphql } from "@/generated/gql/whisk";
-import { whiskClient } from "./client";
-import { CHAIN_ID } from "@/config";
 import { Address } from "viem";
+
+import { CHAIN_ID } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
+import { graphql } from "@/generated/gql/whisk";
+
+import { whiskClient } from "./client";
 
 const query = graphql(`
   query getAccountTokenHolding($chainId: Number!, $tokenAddress: String!, $accountAddress: String!) {

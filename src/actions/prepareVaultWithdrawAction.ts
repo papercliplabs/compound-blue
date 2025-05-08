@@ -1,8 +1,10 @@
-import { getSimulationState } from "@/data/getSimulationState";
 import { DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
-import { prepareBundle, PrepareMorphoActionReturnType, SimulatedValueChange } from "./helpers";
 import { Address, Client, maxUint256 } from "viem";
+
 import { getIsContract } from "@/data/getIsContract";
+import { getSimulationState } from "@/data/getSimulationState";
+
+import { PrepareMorphoActionReturnType, SimulatedValueChange, prepareBundle } from "./helpers";
 
 interface PrepareVaultWithdrawActionParameters {
   publicClient: Client;

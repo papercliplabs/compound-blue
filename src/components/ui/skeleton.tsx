@@ -1,5 +1,6 @@
-import { cn } from "@/utils/shadcn";
 import { ComponentProps } from "react";
+
+import { cn } from "@/utils/shadcn";
 
 function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("animate-pulse rounded-xl bg-content-secondary/15", className)} {...props} />;

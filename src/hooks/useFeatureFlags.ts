@@ -1,8 +1,9 @@
 "use client";
-import { COUNTRY_CODES_TO_DISABLE_LEVERAGE } from "@/config";
-import { safeFetch } from "@/utils/fetch";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+
+import { COUNTRY_CODES_TO_DISABLE_LEVERAGE } from "@/config";
+import { safeFetch } from "@/utils/fetch";
 
 interface FeatureFlags {
   multiply: boolean;

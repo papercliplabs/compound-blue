@@ -1,7 +1,9 @@
 "use client";
 import { useMemo } from "react";
-import { VaultSummary } from "@/data/whisk/getVaultSummaries";
+
 import { AccountVaultPosition } from "@/data/whisk/getAccountVaultPositions";
+import { VaultSummary } from "@/data/whisk/getVaultSummaries";
+
 import { useAccountVaultPositions } from "./useAccountVaultPosition";
 
 export interface EarnTableEntry {

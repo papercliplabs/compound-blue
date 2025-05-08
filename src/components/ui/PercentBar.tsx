@@ -1,7 +1,8 @@
 "use client";
-import { cn } from "@/utils/shadcn";
 import { motion } from "motion/react";
 import { HTMLAttributes } from "react";
+
+import { cn } from "@/utils/shadcn";
 
 interface PercentBarProps extends HTMLAttributes<HTMLDivElement> {
   value: number; // 0->1 (will saturate these)

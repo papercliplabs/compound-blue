@@ -1,5 +1,6 @@
-import { getAaveV3MarketPosition } from "@/data/whisk/getAaveV3MarketPosition";
 import { getAddress } from "viem";
+
+import { getAaveV3MarketPosition } from "@/data/whisk/getAaveV3MarketPosition";
 
 export async function GET(request: Request, { params }: { params: Promise<{ accountAddress: string }> }) {
   const accountAddress = getAddress((await params).accountAddress);

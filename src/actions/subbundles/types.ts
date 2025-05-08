@@ -1,5 +1,6 @@
-import { TransactionRequest, SignatureRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 import { BundlerCall } from "@morpho-org/bundler-sdk-viem";
+
+import { SignatureRequest, TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 
 export interface Subbundle {
   signatureRequirements: SignatureRequest[];

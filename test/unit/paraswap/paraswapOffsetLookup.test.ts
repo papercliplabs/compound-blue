@@ -1,8 +1,9 @@
-import { OFFSET_LOOKUP_TABLE } from "@/data/paraswap/config";
-import { SupportedContractMethod } from "@/data/paraswap/types";
 import { ContractMethodV6 } from "@paraswap/sdk";
 import { Hex } from "viem";
 import { describe, expect, test } from "vitest";
+
+import { OFFSET_LOOKUP_TABLE } from "@/data/paraswap/config";
+import { SupportedContractMethod } from "@/data/paraswap/types";
 
 interface ParaswapOffsetLookupTest {
   name: string;

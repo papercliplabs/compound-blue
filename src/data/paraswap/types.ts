@@ -1,4 +1,5 @@
 import { Address, Hex } from "viem";
+
 import { SUPPORTED_CONTRACT_METHODS, SUPPORTED_DEXS } from "./config";
 
 export interface ParaswapOffsets {
