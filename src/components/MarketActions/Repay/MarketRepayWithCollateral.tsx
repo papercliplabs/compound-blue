@@ -19,9 +19,9 @@ import { ArrowRight, Info } from "lucide-react";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../../ui/tooltipPopover";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import {
-  prepareMarketRepayWithCollateralAction,
-  PrepareMarketRepayWithCollateralActionReturnType,
-} from "@/actions/prepareMarketRepayWithCollateralAction";
+  marketRepayWithCollateralAction,
+  MarketRepayWithCollateralAction,
+} from "@/actions/market/marketRepayWithCollateralAction";
 import { MetricChange } from "@/components/MetricChange";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import AssetFormField from "@/components/FormFields/AssetFormField";
@@ -35,9 +35,7 @@ export default function MarketRepayWithCollateral({
   market: MarketNonIdle;
   onCloseAfterSuccess?: () => void;
 }) {
-  const [preparedAction, setPreparedAction] = useState<PrepareMarketRepayWithCollateralActionReturnType | undefined>(
-    undefined
-  );
+  const [preparedAction, setPreparedAction] = useState<MarketRepayWithCollateralAction | undefined>(undefined);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -98,7 +96,7 @@ export default function MarketRepayWithCollateral({
         ? maxUint256
         : parseUnits(numberToString(repayAmount), market.loanAsset.decimals);
 
-      const action = await prepareMarketRepayWithCollateralAction({
+      const action = await marketRepayWithCollateralAction({
         publicClient,
         accountAddress: address,
         marketId: market.marketId as MarketId,

@@ -1,7 +1,6 @@
 "use client";
 import { ReactNode, createContext, useCallback, useContext, useState } from "react";
-import { SignatureRequirementFunction } from "@morpho-org/bundler-sdk-viem";
-import { Address, Hex, TransactionRequest as ViemTransactionRequest } from "viem";
+import { Hex } from "viem";
 import { useAccount, useConnectorClient, usePublicClient, useSwitchChain } from "wagmi";
 import { CHAIN_ID } from "@/config";
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
@@ -10,6 +9,7 @@ import { revalidateDynamicPages } from "@/utils/revalidateDynamicPages";
 import { trackEvent } from "@/data/trackEvent";
 import { safeFetch } from "@/utils/fetch";
 import { useQueryClient } from "@tanstack/react-query";
+import { SignatureRequest, TransactionRequest } from "@/actions/utils/types";
 
 export type ActionFlowState = "review" | "active" | "success" | "failed";
 export type ActionState = "pending-wallet" | "pending-transaction";
@@ -36,21 +36,6 @@ type ActionFlowContextType = {
 };
 
 const ActionFlowContext = createContext<ActionFlowContextType | undefined>(undefined);
-
-interface ActionMetadata {
-  name: string;
-}
-
-export interface SignatureRequest extends ActionMetadata {
-  sign: SignatureRequirementFunction;
-}
-
-export interface TransactionRequest extends ActionMetadata {
-  tx: () => ViemTransactionRequest & {
-    to: Address;
-    data: Hex;
-  };
-}
 
 interface ActionFlowProviderProps {
   signatureRequests: SignatureRequest[];

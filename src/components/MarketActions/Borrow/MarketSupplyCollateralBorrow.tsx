@@ -17,9 +17,9 @@ import { Form } from "@/components/ui/form";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
-  prepareMarketSupplyCollateralAndBorrowAction,
-  PrepareMarketSupplyCollateralAndBorrowActionReturnType,
-} from "@/actions/prepareMarketSupplyCollateralAndBorrowAction";
+  marketSupplyCollateralAndBorrowAction,
+  MarketSupplyCollateralAndBorrowAction,
+} from "@/actions/market/marketSupplyCollateralAndBorrowAction";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import PoweredByMorpho from "../../ui/icons/PoweredByMorpho";
@@ -42,9 +42,7 @@ export default function MarketSupplyCollateralBorrow({
 }) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
-  const [preparedAction, setPreparedAction] = useState<
-    PrepareMarketSupplyCollateralAndBorrowActionReturnType | undefined
-  >(undefined);
+  const [preparedAction, setPreparedAction] = useState<MarketSupplyCollateralAndBorrowAction | undefined>(undefined);
   const [success, setSuccess] = useState(false);
 
   const { openConnectModal } = useConnectModal();
@@ -146,7 +144,7 @@ export default function MarketSupplyCollateralBorrow({
 
       const borrowAmountBigInt = parseUnits(numberToString(borrowAmount), market.loanAsset.decimals);
 
-      const preparedAction = await prepareMarketSupplyCollateralAndBorrowAction({
+      const preparedAction = await marketSupplyCollateralAndBorrowAction({
         publicClient,
         marketId: market.marketId as MarketId,
         accountAddress: address,

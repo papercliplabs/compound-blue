@@ -3,7 +3,7 @@ import { ActionFlowButton, ActionFlowDialog, ActionFlowReview } from "@/componen
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, useBalance, usePublicClient } from "wagmi";
-import { PrepareVaultSupplyActionReturnType, prepareVaultSupplyBundle } from "@/actions/prepareVaultSupplyAction";
+import { VaultSupplyAction, vaultSupplyBundle } from "@/actions/vault/vaultSupplyAction";
 import { getAddress, isAddressEqual, maxUint256, parseUnits } from "viem";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +28,7 @@ export default function VaultSupply({
 }: VaultActionsProps & { onCloseAfterSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
-  const [preparedAction, setPreparedAction] = useState<PrepareVaultSupplyActionReturnType | undefined>(undefined);
+  const [preparedAction, setPreparedAction] = useState<VaultSupplyAction | undefined>(undefined);
   const [success, setSuccess] = useState(false);
 
   const { openConnectModal } = useConnectModal();
@@ -101,7 +101,7 @@ export default function VaultSupply({
         ? maxUint256
         : parseUnits(numberToString(supplyAmount), vault.asset.decimals);
 
-      const preparedAction = await prepareVaultSupplyBundle({
+      const preparedAction = await vaultSupplyBundle({
         publicClient,
         accountAddress: address,
         vaultAddress: getAddress(vault.vaultAddress),
@@ -215,7 +215,7 @@ export default function VaultSupply({
               side="supply"
               isIncreasing={true}
               descaledAmount={supplyAmount}
-              amountUsd={supplyAmount * vault.asset.priceUsd}
+              amountUsd={supplyAmount * (vault.asset.priceUsd ?? 0)}
             />
           </ActionFlowSummary>
           <ActionFlowReview>
@@ -223,12 +223,12 @@ export default function VaultSupply({
               name={`Position (${vault.asset.symbol})`}
               initialValue={formatNumber(
                 descaleBigIntToNumber(preparedAction.positionBalanceChange.before, vault.decimals) *
-                  vault.asset.priceUsd,
+                  (vault.asset.priceUsd ?? 0),
                 { currency: "USD" }
               )}
               finalValue={formatNumber(
                 descaleBigIntToNumber(preparedAction.positionBalanceChange.after, vault.decimals) *
-                  vault.asset.priceUsd,
+                  (vault.asset.priceUsd ?? 0),
                 { currency: "USD" }
               )}
             />

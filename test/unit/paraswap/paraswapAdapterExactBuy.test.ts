@@ -5,12 +5,10 @@ import { AnvilTestClient } from "@morpho-org/test";
 import { PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
 import { USDC_ADDRESS, USDT_ADDRESS } from "../../helpers/constants";
 import "dotenv/config";
-import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
-import { createBundle, paraswapBuy } from "@/actions/bundler3";
+import { getParaswapExactBuyTxPayload } from "@/actions/data/paraswap/getParaswapExactBuy";
+import { createBundle, paraswapBuy } from "@/actions/utils/bundlerActions";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { getErc20BalanceOf } from "../../helpers/erc20";
-import { GetParaswapReturnType, SupportedDex } from "@/data/paraswap/types";
-import { SUPPORTED_DEXS } from "@/data/paraswap/config";
 import { createViemTest } from "@morpho-org/test/vitest";
 
 const polygonClient = createPublicClient({
@@ -27,44 +25,44 @@ export const test = createViemTest(polygon, {
 
 interface ParaswapAdapterExactBuyTest {
   client: AnvilTestClient;
+
   srcTokenAddress: Address;
   destTokenAddress: Address;
 
   maxSrcTokenAmount: bigint;
   exactDestTokenAmount: bigint;
 
-  forceDex?: SupportedDex;
+  initialSrcTokenBalance?: bigint;
 }
 
 async function runParaswapTest({
   client,
+
   srcTokenAddress,
   destTokenAddress,
+
   maxSrcTokenAmount,
   exactDestTokenAmount,
-  forceDex,
+
+  initialSrcTokenBalance = maxSrcTokenAmount,
 }: ParaswapAdapterExactBuyTest) {
   // Arrange
-
   // Give the adapter the necessary src tokens
-  await client.deal({ erc20: srcTokenAddress, amount: maxSrcTokenAmount, account: PARASWAP_ADAPTER_ADDRESS! });
+  await client.deal({ erc20: srcTokenAddress, amount: initialSrcTokenBalance, account: PARASWAP_ADAPTER_ADDRESS! });
 
   // Act
-  let paraswapExactBuyParams: GetParaswapReturnType;
-  try {
-    paraswapExactBuyParams = await getParaswapExactBuy({
-      publicClient: client,
-      accountAddress: PARASWAP_ADAPTER_ADDRESS!,
-      srcTokenAddress,
-      destTokenAddress,
-      maxSrcTokenAmount,
-      exactDestTokenAmount,
-      allowedDexs: forceDex ? [forceDex] : undefined,
-    });
-  } catch {
-    // Prepare error is fine, check logs but likely all just no route with enough liquidity
-    return;
-  }
+  const paraswapExactBuyParams = await getParaswapExactBuyTxPayload({
+    publicClient: client,
+    accountAddress: PARASWAP_ADAPTER_ADDRESS!,
+
+    srcTokenAddress,
+    destTokenAddress,
+
+    slippageType: "max-input",
+    maxSrcTokenAmount,
+
+    exactDestTokenAmount,
+  });
 
   const paraswapBundlerCall = paraswapBuy(
     paraswapExactBuyParams.augustus,
@@ -91,23 +89,14 @@ async function runParaswapTest({
   // There will be leftovers in the adapter, don't care about them for this test, this is about making sure the swap actually executes
 }
 
-const srcTokenAddress = USDT_ADDRESS;
-const destTokenAddress = USDC_ADDRESS;
-const maxSrcTokenAmount = parseUnits("105", 6);
-const exactDestTokenAmount = parseUnits("100", 6);
-
 const testCases: ({ name: string } & Omit<ParaswapAdapterExactBuyTest, "client">)[] = [
-  // Testing each supported dex individually
-  // Using this to help identify and exclude dex's with systematic issues
-  // Note that error from not enough liquidity is acceptable, but transaction reverts are not
-  ...SUPPORTED_DEXS.map((dex) => ({
-    name: dex,
-    srcTokenAddress,
-    destTokenAddress,
-    maxSrcTokenAmount,
-    exactDestTokenAmount,
-    forceDex: dex as SupportedDex,
-  })),
+  {
+    name: "basic",
+    srcTokenAddress: USDT_ADDRESS,
+    destTokenAddress: USDC_ADDRESS,
+    maxSrcTokenAmount: parseUnits("105", 6),
+    exactDestTokenAmount: parseUnits("100", 6),
+  },
 ];
 
 describe("paraswap-test", () => {

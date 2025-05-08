@@ -63,7 +63,7 @@ export function AccountVaultPositionHighlight({ vault }: { vault: Vault }) {
         description="Your supply balance in this vault."
         className="title-3 md:items-end"
       >
-        <NumberFlow value={vaultPosition.supplyAssetsUsd} format={{ currency: "USD" }} />
+        <NumberFlow value={vaultPosition.supplyAssetsUsd ?? 0} format={{ currency: "USD" }} />
       </Metric>
       <div className="flex items-center gap-1 text-content-secondary label-sm">
         {vault.asset.icon && (

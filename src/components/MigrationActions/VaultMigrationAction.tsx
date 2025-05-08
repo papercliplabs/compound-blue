@@ -12,8 +12,6 @@ import { useAccount } from "wagmi";
 import { usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { getAddress, maxUint256, parseUnits } from "viem";
-import { prepareAaveV3VaultMigrationAction } from "@/actions/prepareAaveV3VaultMigrationAction";
-import { PrepareActionReturnType } from "@/actions/helpers";
 import { ActionFlowButton, ActionFlowReview, ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog";
 import { ActionFlowDialog } from "../ActionFlowDialog";
 import { ArrowDown } from "lucide-react";
@@ -23,6 +21,8 @@ import { MetricChange } from "../MetricChange";
 import Apy from "../Apy";
 import { VaultIdentifier } from "../VaultIdentifier";
 import { VaultMigrationTableEntry } from "@/hooks/useVaultMigrationTableData";
+import { Action } from "@/actions/utils/types";
+import { aaveV3VaultMigrationAction } from "@/actions/migration/aaveV3VaultMigrationAction";
 
 interface VaultMigrationDialogProps {
   open: boolean;
@@ -37,7 +37,7 @@ export default function VaultMigrationAction({
 }: VaultMigrationDialogProps) {
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [txFlowOpen, setTxFlowOpen] = useState(false);
-  const [preparedAction, setPreparedAction] = useState<PrepareActionReturnType | undefined>(undefined);
+  const [preparedAction, setPreparedAction] = useState<Action | undefined>(undefined);
 
   const { openConnectModal } = useConnectModal();
   const { address } = useAccount();
@@ -48,7 +48,7 @@ export default function VaultMigrationAction({
   }, [sourcePosition]);
 
   const aTokenBalanceUsd = sourcePosition.aTokenAssetsUsd;
-  const vaultPositionBalanceUsd = destinationPosition.supplyAssetsUsd;
+  const vaultPositionBalanceUsd = destinationPosition.supplyAssetsUsd ?? 0;
 
   const formSchema = useMemo(() => {
     return z.object({
@@ -92,7 +92,7 @@ export default function VaultMigrationAction({
         ? maxUint256
         : parseUnits(numberToString(migrateAmount), sourcePosition.reserve.aToken.decimals);
 
-      const preparedAction = await prepareAaveV3VaultMigrationAction({
+      const preparedAction = await aaveV3VaultMigrationAction({
         publicClient,
         accountAddress: address,
         vaultAddress: getAddress(destinationVaultSummary.vaultAddress),
@@ -120,7 +120,7 @@ export default function VaultMigrationAction({
   }, [destinationPosition, sourcePosition, descaledATokenBalance, form]);
 
   const migrateAmount = Number(form.watch("migrateAmount") ?? 0);
-  const migrateAmountUsd = migrateAmount * sourcePosition.reserve.underlyingAsset.priceUsd;
+  const migrateAmountUsd = migrateAmount * (sourcePosition.reserve.underlyingAsset.priceUsd ?? 0);
 
   const simContent = useMemo(() => {
     return (

@@ -6,10 +6,7 @@ import { ActionFlowDialog, ActionFlowReview, ActionFlowSummary } from "../../Act
 import { usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
-import {
-  prepareMarketLeveragedBorrowAction,
-  PrepareMarketLeveragedBorrowActionReturnType,
-} from "@/actions/prepareMarketLeverageBorrowAction";
+import { MarketLeveragedBorrowAction, marketLeveragedBorrowAction } from "@/actions/market/marketLeverageBorrowAction";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../ui/form";
 import { z } from "zod";
@@ -23,7 +20,7 @@ import SliderFormField from "../../FormFields/SliderFormField";
 import { Input } from "../../ui/input";
 import { ArrowRight, Info } from "lucide-react";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../../ui/tooltipPopover";
-import { computeMaxLeverageFactor } from "@/actions/prepareMarketLeverageBorrowAction/computeLeverageValues";
+import { computeMaxLeverageFactor } from "@/actions/market/marketLeverageBorrowAction/computeLeverageValues";
 import { MetricChange } from "../../MetricChange";
 import NumberFlow from "../../ui/NumberFlow";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
@@ -47,9 +44,7 @@ export default function MarketLeverageBorrow({
   market: MarketNonIdle;
   onCloseAfterSuccess?: () => void;
 }) {
-  const [preparedAction, setPreparedAction] = useState<PrepareMarketLeveragedBorrowActionReturnType | undefined>(
-    undefined
-  );
+  const [preparedAction, setPreparedAction] = useState<MarketLeveragedBorrowAction | undefined>(undefined);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -152,7 +147,7 @@ export default function MarketLeverageBorrow({
 
       const leverageFactor = multiplier / (1 + maxSlippageTolerance / 100) + 1;
 
-      const action = await prepareMarketLeveragedBorrowAction({
+      const action = await marketLeveragedBorrowAction({
         publicClient,
         accountAddress: address,
         marketId: market.marketId as MarketId,

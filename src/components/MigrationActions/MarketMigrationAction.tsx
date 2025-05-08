@@ -12,7 +12,6 @@ import { useAccount } from "wagmi";
 import { usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { getAddress, maxUint256, parseUnits } from "viem";
-import { PrepareActionReturnType } from "@/actions/helpers";
 import { ActionFlowButton, ActionFlowReview, ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog";
 import { ActionFlowDialog } from "../ActionFlowDialog";
 import { ArrowDown, ArrowRight } from "lucide-react";
@@ -20,7 +19,6 @@ import NumberFlow from "../ui/NumberFlow";
 import Image from "next/image";
 import { MetricChange } from "../MetricChange";
 import Apy from "../Apy";
-import { prepareAaveV3MarketMigrationAction } from "@/actions/prepareAaveV3MarketMigrationAction";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { MarketIdentifier } from "../MarketIdentifier";
 import { computeAaveNewLltv, computeAaveEffectiveBorrowApy } from "@/utils/aave";
@@ -29,6 +27,8 @@ import LtvBar from "../LtvBar";
 import { computeLtvHealth } from "@/utils/ltv";
 import clsx from "clsx";
 import { MarketMigrationTableEntry } from "@/hooks/useMarketMigrationTableData";
+import { Action } from "@/actions/utils/types";
+import { aaveV3MarketMigrationAction } from "@/actions/migration/aaveV3MarketMigrationAction";
 
 const LTV_ROUNDING_THRESHOLD = 0.0001;
 
@@ -51,7 +51,7 @@ export default function MarketMigrationAction({
 }: MarketMigrationDialogProps) {
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [txFlowOpen, setTxFlowOpen] = useState(false);
-  const [preparedAction, setPreparedAction] = useState<PrepareActionReturnType | undefined>(undefined);
+  const [preparedAction, setPreparedAction] = useState<Action | undefined>(undefined);
 
   const { openConnectModal } = useConnectModal();
   const { address } = useAccount();
@@ -130,7 +130,7 @@ export default function MarketMigrationAction({
         ? maxUint256
         : parseUnits(numberToString(loanMigrateAmount), aaveV3LoanReservePosition.reserve.underlyingAsset.decimals);
 
-      const preparedAction = await prepareAaveV3MarketMigrationAction({
+      const preparedAction = await aaveV3MarketMigrationAction({
         publicClient,
         accountAddress: address,
         marketId: destinationMarketSummary.marketId as MarketId,
@@ -181,8 +181,8 @@ export default function MarketMigrationAction({
   const collateralMigrateAmount = Number(form.watch("collateralMigrateAmount") ?? 0);
   const loanMigrateAmount = Number(form.watch("loanMigrateAmount") ?? 0);
   const collateralMigrateAmountUsd =
-    collateralMigrateAmount * aaveV3CollateralReservePosition.reserve.underlyingAsset.priceUsd;
-  const loanMigrateAmountUsd = loanMigrateAmount * aaveV3LoanReservePosition.reserve.underlyingAsset.priceUsd;
+    collateralMigrateAmount * (aaveV3CollateralReservePosition.reserve.underlyingAsset.priceUsd ?? 0);
+  const loanMigrateAmountUsd = loanMigrateAmount * (aaveV3LoanReservePosition.reserve.underlyingAsset.priceUsd ?? 0);
 
   const netApyMetricChange = useMemo(() => {
     const effectiveAaveV3BorrowApy = computeAaveEffectiveBorrowApy(

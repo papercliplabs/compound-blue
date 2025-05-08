@@ -10,11 +10,11 @@ export const test = createViemTest(polygon, {
   // hardfork: "Latest",
 });
 
-const polygonClient = createPublicClient({
+export const polygonClient = createPublicClient({
   chain: polygon,
-  transport: http(),
+  transport: http(process.env.NEXT_PUBLIC_RPC_URL_1!),
 });
-const currentBlock = await polygonClient.getBlock();
+export const currentBlock = await polygonClient.getBlock();
 
 export const currentBlockTest = createViemTest(polygon, {
   forkUrl: process.env.NEXT_PUBLIC_RPC_URL_1!,

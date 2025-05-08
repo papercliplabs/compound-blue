@@ -197,7 +197,7 @@ async function MarketState({ marketId }: { marketId: Hex }) {
     {
       label: "Total Deposits",
       description: "The total amount of assets currently deposited into the market.",
-      value: <NumberFlow value={market.supplyAssetsUsd} format={{ currency: "USD" }} />,
+      value: <NumberFlow value={market.supplyAssetsUsd ?? 0} format={{ currency: "USD" }} />,
     },
     {
       label: "Available Liquidity",

@@ -10,7 +10,7 @@ import { ActionFlowSummaryAssetItem } from "./ActionFlowDialog/ActionFlowSummary
 import { ActionFlowSummary } from "./ActionFlowDialog/ActionFlowSummary";
 import { ActionFlowDialog } from "./ActionFlowDialog";
 import { Address, getAddress, Hex } from "viem";
-import { prepareMerklClaimAction } from "@/actions/prepareMerklClaimAction";
+import { merklClaimAction } from "@/actions/rewards/merklClaimAction";
 import Image from "next/image";
 import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover";
 import LinkExternal from "./LinkExternal";
@@ -48,7 +48,7 @@ export default function ClaimRewards() {
       }
     }
 
-    return prepareMerklClaimAction({ accountAddress: address, tokens, amounts, proofs });
+    return merklClaimAction({ accountAddress: address, tokens, amounts, proofs });
   }, [data, address]);
 
   // Hide if the user is not connected
@@ -106,7 +106,7 @@ export default function ClaimRewards() {
                   side="supply"
                   isIncreasing={true}
                   descaledAmount={descaleBigIntToNumber(reward.unclaimedAmount, reward.token.decimals)}
-                  amountUsd={reward.unclaimedAmountUsd}
+                  amountUsd={reward.unclaimedAmountUsd ?? 0}
                 />
               );
             })}

@@ -1,4 +1,4 @@
-import { getSimulationState } from "@/data/getSimulationState";
+import { getSimulationState } from "@/actions/data/rpc/getSimulationState";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { AnvilTestClient } from "@morpho-org/test";
 import { Address, erc20Abi, Hex, maxUint256, parseEther } from "viem";

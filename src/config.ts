@@ -77,9 +77,11 @@ export const KNOWN_ADDRESSES: Record<Address, { name: string; iconSrc?: string }
   },
 };
 
+export const AAVE_V3_UI_POOL_DATA_PROVIDER_ADDRESS = getAddress("0x68100bD5345eA474D93577127C11F39FF8463e93");
 export const AAVE_V3_POOL_ADDRESS = getAddress("0x794a61358D6845594F94dc1DB02A252b5b4814aD");
+export const AAVE_V3_POOL_ADDRESS_PROVIDER = getAddress("0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb");
 
-export const PARASWAP_PARTNER_NAME = "compound-blue";
+export const PARASWAP_PARTNER_NAME = "compound.blue";
 export const PARASWAP_PARTNER_ADDRESS = getAddress("0xCC3E7c85Bb0EE4f09380e041fee95a0caeDD4a02"); // Compoound DAO
 
 // ISO 3166-2: https://en.wikipedia.org/wiki/ISO_3166-2
@@ -93,3 +95,6 @@ export const ACCOUNT_STATE_POLLING_INTERVAL_MS = 60_000;
 
 // Limit for the max slippage tolerance users can set (0, 1)
 export const MAX_SLIPPAGE_TOLERANCE_LIMIT = 0.5;
+
+export const USDC_ADDRESS = getAddress("0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359");
+export const WBTC_ADDRESS = getAddress("0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6");

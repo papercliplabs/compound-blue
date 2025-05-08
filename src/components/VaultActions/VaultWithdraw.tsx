@@ -17,7 +17,7 @@ import { Form } from "@/components/ui/form";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { VaultActionsProps } from ".";
-import { PrepareVaultWithdrawActionReturnType, prepareVaultWithdrawBundle } from "@/actions/prepareVaultWithdrawAction";
+import { VaultWithdrawAction, vaultWithdrawAction } from "@/actions/vault/vaultWithdrawAction";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
 import { MetricChange } from "../MetricChange";
@@ -29,7 +29,7 @@ export default function VaultWithdraw({
 }: VaultActionsProps & { onCloseAfterSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
-  const [preparedAction, setPreparedAction] = useState<PrepareVaultWithdrawActionReturnType | undefined>(undefined);
+  const [preparedAction, setPreparedAction] = useState<VaultWithdrawAction | undefined>(undefined);
   const [success, setSuccess] = useState(false);
 
   const { openConnectModal } = useConnectModal();
@@ -85,7 +85,7 @@ export default function VaultWithdraw({
         ? maxUint256
         : parseUnits(numberToString(withdrawAmount), vault.asset.decimals);
 
-      const preparedAction = await prepareVaultWithdrawBundle({
+      const preparedAction = await vaultWithdrawAction({
         publicClient,
         accountAddress: address,
         vaultAddress: getAddress(vault.vaultAddress),
@@ -164,7 +164,7 @@ export default function VaultWithdraw({
               side="supply"
               isIncreasing={false}
               descaledAmount={withdrawAmount}
-              amountUsd={withdrawAmount * vault.asset.priceUsd}
+              amountUsd={withdrawAmount * (vault.asset.priceUsd ?? 0)}
             />
           </ActionFlowSummary>
           <ActionFlowReview>
@@ -172,12 +172,12 @@ export default function VaultWithdraw({
               name={`Position (${vault.asset.symbol})`}
               initialValue={formatNumber(
                 descaleBigIntToNumber(preparedAction.positionBalanceChange.before, vault.decimals) *
-                  vault.asset.priceUsd,
+                  (vault.asset.priceUsd ?? 0),
                 { currency: "USD" }
               )}
               finalValue={formatNumber(
                 descaleBigIntToNumber(preparedAction.positionBalanceChange.after, vault.decimals) *
-                  vault.asset.priceUsd,
+                  (vault.asset.priceUsd ?? 0),
                 { currency: "USD" }
               )}
             />
