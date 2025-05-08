@@ -1,17 +1,20 @@
 "use client";
-import { Vault } from "@/data/whisk/getVault";
-import VaultSupply from "./VaultSupply";
-import { CardContent } from "../ui/card";
-import { Card } from "../ui/card";
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "../ui/button";
-import VaultWithdraw from "./VaultWithdraw";
-import { getAddress } from "viem";
-import { useResponsiveContext } from "@/providers/ResponsiveProvider";
-import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useEffect, useMemo, useState } from "react";
+import { getAddress } from "viem";
+
+import { Vault } from "@/data/whisk/getVault";
 import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
+import { useResponsiveContext } from "@/providers/ResponsiveProvider";
+
+import { Button } from "../ui/button";
+import { Card } from "../ui/card";
+import { CardContent } from "../ui/card";
+import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer";
 import VaultMigrationCallout from "../VaultMigrationCallout";
+
+import VaultSupply from "./VaultSupply";
+import VaultWithdraw from "./VaultWithdraw";
 
 export interface VaultActionsProps {
   vault: Vault;

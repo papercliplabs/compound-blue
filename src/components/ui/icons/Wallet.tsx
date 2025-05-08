@@ -1,5 +1,6 @@
-import { cn } from "@/utils/shadcn";
 import { SVGProps } from "react";
+
+import { cn } from "@/utils/shadcn";
 
 export default function Wallet({ className, ...props }: SVGProps<SVGSVGElement>) {
   return (

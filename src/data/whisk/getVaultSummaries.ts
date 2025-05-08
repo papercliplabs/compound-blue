@@ -1,8 +1,9 @@
 import "server-only";
-import { graphql } from "@/generated/gql/whisk";
-import { whiskClient } from "./client";
 import { CHAIN_ID, WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
+import { graphql } from "@/generated/gql/whisk";
+
+import { whiskClient } from "./client";
 
 const query = graphql(`
   query getVaultSummarys($chainId: Number!, $addresses: [String!]!) {

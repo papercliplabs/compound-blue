@@ -1,9 +1,11 @@
 import "server-only";
-import { graphql } from "@/generated/gql/whisk";
-import { whiskClient } from "./client";
 import { Address } from "viem";
+
 import { CHAIN_ID } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
+import { graphql } from "@/generated/gql/whisk";
+
+import { whiskClient } from "./client";
 
 const query = graphql(`
   query getVault($chainId: Number!, $address: String!) {

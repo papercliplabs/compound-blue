@@ -1,7 +1,8 @@
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "./ui/tooltip";
-import PercentRing from "./ui/icons/PercentRing";
 import { formatNumber } from "@/utils/format";
+
+import PercentRing from "./ui/icons/PercentRing";
 import NumberFlow from "./ui/NumberFlow";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface TotalSupplyWithCapProps {
   totalSupplyUsd: number;

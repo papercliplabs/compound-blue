@@ -1,16 +1,18 @@
 "use client";
-import { descaleBigIntToNumber } from "@/utils/format";
-import { getAddress } from "viem";
-import { ReactNode } from "react";
-import { Skeleton } from "./ui/skeleton";
-import { MetricWithTooltip } from "./Metric";
-import { useAccount } from "wagmi";
 import Image from "next/image";
-import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
-import Apy from "./Apy";
-import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
+import { ReactNode } from "react";
+import { getAddress } from "viem";
+import { useAccount } from "wagmi";
+
 import { Vault } from "@/data/whisk/getVault";
 import { useAccountVaultPosition, useAccountVaultPositionAggregate } from "@/hooks/useAccountVaultPosition";
+import { descaleBigIntToNumber } from "@/utils/format";
+
+import Apy from "./Apy";
+import { MetricWithTooltip } from "./Metric";
+import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
+import { Skeleton } from "./ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 
 interface VaultPositionProps {
   vault: Vault;

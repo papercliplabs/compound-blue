@@ -1,9 +1,11 @@
 import "server-only";
-import { graphql } from "@/generated/gql/whisk";
-import { whiskClient } from "./client";
 import { Address } from "viem";
+
 import { cacheAndCatch } from "@/data/cacheAndCatch";
+import { graphql } from "@/generated/gql/whisk";
 import { MarketIdentifierInput } from "@/generated/gql/whisk/graphql";
+
+import { whiskClient } from "./client";
 
 const query = graphql(`
   query getAaveV3MarketPosition($marketIdentifier: MarketIdentifierInput!, $accountAddress: String!) {

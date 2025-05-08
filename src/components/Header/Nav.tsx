@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "../ui/button";
 import { ReactNode } from "react";
+
+import { Button } from "../ui/button";
+import ArrowFatLineDown from "../ui/icons/ArrowFatLineDown";
 import BarChart from "../ui/icons/BarChart";
 import CirclePlus from "../ui/icons/CirclePlus";
-import ArrowFatLineDown from "../ui/icons/ArrowFatLineDown";
 
 const NAV_ITEMS: { href: string; name: string; icon?: ReactNode; isNew?: boolean }[] = [
   { href: "/", name: "Earn", icon: <BarChart className="fill-content-secondary" /> },

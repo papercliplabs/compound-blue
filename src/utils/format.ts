@@ -1,4 +1,5 @@
 import { Address, formatUnits } from "viem";
+
 import { BigIntString } from "./types";
 
 const MAX_USD_VALUE = 1e12;

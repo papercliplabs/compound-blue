@@ -1,19 +1,22 @@
-import { describe, expect } from "vitest";
-import { prepareAaveV3MarketMigrationAction } from "@/actions/prepareAaveV3MarketMigrationAction";
-import { currentBlockTest as test } from "../../config";
+import { AnvilTestClient } from "@morpho-org/test";
 import { Address, maxUint256, parseEther, parseUnits } from "viem";
+import { describe, expect } from "vitest";
+
+import { prepareAaveV3MarketMigrationAction } from "@/actions/prepareAaveV3MarketMigrationAction";
+import { BUNDLER3_ADDRESS, SUPPORTED_ADDAPTERS } from "@/utils/constants";
+
+import { currentBlockTest as test } from "../../config";
 import {
   borrowFromAaveV3,
   dealAndSupplyToAaveV3,
   getAaveV3LoanBalance,
   getAaveV3SupplyBalance,
 } from "../../helpers/aaveV3";
-import { executeAction } from "../../helpers/executeAction";
+import { USDC_ADDRESS, USDT_ADDRESS, WETH_ADDRESS, WETH_USDC_MARKET_ID } from "../../helpers/constants";
 import { expectZeroErc20Balances } from "../../helpers/erc20";
-import { AnvilTestClient } from "@morpho-org/test";
-import { WETH_ADDRESS, USDC_ADDRESS, USDT_ADDRESS, WETH_USDC_MARKET_ID } from "../../helpers/constants";
+import { executeAction } from "../../helpers/executeAction";
 import { getMorphoMarketPosition } from "../../helpers/morpho";
-import { BUNDLER3_ADDRESS, SUPPORTED_ADDAPTERS } from "@/utils/constants";
+
 
 const ALLOCATING_VAULT_ADDRESS: Address[] = ["0x781FB7F6d845E3bE129289833b04d43Aa8558c42"];
 

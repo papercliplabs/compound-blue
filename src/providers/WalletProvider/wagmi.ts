@@ -1,5 +1,6 @@
-import { CHAIN, TRANSPORTS } from "@/config";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+
+import { CHAIN, TRANSPORTS } from "@/config";
 
 export const wagmiConfig = getDefaultConfig({
   chains: [CHAIN],
