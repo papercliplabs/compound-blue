@@ -5,7 +5,7 @@ import { Address, Hex, erc20Abi, maxUint256, parseEther } from "viem";
 import { writeContract } from "viem/actions";
 import { expect } from "vitest";
 
-import { getSimulationState } from "@/data/getSimulationState";
+import { getSimulationState } from "@/actions/data/rpc/getSimulationState";
 import { MORPHO_BLUE_ADDRESS } from "@/utils/constants";
 
 import { RANDOM_ADDRESS } from "./constants";

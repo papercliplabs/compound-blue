@@ -11,6 +11,10 @@ const config: CodegenConfig = {
       preset: "client",
       config: {
         avoidOptionals: true,
+        scalars: {
+          Number: "number",
+          // Add more if your schema uses other custom number types
+        },
       },
     },
     "./src/generated/gql/schema.graphql": {

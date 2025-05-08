@@ -11,9 +11,9 @@ import { useAccount, usePublicClient } from "wagmi";
 import { z } from "zod";
 
 import {
-  PrepareMarketSupplyCollateralAndBorrowActionReturnType,
-  prepareMarketSupplyCollateralAndBorrowAction,
-} from "@/actions/prepareMarketSupplyCollateralAndBorrowAction";
+  MarketSupplyCollateralAndBorrowAction,
+  marketSupplyCollateralAndBorrowAction,
+} from "@/actions/market/marketSupplyCollateralAndBorrowAction";
 import {
   ActionFlowButton,
   ActionFlowDialog,
@@ -44,9 +44,7 @@ export default function MarketSupplyCollateralBorrow({
 }) {
   const [open, setOpen] = useState(false);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
-  const [preparedAction, setPreparedAction] = useState<
-    PrepareMarketSupplyCollateralAndBorrowActionReturnType | undefined
-  >(undefined);
+  const [preparedAction, setPreparedAction] = useState<MarketSupplyCollateralAndBorrowAction | undefined>(undefined);
   const [success, setSuccess] = useState(false);
 
   const { openConnectModal } = useConnectModal();
@@ -148,7 +146,7 @@ export default function MarketSupplyCollateralBorrow({
 
       const borrowAmountBigInt = parseUnits(numberToString(borrowAmount), market.loanAsset.decimals);
 
-      const preparedAction = await prepareMarketSupplyCollateralAndBorrowAction({
+      const preparedAction = await marketSupplyCollateralAndBorrowAction({
         publicClient,
         marketId: market.marketId as MarketId,
         accountAddress: address,

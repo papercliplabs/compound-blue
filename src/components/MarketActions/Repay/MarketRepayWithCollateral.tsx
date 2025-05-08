@@ -11,9 +11,9 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 
 import {
-  PrepareMarketRepayWithCollateralActionReturnType,
-  prepareMarketRepayWithCollateralAction,
-} from "@/actions/prepareMarketRepayWithCollateralAction";
+  MarketRepayWithCollateralAction,
+  marketRepayWithCollateralAction,
+} from "@/actions/market/marketRepayWithCollateralAction";
 import AssetFormField from "@/components/FormFields/AssetFormField";
 import { MetricChange } from "@/components/MetricChange";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
@@ -37,9 +37,7 @@ export default function MarketRepayWithCollateral({
   market: MarketNonIdle;
   onCloseAfterSuccess?: () => void;
 }) {
-  const [preparedAction, setPreparedAction] = useState<PrepareMarketRepayWithCollateralActionReturnType | undefined>(
-    undefined
-  );
+  const [preparedAction, setPreparedAction] = useState<MarketRepayWithCollateralAction | undefined>(undefined);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -100,7 +98,7 @@ export default function MarketRepayWithCollateral({
         ? maxUint256
         : parseUnits(numberToString(repayAmount), market.loanAsset.decimals);
 
-      const action = await prepareMarketRepayWithCollateralAction({
+      const action = await marketRepayWithCollateralAction({
         publicClient,
         accountAddress: address,
         marketId: market.marketId as MarketId,
