@@ -1,5 +1,6 @@
-import { Address, encodeFunctionData, Hex, zeroHash } from "viem";
-import { bundler3Abi, BundlerCall, paraswapAdapterAbi } from "@morpho-org/bundler-sdk-viem";
+import { BundlerCall, bundler3Abi, paraswapAdapterAbi } from "@morpho-org/bundler-sdk-viem";
+import { Address, Hex, encodeFunctionData, zeroHash } from "viem";
+
 import { ParaswapOffsets } from "@/data/paraswap/types";
 import { BUNDLER3_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
 

@@ -1,5 +1,6 @@
-import { cn } from "@/utils/shadcn";
 import { HTMLAttributes } from "react";
+
+import { cn } from "@/utils/shadcn";
 
 export default function CirclePlus({ className, ...props }: HTMLAttributes<SVGElement>) {
   return (

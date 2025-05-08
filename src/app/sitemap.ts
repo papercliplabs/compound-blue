@@ -1,5 +1,6 @@
-import { WHITELISTED_MARKET_IDS, WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import type { MetadataRoute } from "next";
+
+import { WHITELISTED_MARKET_IDS, WHITELISTED_VAULT_ADDRESSES } from "@/config";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const vaultPages = WHITELISTED_VAULT_ADDRESSES.map((address) => ({

@@ -1,6 +1,7 @@
-import { cn } from "@/utils/shadcn";
-import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "./ui/tooltipPopover";
 import { Core_Prime_Frontier } from "@/generated/gql/whisk/graphql";
+import { cn } from "@/utils/shadcn";
+
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 
 type RiskTierProps = {
   tier: Core_Prime_Frontier;

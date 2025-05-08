@@ -1,8 +1,9 @@
+import { AnvilTestClient } from "@morpho-org/test";
 import { Address, erc20Abi, maxUint256 } from "viem";
-import { writeContract, readContract } from "viem/actions";
+import { readContract, writeContract } from "viem/actions";
+
 import { aaveV3PoolAbi } from "@/abis/aaveV3PoolAbi";
 import { AAVE_V3_POOL_ADDRESS } from "@/config";
-import { AnvilTestClient } from "@morpho-org/test";
 
 export async function dealAndSupplyToAaveV3(
   client: AnvilTestClient,

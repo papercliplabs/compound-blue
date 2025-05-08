@@ -1,11 +1,12 @@
 "use client";
-import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
-import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
-import { safeFetch } from "@/utils/fetch";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
+
+import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
+import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
+import { safeFetch } from "@/utils/fetch";
 
 export function useAccountMarketPositions() {
   const { address } = useAccount();

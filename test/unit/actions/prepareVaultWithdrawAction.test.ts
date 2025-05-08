@@ -1,15 +1,18 @@
-import { describe, expect } from "vitest";
-import { test } from "../../config";
+import { fetchVaultConfig } from "@morpho-org/blue-sdk-viem";
+import { AnvilTestClient } from "@morpho-org/test";
 import { Address, maxUint256, parseUnits, zeroAddress } from "viem";
+import { describe, expect } from "vitest";
+
+import { prepareVaultWithdrawBundle } from "@/actions/prepareVaultWithdrawAction";
+import { BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
+
+import { test } from "../../config";
+import { USDC_ADDRESS, USDC_VAULT_ADDRESS } from "../../helpers/constants";
+import { expectZeroErc20Balances, getErc20BalanceOf } from "../../helpers/erc20";
 import { executeAction } from "../../helpers/executeAction";
 import { expectOnlyAllowedApprovals } from "../../helpers/logs";
-import { expectZeroErc20Balances, getErc20BalanceOf } from "../../helpers/erc20";
-import { BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
-import { AnvilTestClient } from "@morpho-org/test";
-import { fetchVaultConfig } from "@morpho-org/blue-sdk-viem";
 import { dealAndSupplyToMorphoVault, getMorphoVaultPosition } from "../../helpers/morpho";
-import { USDC_ADDRESS, USDC_VAULT_ADDRESS } from "../../helpers/constants";
-import { prepareVaultWithdrawBundle } from "@/actions/prepareVaultWithdrawAction";
+
 
 interface VaultWithdrawTestParameters {
   client: AnvilTestClient;

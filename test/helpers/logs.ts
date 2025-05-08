@@ -1,10 +1,11 @@
-import { expect } from "vitest";
-import { Address, erc20Abi, Log, parseEventLogs } from "viem";
-import { permit2Abi } from "@morpho-org/blue-sdk-viem";
-import { GENERAL_ADAPTER_1_ADDRESS, PERMIT2_ADDRESS } from "@/utils/constants";
-import { readContract } from "viem/actions";
-import { AnvilTestClient } from "@morpho-org/test";
 import { MathLib } from "@morpho-org/blue-sdk";
+import { permit2Abi } from "@morpho-org/blue-sdk-viem";
+import { AnvilTestClient } from "@morpho-org/test";
+import { Address, Log, erc20Abi, parseEventLogs } from "viem";
+import { readContract } from "viem/actions";
+import { expect } from "vitest";
+
+import { GENERAL_ADAPTER_1_ADDRESS, PERMIT2_ADDRESS } from "@/utils/constants";
 
 const REBASEING_MARGIN = BigInt(100030);
 const REBASEING_MARGIN_SCALE = BigInt(100000);

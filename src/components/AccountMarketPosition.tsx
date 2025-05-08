@@ -1,18 +1,22 @@
 "use client";
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
-import { Hex } from "viem";
-import { ReactNode } from "react";
-import { Skeleton } from "./ui/skeleton";
-import { MetricWithTooltip } from "./Metric";
-import { useAccount } from "wagmi";
+import { MarketId } from "@morpho-org/blue-sdk";
 import Image from "next/image";
-import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
-import Apy from "./Apy";
-import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
+import { ReactNode } from "react";
+import { Hex } from "viem";
+import { useAccount } from "wagmi";
+
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
-import { MarketId } from "@morpho-org/blue-sdk";
 import { useAccountMarketPosition, useAccountMarketPositionAggregate } from "@/hooks/useAccountMarketPosition";
+import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+
+import Apy from "./Apy";
+import { MetricWithTooltip } from "./Metric";
+import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
+import { Skeleton } from "./ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
+
+
 
 interface MarketPositionProps {
   market: MarketNonIdle;

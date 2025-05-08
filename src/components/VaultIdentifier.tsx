@@ -1,5 +1,6 @@
-import { VaultSummary } from "@/data/whisk/getVaultSummaries";
 import Image from "next/image";
+
+import { VaultSummary } from "@/data/whisk/getVaultSummaries";
 
 interface VaultIdentifierProps {
   name: VaultSummary["name"];

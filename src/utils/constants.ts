@@ -1,5 +1,7 @@
-import { CHAIN_ID } from "@/config";
 import { addresses } from "@morpho-org/blue-sdk";
+
+import { CHAIN_ID } from "@/config";
+
 import { requireValue } from "./require";
 
 export const WAD = BigInt(10 ** 18);

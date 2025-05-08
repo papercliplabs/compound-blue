@@ -1,6 +1,8 @@
-import { cn } from "@/utils/shadcn";
 import { ReactNode } from "react";
-import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "./ui/tooltipPopover";
+
+import { cn } from "@/utils/shadcn";
+
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 
 export type MetricProps = {
   label: ReactNode;
