@@ -25,8 +25,8 @@ export function AccountMarketPosition({ market }: MarketPositionProps) {
     marketPosition?.collateralAssets ?? "0",
     market.collateralAsset.decimals
   );
-  const borrowAssets = descaleBigIntToNumber(marketPosition?.borrowAssets ?? "0", market.loanAsset.decimals);
-  const maxBorrowAssets = descaleBigIntToNumber(marketPosition?.maxBorrowAssets ?? "0", market.loanAsset.decimals);
+  const borrowAssets = descaleBigIntToNumber(marketPosition?.borrowAssets ?? 0n, market.loanAsset.decimals);
+  const maxBorrowAssets = descaleBigIntToNumber(marketPosition?.maxBorrowAssets ?? 0n, market.loanAsset.decimals);
 
   const items: { label: string; description: string; value: ReactNode }[] = [
     {

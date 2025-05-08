@@ -19,7 +19,7 @@ interface VaultPositionProps {
 export function AccountVaultPosition({ vault }: VaultPositionProps) {
   const { data: vaultPosition, isLoading } = useAccountVaultPosition(getAddress(vault.vaultAddress));
 
-  const balance = descaleBigIntToNumber(vaultPosition?.supplyAssets ?? "0", vault.asset.decimals);
+  const balance = descaleBigIntToNumber(vaultPosition?.supplyAssets ?? 0n, vault.asset.decimals);
 
   const items: { label: string; description: string; value: ReactNode }[] = [
     {
