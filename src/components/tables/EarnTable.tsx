@@ -36,7 +36,7 @@ export const columns: ColumnDef<EarnTableEntry>[] = [
       const { position, isPositionLoading } = row.original;
       return (
         <NumberFlowWithLoading
-          value={position?.supplyAssetsUsd}
+          value={position?.supplyAssetsUsd ?? undefined}
           format={{ currency: "USD" }}
           isLoading={isPositionLoading}
           loadingContent={<Skeleton className="h-[24px] w-[60px]" />}

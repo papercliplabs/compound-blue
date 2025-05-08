@@ -29,7 +29,10 @@ export async function expectZeroErc20Balances(
     allowFailure: false,
   });
 
-  balances.forEach((balance) => {
+  balances.forEach((balance, i) => {
+    if (balance != BigInt(0)) {
+      console.log("Non zero balance:", { balance, account: accountAddresses[i], tokenAddress });
+    }
     expect(balance).toEqual(BigInt(0));
   });
 }

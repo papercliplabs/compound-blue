@@ -6,22 +6,24 @@ import { ArrowRight, Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { getAddress, maxUint256, parseUnits } from "viem";
-import { usePublicClient } from "wagmi";
 import { useAccount } from "wagmi";
+import { usePublicClient } from "wagmi";
 import { z } from "zod";
 
-import {
-  PrepareMarketLeveragedBorrowActionReturnType,
-  prepareMarketLeveragedBorrowAction,
-} from "@/actions/prepareMarketLeverageBorrowAction";
-import { computeMaxLeverageFactor } from "@/actions/prepareMarketLeverageBorrowAction/computeLeverageValues";
+import { MarketLeveragedBorrowAction, marketLeveragedBorrowAction } from "@/actions/market/marketLeverageBorrowAction";
+import { computeMaxLeverageFactor } from "@/actions/market/marketLeverageBorrowAction/computeLeverageValues";
 import AssetFormField from "@/components/FormFields/AssetFormField";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 
-import { ActionFlowDialog, ActionFlowReview, ActionFlowSummary } from "../../ActionFlowDialog";
-import { ActionFlowButton, ActionFlowSummaryAssetItem } from "../../ActionFlowDialog";
+import {
+  ActionFlowButton,
+  ActionFlowDialog,
+  ActionFlowReview,
+  ActionFlowSummary,
+  ActionFlowSummaryAssetItem,
+} from "../../ActionFlowDialog";
 import SliderFormField from "../../FormFields/SliderFormField";
 import { MetricChange } from "../../MetricChange";
 import { Button } from "../../ui/button";
@@ -49,9 +51,7 @@ export default function MarketLeverageBorrow({
   market: MarketNonIdle;
   onCloseAfterSuccess?: () => void;
 }) {
-  const [preparedAction, setPreparedAction] = useState<PrepareMarketLeveragedBorrowActionReturnType | undefined>(
-    undefined
-  );
+  const [preparedAction, setPreparedAction] = useState<MarketLeveragedBorrowAction | undefined>(undefined);
   const [simulatingBundle, setSimulatingBundle] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -154,7 +154,7 @@ export default function MarketLeverageBorrow({
 
       const leverageFactor = multiplier / (1 + maxSlippageTolerance / 100) + 1;
 
-      const action = await prepareMarketLeveragedBorrowAction({
+      const action = await marketLeveragedBorrowAction({
         publicClient,
         accountAddress: address,
         marketId: market.marketId as MarketId,

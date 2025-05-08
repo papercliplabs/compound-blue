@@ -40,8 +40,8 @@ export function useAccountVaultPositionAggregate() {
     const { totalSupplyUsd, avgApy } = Object.values(accountVaultPositions).reduce(
       (acc, vaultPosition) => {
         return {
-          totalSupplyUsd: acc.totalSupplyUsd + vaultPosition.supplyAssetsUsd,
-          avgApy: acc.avgApy + vaultPosition.vault.supplyApy.total * vaultPosition.supplyAssetsUsd,
+          totalSupplyUsd: acc.totalSupplyUsd + (vaultPosition.supplyAssetsUsd ?? 0),
+          avgApy: acc.avgApy + vaultPosition.vault.supplyApy.total * (vaultPosition.supplyAssetsUsd ?? 0),
         };
       },
       { totalSupplyUsd: 0, avgApy: 0 }
