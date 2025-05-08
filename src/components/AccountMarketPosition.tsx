@@ -21,26 +21,28 @@ interface MarketPositionProps {
 export function AccountMarketPosition({ market }: MarketPositionProps) {
   const { data: marketPosition, isLoading } = useAccountMarketPosition(market.marketId as MarketId);
 
+  const collateralAssets = descaleBigIntToNumber(
+    marketPosition?.collateralAssets ?? "0",
+    market.collateralAsset.decimals
+  );
+  const borrowAssets = descaleBigIntToNumber(marketPosition?.borrowAssets ?? 0n, market.loanAsset.decimals);
+  const maxBorrowAssets = descaleBigIntToNumber(marketPosition?.maxBorrowAssets ?? 0n, market.loanAsset.decimals);
+
   const items: { label: string; description: string; value: ReactNode }[] = [
     {
       label: `Collateral (${market.collateralAsset.symbol})`,
       description: "Your position's collateral balance.",
-      value: <NumberFlow value={marketPosition?.collateralAssetsUsd ?? 0} format={{ currency: "USD" }} />,
+      value: <NumberFlow value={collateralAssets} />,
     },
     {
       label: `Loan (${market.loanAsset.symbol})`,
       description: "Your positions borrow balance.",
-      value: <NumberFlow value={marketPosition?.borrowAssetsUsd ?? 0} format={{ currency: "USD" }} />,
+      value: <NumberFlow value={borrowAssets} />,
     },
     {
       label: "Available to Borrow",
       description: `The additional amount your position is able to borrow from the market. This will provide a LTV with a ${formatNumber(MAX_BORROW_LTV_MARGIN, { style: "percent" })} margin below the market's LLTV.`,
-      value: (
-        <NumberFlow
-          value={Math.max((marketPosition?.maxBorrowAssetsUsd ?? 0) - (marketPosition?.borrowAssetsUsd ?? 0), 0)}
-          format={{ currency: "USD" }}
-        />
-      ),
+      value: <NumberFlow value={Math.max(maxBorrowAssets - borrowAssets, 0)} />,
     },
     {
       label: "Loan to value",
