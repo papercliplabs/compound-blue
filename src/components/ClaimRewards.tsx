@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Address, Hex, getAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import { prepareMerklClaimAction } from "@/actions/prepareMerklClaimAction";
+import { merklClaimAction } from "@/actions/rewards/merklClaimAction";
 import { useAccountRewards } from "@/hooks/useAccountRewards";
 import { useTheme } from "@/hooks/useTheme";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
@@ -19,7 +19,6 @@ import { Button } from "./ui/button";
 import Sparkle from "./ui/icons/Sparkle";
 import NumberFlow from "./ui/NumberFlow";
 import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover";
-
 
 export default function ClaimRewards() {
   const [claimFlowOpen, setClaimFlowOpen] = useState(false);
@@ -51,7 +50,7 @@ export default function ClaimRewards() {
       }
     }
 
-    return prepareMerklClaimAction({ accountAddress: address, tokens, amounts, proofs });
+    return merklClaimAction({ accountAddress: address, tokens, amounts, proofs });
   }, [data, address]);
 
   // Hide if the user is not connected
@@ -109,7 +108,7 @@ export default function ClaimRewards() {
                   side="supply"
                   isIncreasing={true}
                   descaledAmount={descaleBigIntToNumber(reward.unclaimedAmount, reward.token.decimals)}
-                  amountUsd={reward.unclaimedAmountUsd}
+                  amountUsd={reward.unclaimedAmountUsd ?? 0}
                 />
               );
             })}

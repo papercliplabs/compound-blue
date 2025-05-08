@@ -3,9 +3,9 @@ import { Hex, Log } from "viem";
 import { getTransactionReceipt, sendTransaction } from "viem/actions";
 import { expect } from "vitest";
 
-import { PrepareActionReturnType } from "@/actions/helpers";
+import { Action } from "@/actions/utils/types";
 
-export async function executeAction(client: AnvilTestClient, action: PrepareActionReturnType): Promise<Log[]> {
+export async function executeAction(client: AnvilTestClient, action: Action): Promise<Log[]> {
   if (action.status == "error") {
     console.log("DEBUG", action);
   }
