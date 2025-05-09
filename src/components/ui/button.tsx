@@ -9,6 +9,7 @@ import { cn } from "@/utils/shadcn";
 const buttonVariants = cva(
   clsx(
     "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full transition-all",
+    "disabled:scale-1 active:scale-[.98]",
     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
@@ -16,7 +17,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-button-supply hover:brightness-90 text-white",
+        primary:
+          "bg-button-supply hover:brightness-90 text-white active:bg-button-supply-deemphasized active:brightness-100",
+        borrow:
+          "bg-button-borrow hover:brightness-90 text-white active:bg-button-borrow-deemphasized active:brightness-100",
         secondary: "bg-button-neutral hover:brightness-90",
         negative: "bg-button-neutral text-semantic-negative hover:brightness-90",
         ghost: "hover:bg-button-neutral",
