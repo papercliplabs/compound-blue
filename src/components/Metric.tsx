@@ -15,7 +15,7 @@ export type MetricWithTooltipProps = {
 
 export function MetricWithTooltip({ label, children, tooltip, className, ...props }: MetricWithTooltipProps) {
   return (
-    <div className={cn("flex flex-col gap-1", className)} {...props}>
+    <div className={cn("flex flex-col gap-2", className)} {...props}>
       <TooltipPopover>
         <TooltipPopoverTrigger>
           <Metric label={label} className={className}>
@@ -30,7 +30,7 @@ export function MetricWithTooltip({ label, children, tooltip, className, ...prop
 
 export function Metric({ label, children, className, ...props }: MetricProps) {
   return (
-    <div className={cn("flex flex-col gap-1 text-left text-content-primary", className)} {...props}>
+    <div className={cn("flex flex-col gap-2 text-left text-content-primary", className)} {...props}>
       <p className="w-fit whitespace-nowrap text-content-secondary label-md">{label}</p>
       {children}
     </div>

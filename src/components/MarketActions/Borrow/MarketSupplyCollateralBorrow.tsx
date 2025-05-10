@@ -208,7 +208,8 @@ export default function MarketSupplyCollateralBorrow({
               <div className="flex min-w-0 flex-col gap-2">
                 <Button
                   type="submit"
-                  className="w-full bg-accent-ternary"
+                  className="w-full"
+                  variant="borrow"
                   disabled={
                     simulatingBundle || (borrowAmount == 0 && supplyCollateralAmount == 0) || !form.formState.isValid
                   }

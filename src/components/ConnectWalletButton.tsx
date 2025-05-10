@@ -44,7 +44,11 @@ export default function ConnectWalletButton() {
               }
 
               return (
-                <Button onClick={openAccountModal} variant="secondary" className="aspect-square border p-0 md:px-4">
+                <Button
+                  onClick={openAccountModal}
+                  variant="secondary"
+                  className="aspect-square border p-0 md:aspect-auto md:px-4"
+                >
                   <span className="hidden md:block">{account.displayName}</span>
                   <Wallet className="block fill-content-primary md:hidden" />
                 </Button>
