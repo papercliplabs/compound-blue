@@ -1,20 +1,22 @@
 import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib, ORACLE_PRICE_SCALE } from "@morpho-org/blue-sdk";
+import { BundlerAction, BundlerCall, encodeBundle, populateSubBundle } from "@morpho-org/bundler-sdk-viem";
+import { Address, Client, maxUint256 } from "viem";
+
+import { CHAIN_ID, MAX_SLIPPAGE_TOLERANCE_LIMIT } from "@/config";
+import { getIsContract } from "@/data/getIsContract";
+import { getSimulationState } from "@/data/getSimulationState";
+import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
+import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
+
+import { createBundle, paraswapBuy } from "./bundler3";
 import {
+  PrepareActionReturnType,
+  SimulatedValueChange,
   computeAmountWithRebasingMargin,
   computeAmountWithSlippageSurplus,
   getSignatureRequirementDescription,
   getTransactionRequirementDescription,
-  PrepareActionReturnType,
-  SimulatedValueChange,
 } from "./helpers";
-import { Address, Client, maxUint256 } from "viem";
-import { getSimulationState } from "@/data/getSimulationState";
-import { getIsContract } from "@/data/getIsContract";
-import { BundlerCall, BundlerAction, populateSubBundle, encodeBundle } from "@morpho-org/bundler-sdk-viem";
-import { CHAIN_ID, MAX_SLIPPAGE_TOLERANCE_LIMIT } from "@/config";
-import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
-import { createBundle, paraswapBuy } from "./bundler3";
-import { GENERAL_ADAPTER_1_ADDRESS, MORPHO_BLUE_ADDRESS, PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
 
 interface PrepareMarketRepayWithCollateralActionParameters {
   publicClient: Client;

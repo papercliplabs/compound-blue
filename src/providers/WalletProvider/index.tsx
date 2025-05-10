@@ -1,9 +1,11 @@
 "use client";
-import { darkTheme, lightTheme, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
-import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-import { wagmiConfig } from "./wagmi";
+
 import { useTheme } from "@/hooks/useTheme";
+
+import { wagmiConfig } from "./wagmi";
 
 const queryClient = new QueryClient();
 

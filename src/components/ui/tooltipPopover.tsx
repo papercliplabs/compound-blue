@@ -1,8 +1,10 @@
 "use client";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { useResponsiveContext } from "@/providers/ResponsiveProvider";
 import { ButtonHTMLAttributes, HTMLAttributes } from "react";
+
+import { useResponsiveContext } from "@/providers/ResponsiveProvider";
+
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 
 export function TooltipPopover({ children }: { children: React.ReactNode }) {
   const { isDesktop } = useResponsiveContext();

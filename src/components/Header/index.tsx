@@ -1,9 +1,11 @@
 import Link from "next/link";
-import Nav from "./Nav";
-import LogoCopy from "../ui/icons/LogoCopy";
-import Logo from "../ui/icons/Logo";
-import ConnectWalletButton from "../ConnectWalletButton";
+
 import ClaimRewards from "../ClaimRewards";
+import ConnectWalletButton from "../ConnectWalletButton";
+import Logo from "../ui/icons/Logo";
+import LogoCopy from "../ui/icons/LogoCopy";
+
+import Nav from "./Nav";
 
 export default function Header() {
   return (

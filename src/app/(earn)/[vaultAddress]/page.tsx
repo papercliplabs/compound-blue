@@ -1,23 +1,26 @@
-import Apy from "@/components/Apy";
-import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
-import MarketAllocationTable from "@/components/tables/MarketAllocationTable";
-import Metric from "@/components/Metric";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton, Skeletons } from "@/components/ui/skeleton";
-import { getVault } from "@/data/whisk/getVault";
-import { formatNumber } from "@/utils/format";
 import { ArrowLeft } from "lucide-react";
+import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ReactNode, Suspense } from "react";
 import { Address, getAddress } from "viem";
-import VaultActions from "@/components/VaultActions";
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { WHITELISTED_VAULT_ADDRESSES } from "@/config";
-import BackButton from "@/components/BackButton";
+
 import { AccountVaultPosition, AccountVaultPositionHighlight } from "@/components/AccountVaultPosition";
+import Apy, { ApyTooltipContent } from "@/components/Apy";
+import BackButton from "@/components/BackButton";
+import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
+import { Metric, MetricWithTooltip } from "@/components/Metric";
+import RiskTier from "@/components/RiskTier";
+import MarketAllocationTable from "@/components/tables/MarketAllocationTable";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import NumberFlow from "@/components/ui/NumberFlow";
+import { Skeleton, Skeletons } from "@/components/ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "@/components/ui/tooltipPopover";
+import VaultActions from "@/components/VaultActions";
+import { WHITELISTED_VAULT_ADDRESSES } from "@/config";
+import { getVault } from "@/data/whisk/getVault";
+import { formatNumber } from "@/utils/format";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Vault",
@@ -150,11 +153,7 @@ async function VaultMetadata({ vaultAddress }: { vaultAddress: Address }) {
         />
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="inline title-2">{vault.name}</h1>
-          {vault.metadata?.riskTier && (
-            <span className="inline h-[20px] w-fit rounded-[4px] bg-button-neutral px-1 text-content-secondary label-md">
-              {vault.metadata.riskTier.toUpperCase()}
-            </span>
-          )}
+          {vault.metadata?.riskTier && <RiskTier tier={vault.metadata.riskTier} />}
         </div>
       </div>
       {vault.metadata?.description && (
@@ -171,30 +170,37 @@ async function VaultState({ vaultAddress }: { vaultAddress: Address }) {
     return null;
   }
 
-  const metrics: { label: string; description: string; value: ReactNode }[] = [
+  const metrics: { label: string; tooltip: ReactNode; value: ReactNode }[] = [
     {
       label: "Total Deposits",
-      description: "The total amount of assets currently deposited into the vault.",
-      value: <NumberFlow value={vault.supplyAssetsUsd} format={{ currency: "USD" }} />,
+      tooltip: "The total amount of assets currently deposited into the vault.",
+      value: <NumberFlow className="title-3" value={vault.supplyAssetsUsd} format={{ currency: "USD" }} />,
     },
     {
       label: "Available Liquidity",
-      description: "The available assets that can be withdrawn or reallocated.",
-      value: <NumberFlow value={vault.liquidityAssetsUsd} format={{ currency: "USD" }} />,
+      tooltip: "The available assets that can be withdrawn or reallocated.",
+      value: <NumberFlow className="title-3" value={vault.liquidityAssetsUsd} format={{ currency: "USD" }} />,
     },
     {
       label: "APY",
-      description: "The annual percent yield (APY) earned by depositing into this vault, including rewards and fees.",
-      value: <Apy type="supply" apy={vault.supplyApy} />,
+      tooltip: <ApyTooltipContent type="supply" apy={vault.supplyApy} />,
+      value: <Apy className="title-3" type="supply" apy={vault.supplyApy} showTooltip={false} />,
     },
   ];
 
   return (
     <div className="flex flex-wrap justify-between gap-x-8 gap-y-4">
       {metrics.map((metric, i) => (
-        <Metric key={i} label={metric.label} description={metric.description} className="flex-1">
-          <span className="title-3">{metric.value}</span>
-        </Metric>
+        <div key={i} className="flex-1">
+          <TooltipPopover>
+            <TooltipPopoverTrigger>
+              <Metric label={metric.label} className="gap-1">
+                {metric.value}
+              </Metric>
+            </TooltipPopoverTrigger>
+            <TooltipPopoverContent>{metric.tooltip}</TooltipPopoverContent>
+          </TooltipPopover>
+        </div>
       ))}
     </div>
   );
@@ -257,9 +263,9 @@ async function VaultInfo({ vaultAddress }: { vaultAddress: Address }) {
   return (
     <div className="grid grid-cols-1 gap-y-8 md:grid-cols-3 md:gap-y-10">
       {metrics.map((metric, i) => (
-        <Metric key={i} label={metric.label} description={metric.description}>
+        <MetricWithTooltip key={i} label={metric.label} tooltip={metric.description}>
           <span className="title-5">{metric.value}</span>
-        </Metric>
+        </MetricWithTooltip>
       ))}
     </div>
   );

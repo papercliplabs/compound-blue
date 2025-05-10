@@ -1,13 +1,15 @@
-import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
+import { type VariantProps, cva } from "class-variance-authority";
+import clsx from "clsx";
+import { LoaderCircle } from "lucide-react";
+import * as React from "react";
 
 import { cn } from "@/utils/shadcn";
-import clsx from "clsx";
 
 const buttonVariants = cva(
   clsx(
     "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full transition-all",
+    "disabled:scale-1 active:scale-[.98]",
     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-primary",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
@@ -15,7 +17,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-button-supply hover:brightness-90 text-white",
+        primary:
+          "bg-button-supply hover:brightness-90 text-white active:bg-button-supply-deemphasized active:brightness-100",
+        borrow:
+          "bg-button-borrow hover:brightness-90 text-white active:bg-button-borrow-deemphasized active:brightness-100",
         secondary: "bg-button-neutral hover:brightness-90",
         negative: "bg-button-neutral text-semantic-negative hover:brightness-90",
         ghost: "hover:bg-button-neutral",
@@ -35,16 +40,31 @@ const buttonVariants = cva(
   }
 );
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+type ButtonProps = {
   asChild?: boolean;
-}
+  isLoading?: boolean;
+  loadingMessage?: string;
+} & React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants>;
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  (
+    { children, className, isLoading = false, loadingMessage = "Loading", variant, size, asChild = false, ...props },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props}>
+        {isLoading ? (
+          <div className="flex items-center gap-1">
+            <LoaderCircle className="animate-spin" />
+            {loadingMessage}
+          </div>
+        ) : (
+          children
+        )}
+      </Comp>
+    );
   }
 );
 Button.displayName = "Button";

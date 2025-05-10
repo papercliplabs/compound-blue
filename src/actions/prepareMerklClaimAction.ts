@@ -1,8 +1,10 @@
-import { Address, encodeFunctionData, Hex } from "viem";
-import { PrepareActionReturnType } from "./helpers";
+import { Address, Hex, encodeFunctionData } from "viem";
+
+import { merklDistributorAbi } from "@/abis/merklDistributorAbi";
 import { TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 import { MERKLE_DISTRIBUTION_ADDRESS } from "@/config";
-import { merklDistributorAbi } from "@/abis/merklDistributorAbi";
+
+import { PrepareActionReturnType } from "./helpers";
 
 interface PrepareMerklClaimActionParameters {
   accountAddress: Address;

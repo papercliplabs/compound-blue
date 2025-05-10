@@ -1,15 +1,18 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Table } from "./Table";
+import clsx from "clsx";
+
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
+import { EarnTableEntry, useEarnTableData } from "@/hooks/useEarnTableData";
 import { formatNumber } from "@/utils/format";
+
 import Apy from "../Apy";
 import RowIcons from "../RowIcons";
 import { NumberFlowWithLoading } from "../ui/NumberFlow";
-import { VaultIdentifier } from "../VaultIdentifier";
 import { Skeleton } from "../ui/skeleton";
-import clsx from "clsx";
-import { EarnTableEntry, useEarnTableData } from "@/hooks/useEarnTableData";
+import { VaultIdentifier } from "../VaultIdentifier";
+
+import { Table } from "./Table";
 
 interface TableProps {
   vaultSummaries: VaultSummary[];
@@ -17,7 +20,7 @@ interface TableProps {
 
 export const columns: ColumnDef<EarnTableEntry>[] = [
   {
-    accessorKey: "name",
+    accessorKey: "vaultSummary.name",
     header: "Vault Name",
     cell: ({ row }) => {
       const { vaultSummary } = row.original;
@@ -44,7 +47,8 @@ export const columns: ColumnDef<EarnTableEntry>[] = [
     minSize: 160,
   },
   {
-    accessorKey: "supplyAssetsUsd",
+    id: "supplyAssetsUsd",
+    accessorKey: "vaultSummary.supplyAssetsUsd",
     header: "Total Deposits",
     cell: ({ row }) => formatNumber(row.original.vaultSummary.supplyAssetsUsd, { currency: "USD" }),
     meta: {
@@ -53,7 +57,7 @@ export const columns: ColumnDef<EarnTableEntry>[] = [
     minSize: 160,
   },
   {
-    accessorKey: "liquidityAssetsUsd",
+    accessorKey: "vaultSummary.liquidityAssetsUsd",
     header: "Liquidity",
     cell: ({ row }) => formatNumber(row.original.vaultSummary.liquidityAssetsUsd, { currency: "USD" }),
     minSize: 120,
@@ -86,7 +90,7 @@ export const columns: ColumnDef<EarnTableEntry>[] = [
     minSize: 160,
   },
   {
-    accessorKey: "supplyApy.total",
+    accessorKey: "vaultSummary.supplyApy.total",
     header: "Supply APY",
     cell: ({ row }) => {
       const { vaultSummary } = row.original;

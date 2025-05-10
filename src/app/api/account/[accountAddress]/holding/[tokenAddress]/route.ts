@@ -1,5 +1,6 @@
-import { getAccountTokenHolding } from "@/data/whisk/getAccountTokenHolding";
 import { getAddress } from "viem";
+
+import { getAccountTokenHolding } from "@/data/whisk/getAccountTokenHolding";
 
 export async function GET(
   request: Request,

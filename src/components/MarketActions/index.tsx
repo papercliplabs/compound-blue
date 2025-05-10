@@ -1,15 +1,18 @@
 "use client";
-import { CardContent } from "../ui/card";
-import { Card } from "../ui/card";
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "../ui/button";
-import { Hex } from "viem";
-import { useResponsiveContext } from "@/providers/ResponsiveProvider";
-import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useEffect, useMemo, useState } from "react";
+import { Hex } from "viem";
+
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
+import { useResponsiveContext } from "@/providers/ResponsiveProvider";
+
 import MarketMigrationCallout from "../MarketMigrationCallout";
+import { Button } from "../ui/button";
+import { Card } from "../ui/card";
+import { CardContent } from "../ui/card";
+import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "../ui/drawer";
+
 import MarketBorrow from "./Borrow";
 import MarketRepay from "./Repay";
 

@@ -1,7 +1,9 @@
-import Link from "next/link";
-import { Button } from "../ui/button";
-import EducationalSummaryTemplate, { EducationalSummaryTemplateProps } from "./EducationalSummaryTemplate";
 import { Shield, TrendingDown, TrendingUp } from "lucide-react";
+import Link from "next/link";
+
+import { Button } from "../ui/button";
+
+import EducationalSummaryTemplate, { EducationalSummaryTemplateProps } from "./EducationalSummaryTemplate";
 
 interface BorrowEducationalSummaryProps {
   showLink: boolean;

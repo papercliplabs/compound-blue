@@ -1,22 +1,25 @@
 "use client";
+import Image from "next/image";
+import { useMemo, useState } from "react";
+import { Address, Hex, getAddress } from "viem";
 import { useAccount } from "wagmi";
+
+import { prepareMerklClaimAction } from "@/actions/prepareMerklClaimAction";
+import { useAccountRewards } from "@/hooks/useAccountRewards";
+import { useTheme } from "@/hooks/useTheme";
+import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+
+import { ActionFlowButton } from "./ActionFlowDialog";
+import { ActionFlowDialog } from "./ActionFlowDialog";
+import { ActionFlowReview } from "./ActionFlowDialog/ActionFlowReview";
+import { ActionFlowSummary } from "./ActionFlowDialog/ActionFlowSummary";
+import { ActionFlowSummaryAssetItem } from "./ActionFlowDialog/ActionFlowSummary";
+import LinkExternal from "./LinkExternal";
 import { Button } from "./ui/button";
 import Sparkle from "./ui/icons/Sparkle";
-import { useMemo, useState } from "react";
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
-import { ActionFlowButton } from "./ActionFlowDialog";
-import { ActionFlowReview } from "./ActionFlowDialog/ActionFlowReview";
-import { ActionFlowSummaryAssetItem } from "./ActionFlowDialog/ActionFlowSummary";
-import { ActionFlowSummary } from "./ActionFlowDialog/ActionFlowSummary";
-import { ActionFlowDialog } from "./ActionFlowDialog";
-import { Address, getAddress, Hex } from "viem";
-import { prepareMerklClaimAction } from "@/actions/prepareMerklClaimAction";
-import Image from "next/image";
-import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover";
-import LinkExternal from "./LinkExternal";
-import { useAccountRewards } from "@/hooks/useAccountRewards";
 import NumberFlow from "./ui/NumberFlow";
-import { useTheme } from "@/hooks/useTheme";
+import { Popover, PopoverAnchor, PopoverContent } from "./ui/popover";
+
 
 export default function ClaimRewards() {
   const [claimFlowOpen, setClaimFlowOpen] = useState(false);

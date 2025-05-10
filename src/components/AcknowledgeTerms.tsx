@@ -1,12 +1,16 @@
 "use client";
 import { useState } from "react";
+
+import LegalLayout from "@/app/(legal)/layout";
+import TermsPage from "@/app/(legal)/terms/page";
+
+import { useAcknowledgeTermsContext } from "../providers/AcknowledgeTermsProvider";
+
+import LinkExternal from "./LinkExternal";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import { DialogDrawer, DialogDrawerContent, DialogDrawerTitle } from "./ui/dialogDrawer";
-import { useAcknowledgeTermsContext } from "../providers/AcknowledgeTermsProvider";
-import LinkExternal from "./LinkExternal";
-import TermsPage from "@/app/(legal)/terms/page";
-import LegalLayout from "@/app/(legal)/layout";
+
 
 export default function AcknowledgeTerms({
   open,

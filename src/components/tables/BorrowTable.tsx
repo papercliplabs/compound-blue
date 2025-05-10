@@ -1,15 +1,20 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
-import { MarketSummary } from "@/data/whisk/getMarketSummaries";
-import Image from "next/image";
-import { formatNumber } from "@/utils/format";
-import { Table } from "./Table";
-import Apy from "../Apy";
-import { NumberFlowWithLoading } from "../ui/NumberFlow";
-import MarketAvailableLiquidity from "../MarketAvailableLiquidity";
-import { Skeleton } from "../ui/skeleton";
 import clsx from "clsx";
+import Image from "next/image";
+
+import { MarketSummary } from "@/data/whisk/getMarketSummaries";
 import { BorrowTableEntry, useBorrowTableData } from "@/hooks/useBorrowTableData";
+import { formatNumber } from "@/utils/format";
+
+import Apy from "../Apy";
+import MarketAvailableLiquidity from "../MarketAvailableLiquidity";
+import { NumberFlowWithLoading } from "../ui/NumberFlow";
+import { Skeleton } from "../ui/skeleton";
+
+import { Table } from "./Table";
+
+
 
 interface TableProps {
   marketSummaries: MarketSummary[];
@@ -17,31 +22,7 @@ interface TableProps {
 
 export const columns: ColumnDef<BorrowTableEntry>[] = [
   {
-    accessorKey: "loanAsset.symbol",
-    header: "Loan Asset",
-    cell: ({ row }) => {
-      const { marketSummary } = row.original;
-
-      return (
-        <div className="flex items-center gap-3">
-          <Image
-            src={marketSummary.loanAsset.icon ?? ""}
-            width={36}
-            height={36}
-            className="shrink-0 rounded-full border"
-            alt={marketSummary.loanAsset.symbol}
-          />
-          <span className="label-lg">{marketSummary.loanAsset.symbol}</span>
-        </div>
-      );
-    },
-    meta: {
-      tooltip: "The borrowable asset.",
-    },
-    minSize: 160,
-  },
-  {
-    accessorKey: "collateralAsset.symbol",
+    accessorKey: "marketSummary.collateralAsset.symbol",
     header: "Collateral Asset",
     cell: ({ row }) => {
       const { marketSummary } = row.original;
@@ -67,6 +48,30 @@ export const columns: ColumnDef<BorrowTableEntry>[] = [
     minSize: 160,
   },
   {
+    accessorKey: "marketSummary.loanAsset.symbol",
+    header: "Loan Asset",
+    cell: ({ row }) => {
+      const { marketSummary } = row.original;
+
+      return (
+        <div className="flex items-center gap-3">
+          <Image
+            src={marketSummary.loanAsset.icon ?? ""}
+            width={36}
+            height={36}
+            className="shrink-0 rounded-full border"
+            alt={marketSummary.loanAsset.symbol}
+          />
+          <span className="label-lg">{marketSummary.loanAsset.symbol}</span>
+        </div>
+      );
+    },
+    meta: {
+      tooltip: "The borrowable asset.",
+    },
+    minSize: 160,
+  },
+  {
     id: "userBorrowUsd",
     accessorFn: (row) => row.position?.borrowAssetsUsd ?? 0,
     header: "Your Borrow",
@@ -85,7 +90,7 @@ export const columns: ColumnDef<BorrowTableEntry>[] = [
     minSize: 160,
   },
   {
-    accessorKey: "userLtv",
+    accessorKey: "position.ltv",
     header: "Your LTV / LLTV",
     cell: ({ row }) => {
       const { marketSummary, position, isPositionLoading } = row.original;
@@ -127,7 +132,7 @@ export const columns: ColumnDef<BorrowTableEntry>[] = [
     minSize: 140,
   },
   {
-    accessorKey: "borrowApy.total",
+    accessorKey: "marketSummary.borrowApy.total",
     header: "Borrow APY",
     cell: ({ row }) => {
       const { marketSummary } = row.original;

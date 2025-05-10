@@ -1,10 +1,11 @@
-import { BLOCK_EXPLORER_BASE_URL, KNOWN_ADDRESSES } from "@/config";
-import { formatAddress } from "@/utils/format";
-import { cn } from "@/utils/shadcn";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import { AnchorHTMLAttributes } from "react";
 import { Address } from "viem";
+
+import { BLOCK_EXPLORER_BASE_URL, KNOWN_ADDRESSES } from "@/config";
+import { formatAddress } from "@/utils/format";
+import { cn } from "@/utils/shadcn";
 
 interface LinkExternalProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   keepReferrer?: boolean; // Allow sending our site as referrer

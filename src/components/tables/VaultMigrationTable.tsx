@@ -1,12 +1,16 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Table } from "./Table";
-import Image from "next/image";
-import NumberFlow from "../ui/NumberFlow";
-import { Button } from "../ui/button";
 import { ArrowRight } from "lucide-react";
-import Apy from "../Apy";
+import Image from "next/image";
+
 import { VaultMigrationTableEntry } from "@/hooks/useVaultMigrationTableData";
+
+import Apy from "../Apy";
+import { Button } from "../ui/button";
+import NumberFlow from "../ui/NumberFlow";
+
+
+import { Table } from "./Table";
 
 interface TableProps {
   data: VaultMigrationTableEntry[];

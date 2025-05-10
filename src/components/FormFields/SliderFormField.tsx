@@ -1,9 +1,11 @@
 "use client";
 import { ComponentProps, ReactNode, useMemo } from "react";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
-import { Slider } from "../ui/slider";
-import { Input } from "../ui/input";
+
 import { formatNumber } from "@/utils/format";
+
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
+import { Input } from "../ui/input";
+import { Slider } from "../ui/slider";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface SliderFormFieldProps<TFieldValues extends Record<string, any>>

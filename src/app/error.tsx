@@ -1,7 +1,8 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useEffect } from "react";
+
+import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/data/trackEvent";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {

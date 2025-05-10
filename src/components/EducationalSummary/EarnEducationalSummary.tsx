@@ -1,7 +1,9 @@
-import Link from "next/link";
-import { Button } from "../ui/button";
-import EducationalSummaryTemplate, { EducationalSummaryTemplateProps } from "./EducationalSummaryTemplate";
 import { Eye, Search, TrendingUp } from "lucide-react";
+import Link from "next/link";
+
+import { Button } from "../ui/button";
+
+import EducationalSummaryTemplate, { EducationalSummaryTemplateProps } from "./EducationalSummaryTemplate";
 
 interface EarnEducationalSummaryProps {
   showLink: boolean;

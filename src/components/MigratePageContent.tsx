@@ -1,23 +1,26 @@
 "use client";
-import { VaultSummary } from "@/data/whisk/getVaultSummaries";
-import { Card, CardContent, CardHeader } from "./ui/card";
-import VaultMigrationTable from "./tables/VaultMigrationTable";
-import { useAccount } from "wagmi";
-import Wallet from "./ui/icons/Wallet";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Button } from "./ui/button";
-import VaultMigrationAction from "./MigrationActions/VaultMigrationAction";
-import { useState } from "react";
-import { Skeleton } from "./ui/skeleton";
-import EarnEducationalSummary from "./EducationalSummary/EarnEducationalSummary";
-import BorrowEducationalSummary from "./EducationalSummary/BorrowEducationalSummary";
 import Link from "next/link";
-import NumberFlow from "./ui/NumberFlow";
-import MarketMigrationTable from "./tables/MarketMigrationTable";
+import { useState } from "react";
+import { useAccount } from "wagmi";
+
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
+import { VaultSummary } from "@/data/whisk/getVaultSummaries";
+import { MarketMigrationTableEntry, useMarketMigrationTableData } from "@/hooks/useMarketMigrationTableData";
+import { VaultMigrationTableEntry, useVaultMigrationTableData } from "@/hooks/useVaultMigrationTableData";
+
+import BorrowEducationalSummary from "./EducationalSummary/BorrowEducationalSummary";
+import EarnEducationalSummary from "./EducationalSummary/EarnEducationalSummary";
 import MarketMigrationAction from "./MigrationActions/MarketMigrationAction";
-import { useVaultMigrationTableData, VaultMigrationTableEntry } from "@/hooks/useVaultMigrationTableData";
-import { useMarketMigrationTableData, MarketMigrationTableEntry } from "@/hooks/useMarketMigrationTableData";
+import VaultMigrationAction from "./MigrationActions/VaultMigrationAction";
+import MarketMigrationTable from "./tables/MarketMigrationTable";
+import VaultMigrationTable from "./tables/VaultMigrationTable";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader } from "./ui/card";
+import Wallet from "./ui/icons/Wallet";
+import NumberFlow from "./ui/NumberFlow";
+import { Skeleton } from "./ui/skeleton";
+
 
 interface MigrateContentProps {
   vaultSummaries: VaultSummary[];

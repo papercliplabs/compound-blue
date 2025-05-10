@@ -1,26 +1,29 @@
 "use client";
-import { ActionFlowButton, ActionFlowDialog, ActionFlowReview } from "@/components/ActionFlowDialog";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "../ui/button";
-import { useAccount, useBalance, usePublicClient } from "wagmi";
-import { PrepareVaultSupplyActionReturnType, prepareVaultSupplyBundle } from "@/actions/prepareVaultSupplyAction";
-import { getAddress, isAddressEqual, maxUint256, parseUnits } from "viem";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Form } from "@/components/ui/form";
-import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { VaultActionsProps } from ".";
-import { ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog/ActionFlowSummary";
-import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
-import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
-import { VAULT_ASSET_CALLOUT } from "@/config";
 import { Info } from "lucide-react";
-import { MetricChange } from "../MetricChange";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { getAddress, isAddressEqual, maxUint256, parseUnits } from "viem";
+import { useAccount, useBalance, usePublicClient } from "wagmi";
+import { z } from "zod";
+
+import { PrepareVaultSupplyActionReturnType, prepareVaultSupplyBundle } from "@/actions/prepareVaultSupplyAction";
+import { ActionFlowButton, ActionFlowDialog, ActionFlowReview } from "@/components/ActionFlowDialog";
+import { Form } from "@/components/ui/form";
+import { VAULT_ASSET_CALLOUT } from "@/config";
+import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
+import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
+
+import { ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog/ActionFlowSummary";
 import AssetFormField from "../FormFields/AssetFormField";
 import SwitchFormField from "../FormFields/SwitchFormField";
+import { MetricChange } from "../MetricChange";
+import { Button } from "../ui/button";
+import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
+
+import { VaultActionsProps } from ".";
 
 export default function VaultSupply({
   vault,
@@ -180,8 +183,14 @@ export default function VaultSupply({
               )}
 
               <div className="flex min-w-0 flex-col gap-2">
-                <Button type="submit" className="w-full" disabled={simulatingBundle || !form.formState.isValid}>
-                  {supplyAmount == 0 ? "Enter Amount" : simulatingBundle ? "Simulating..." : "Review Supply"}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={simulatingBundle || !form.formState.isValid}
+                  isLoading={simulatingBundle}
+                  loadingMessage="Simulating"
+                >
+                  {supplyAmount == 0 ? "Enter Amount" : "Review Supply"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">

@@ -1,8 +1,10 @@
-import { graphql } from "@/generated/gql/whisk";
-import { whiskClient } from "./client";
 import { Hex } from "viem";
+
 import { CHAIN_ID } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
+import { graphql } from "@/generated/gql/whisk";
+
+import { whiskClient } from "./client";
 
 const query = graphql(`
   query getMarket($chainId: Number!, $marketId: String!) {

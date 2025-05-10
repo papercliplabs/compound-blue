@@ -1,11 +1,12 @@
-import EarnTable from "@/components/tables/EarnTable";
-import Image from "next/image";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
-import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Metadata } from "next";
+import Image from "next/image";
+import { Suspense } from "react";
+
 import { AccountVaultPositionAggregate } from "@/components/AccountVaultPosition";
+import EarnTable from "@/components/tables/EarnTable";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Earn",

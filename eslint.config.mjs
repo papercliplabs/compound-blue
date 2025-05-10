@@ -18,7 +18,7 @@ const eslintConfig = [
     languageOptions: {
       parser: parserTs,
       parserOptions: {
-        project: "./tsconfig.json", 
+        project: "./tsconfig.json",
         tsconfigRootDir: __dirname,
       },
     },
@@ -28,6 +28,30 @@ const eslintConfig = [
     rules: {
       // Promise must be awaited, or explicitly marked as void for fire and forget
       "@typescript-eslint/no-floating-promises": "error",
+      "sort-imports": [
+        "error",
+        {
+          ignoreDeclarationSort: true,
+        },
+      ],
+      "import/order": [
+        "error",
+        {
+          "newlines-between": "always",
+          alphabetize: {
+            order: "asc",
+            caseInsensitive: true,
+          },
+          groups: ["builtin", "external", "parent", "sibling", "index"],
+          pathGroups: [
+            {
+              pattern: "@/**",
+              group: "external",
+              position: "after",
+            },
+          ],
+        },
+      ],
     },
   },
 ];

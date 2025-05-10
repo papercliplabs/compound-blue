@@ -1,13 +1,15 @@
-import { getSimulationState } from "@/data/getSimulationState";
 import { MarketId } from "@morpho-org/blue-sdk";
-import { AnvilTestClient } from "@morpho-org/test";
-import { Address, erc20Abi, Hex, maxUint256, parseEther } from "viem";
-import { getErc20BalanceOf } from "./erc20";
-import { writeContract } from "viem/actions";
 import { blueAbi, fetchMarket, fetchVaultConfig, metaMorphoAbi } from "@morpho-org/blue-sdk-viem";
-import { MORPHO_BLUE_ADDRESS } from "@/utils/constants";
+import { AnvilTestClient } from "@morpho-org/test";
+import { Address, Hex, erc20Abi, maxUint256, parseEther } from "viem";
+import { writeContract } from "viem/actions";
 import { expect } from "vitest";
+
+import { getSimulationState } from "@/data/getSimulationState";
+import { MORPHO_BLUE_ADDRESS } from "@/utils/constants";
+
 import { RANDOM_ADDRESS } from "./constants";
+import { getErc20BalanceOf } from "./erc20";
 
 export async function getMorphoMarketPosition(
   client: AnvilTestClient,

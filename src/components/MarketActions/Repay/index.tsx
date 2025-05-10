@@ -1,13 +1,16 @@
 "use client";
-import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
-import MarketRepayWithdrawCollateral from "./MarketRepayWithdrawCollateral";
-import MarketRepayWithCollateral from "./MarketRepayWithCollateral";
 import { Info } from "lucide-react";
+import { useMemo } from "react";
+import { getAddress } from "viem";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "@/components/ui/tooltipPopover";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
-import { useMemo } from "react";
 import { isAssetVaultShare } from "@/utils/isAssetVaultShare";
-import { getAddress } from "viem";
+
+import MarketRepayWithCollateral from "./MarketRepayWithCollateral";
+import MarketRepayWithdrawCollateral from "./MarketRepayWithdrawCollateral";
+
 
 export default function MarketRepay({
   market,

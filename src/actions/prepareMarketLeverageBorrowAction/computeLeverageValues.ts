@@ -1,6 +1,8 @@
+import { Market, MathLib } from "@morpho-org/blue-sdk";
+
 import { MAX_BORROW_LTV_MARGIN, MAX_SLIPPAGE_TOLERANCE_LIMIT } from "@/config";
 import { descaleBigIntToNumber } from "@/utils/format";
-import { Market, MathLib } from "@morpho-org/blue-sdk";
+
 import { computeAmountWithSlippageSurplus } from "../helpers";
 
 const LEVERAGE_FACTOR_CEILING = 100; // Only clamps if lltv * (1 - S) > 99%

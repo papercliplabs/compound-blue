@@ -1,18 +1,22 @@
 "use client";
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
-import { Hex } from "viem";
-import { ReactNode } from "react";
-import { Skeleton } from "./ui/skeleton";
-import Metric from "./Metric";
-import { useAccount } from "wagmi";
+import { MarketId } from "@morpho-org/blue-sdk";
 import Image from "next/image";
-import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
-import Apy from "./Apy";
-import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
+import { ReactNode } from "react";
+import { Hex } from "viem";
+import { useAccount } from "wagmi";
+
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
-import { MarketId } from "@morpho-org/blue-sdk";
 import { useAccountMarketPosition, useAccountMarketPositionAggregate } from "@/hooks/useAccountMarketPosition";
+import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+
+import Apy from "./Apy";
+import { MetricWithTooltip } from "./Metric";
+import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
+import { Skeleton } from "./ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
+
+
 
 interface MarketPositionProps {
   market: MarketNonIdle;
@@ -21,26 +25,28 @@ interface MarketPositionProps {
 export function AccountMarketPosition({ market }: MarketPositionProps) {
   const { data: marketPosition, isLoading } = useAccountMarketPosition(market.marketId as MarketId);
 
+  const collateralAssets = descaleBigIntToNumber(
+    marketPosition?.collateralAssets ?? "0",
+    market.collateralAsset.decimals
+  );
+  const borrowAssets = descaleBigIntToNumber(marketPosition?.borrowAssets ?? 0n, market.loanAsset.decimals);
+  const maxBorrowAssets = descaleBigIntToNumber(marketPosition?.maxBorrowAssets ?? 0n, market.loanAsset.decimals);
+
   const items: { label: string; description: string; value: ReactNode }[] = [
     {
       label: `Collateral (${market.collateralAsset.symbol})`,
       description: "Your position's collateral balance.",
-      value: <NumberFlow value={marketPosition?.collateralAssetsUsd ?? 0} format={{ currency: "USD" }} />,
+      value: <NumberFlow value={collateralAssets} />,
     },
     {
       label: `Loan (${market.loanAsset.symbol})`,
       description: "Your positions borrow balance.",
-      value: <NumberFlow value={marketPosition?.borrowAssetsUsd ?? 0} format={{ currency: "USD" }} />,
+      value: <NumberFlow value={borrowAssets} />,
     },
     {
       label: "Available to Borrow",
       description: `The additional amount your position is able to borrow from the market. This will provide a LTV with a ${formatNumber(MAX_BORROW_LTV_MARGIN, { style: "percent" })} margin below the market's LLTV.`,
-      value: (
-        <NumberFlow
-          value={Math.max((marketPosition?.maxBorrowAssetsUsd ?? 0) - (marketPosition?.borrowAssetsUsd ?? 0), 0)}
-          format={{ currency: "USD" }}
-        />
-      ),
+      value: <NumberFlow value={Math.max(maxBorrowAssets - borrowAssets, 0)} />,
     },
     {
       label: "Loan to value",
@@ -87,13 +93,13 @@ export function AccountMarketPositionHighlight({ market }: MarketPositionProps) 
 
   return (
     <div className="flex flex-col md:items-end md:text-end">
-      <Metric
+      <MetricWithTooltip
         label={<span className="justify-end text-accent-ternary">Borrowing</span>}
-        description="Your borrow balance in this market."
+        tooltip="Your borrow balance in this market."
         className="title-3 md:items-end"
       >
         <NumberFlow value={marketPosition.borrowAssetsUsd} format={{ currency: "USD" }} />
-      </Metric>
+      </MetricWithTooltip>
       <div className="flex items-center gap-1 text-content-secondary label-sm">
         {market.loanAsset.icon && (
           <Image
@@ -114,9 +120,9 @@ export function AccountMarketPositionAggregate() {
   const { data: accountMarketPositonAggregate, isLoading } = useAccountMarketPositionAggregate();
   return (
     <div className="flex gap-10 md:text-end">
-      <Metric
+      <MetricWithTooltip
         label={<span className="justify-end text-accent-ternary">Your Borrowing</span>}
-        description="Your total borrow balance across all markets."
+        tooltip="Your total borrow balance across all markets."
         className="title-3 md:items-end"
       >
         <NumberFlowWithLoading
@@ -125,11 +131,11 @@ export function AccountMarketPositionAggregate() {
           isLoading={isLoading}
           loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
         />
-      </Metric>
+      </MetricWithTooltip>
 
-      <Metric
+      <MetricWithTooltip
         label={<span className="justify-end">Avg. Borrow APY</span>}
-        description="Your average borrow APY across all markets, including rewards."
+        tooltip="Your average borrow APY across all markets, including rewards."
         className="title-3 md:items-end"
       >
         <NumberFlowWithLoading
@@ -138,7 +144,7 @@ export function AccountMarketPositionAggregate() {
           isLoading={isLoading}
           loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
         />
-      </Metric>
+      </MetricWithTooltip>
     </div>
   );
 }

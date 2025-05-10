@@ -1,27 +1,28 @@
-import { getMarket, isNonIdleMarket } from "@/data/whisk/getMarket";
-import Link from "next/link";
-import { getAddress, Hex, isHex, zeroAddress } from "viem";
 import { ArrowLeft, Info } from "lucide-react";
-import { ReactNode, Suspense } from "react";
-import { Skeleton, Skeletons } from "@/components/ui/skeleton";
-import { formatNumber } from "@/utils/format";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import Apy from "@/components/Apy";
-import Metric from "@/components/Metric";
-import VaultAllocationTable from "@/components/tables/VaultAllocationTable";
-import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
-import Image from "next/image";
-import IrmChart from "@/components/IrmChart";
-import MarketActions from "@/components/MarketActions";
 import { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { WHITELISTED_MARKET_IDS } from "@/config";
-import BackButton from "@/components/BackButton";
+import { ReactNode, Suspense } from "react";
+import { Hex, getAddress, isHex, zeroAddress } from "viem";
+
 import { AccountMarketPosition, AccountMarketPositionHighlight } from "@/components/AccountMarketPosition";
-import MarketAvailableLiquidity from "@/components/MarketAvailableLiquidity";
-import NumberFlow from "@/components/ui/NumberFlow";
+import Apy, { ApyTooltipContent } from "@/components/Apy";
+import BackButton from "@/components/BackButton";
+import IrmChart from "@/components/IrmChart";
+import { LinkExternalBlockExplorer } from "@/components/LinkExternal";
+import MarketActions from "@/components/MarketActions";
+import MarketAvailableLiquidity, { MarketAvailableLiquidityTooltip } from "@/components/MarketAvailableLiquidity";
 import { MarketIcon } from "@/components/MarketIdentifier";
-import { TooltipPopover, TooltipPopoverTrigger, TooltipPopoverContent } from "@/components/ui/tooltipPopover";
+import { Metric, MetricWithTooltip } from "@/components/Metric";
+import VaultAllocationTable from "@/components/tables/VaultAllocationTable";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import NumberFlow from "@/components/ui/NumberFlow";
+import { Skeleton, Skeletons } from "@/components/ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "@/components/ui/tooltipPopover";
+import { WHITELISTED_MARKET_IDS } from "@/config";
+import { getMarket, isNonIdleMarket } from "@/data/whisk/getMarket";
+import { formatNumber } from "@/utils/format";
 import { isAssetVaultShare } from "@/utils/isAssetVaultShare";
 
 export const metadata: Metadata = {
@@ -163,9 +164,19 @@ async function MarketMetadata({ marketId }: { marketId: Hex }) {
       />
       <div className="flex items-center gap-4">
         <h1 className="whitespace-nowrap title-2">{market.name}</h1>
-        <div className="rounded-[4px] bg-button-neutral px-1 text-content-secondary label-lg">
-          {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 0 })}
-        </div>
+        <TooltipPopover>
+          <TooltipPopoverTrigger>
+            <div className="rounded-[4px] bg-button-neutral px-1 text-content-secondary label-lg">
+              {formatNumber(market.lltv, { style: "percent", minimumFractionDigits: 0 })}
+            </div>
+          </TooltipPopoverTrigger>
+          <TooltipPopoverContent>
+            <p>
+              The liquidation loan-to-value (LLTV) threshold sets the limit at which positions become eligible for
+              liquidation.
+            </p>
+          </TooltipPopoverContent>
+        </TooltipPopover>
       </div>
       {collateralRehypothecation && (
         <TooltipPopover>
@@ -193,36 +204,49 @@ async function MarketState({ marketId }: { marketId: Hex }) {
     return null;
   }
 
-  const metrics: { label: string; description: string; value: ReactNode }[] = [
+  const metrics: { label: string; tooltip: ReactNode; value: ReactNode }[] = [
     {
       label: "Total Deposits",
-      description: "The total amount of assets currently deposited into the market.",
-      value: <NumberFlow value={market.supplyAssetsUsd} format={{ currency: "USD" }} />,
+      tooltip: "The total amount of assets currently deposited into the market.",
+      value: <NumberFlow className="title-3" value={market.supplyAssetsUsd} format={{ currency: "USD" }} />,
     },
     {
       label: "Available Liquidity",
-      description:
-        "The total amount of assets available for borrowing, including liquidity that can be reallocated from other markets through the public allocator.",
-      value: (
-        <MarketAvailableLiquidity
+      tooltip: (
+        <MarketAvailableLiquidityTooltip
           liquidityAssetUsd={market.liquidityAssetsUsd}
           publicAllocatorSharedLiquidityAssetsUsd={market.publicAllocatorSharedLiquidityAssetsUsd}
+        />
+      ),
+      value: (
+        <MarketAvailableLiquidity
+          className="title-3"
+          liquidityAssetUsd={market.liquidityAssetsUsd}
+          publicAllocatorSharedLiquidityAssetsUsd={market.publicAllocatorSharedLiquidityAssetsUsd}
+          showTooltip={false}
         />
       ),
     },
     {
       label: "Borrow APY",
-      description: "The annual percent yield (APY) payed for borrowing from this market, including rewards.",
-      value: <Apy type="borrow" apy={market.borrowApy} />,
+      tooltip: <ApyTooltipContent apy={market.borrowApy} type="borrow" />,
+      value: <Apy className="title-3" type="borrow" apy={market.borrowApy} showTooltip={false} />,
     },
   ];
 
   return (
     <div className="flex flex-wrap justify-between gap-x-8 gap-y-4">
       {metrics.map((metric, i) => (
-        <Metric key={i} label={metric.label} description={metric.description} className="flex-1">
-          <span className="title-3">{metric.value}</span>
-        </Metric>
+        <div key={i} className="flex-1">
+          <TooltipPopover>
+            <TooltipPopoverTrigger>
+              <Metric label={metric.label} className="gap-1">
+                {metric.value}
+              </Metric>
+            </TooltipPopoverTrigger>
+            <TooltipPopoverContent>{metric.tooltip}</TooltipPopoverContent>
+          </TooltipPopover>
+        </div>
       ))}
     </div>
   );
@@ -267,9 +291,9 @@ async function MarketIrm({ marketId }: { marketId: Hex }) {
     <div className="flex flex-col justify-between gap-8 lg:flex-row">
       <div className="flex flex-col justify-between gap-6 md:flex-row lg:flex-col">
         {metrics.map((metric, i) => (
-          <Metric key={i} label={metric.label} description={metric.description} className="flex-1">
+          <MetricWithTooltip key={i} label={metric.label} tooltip={metric.description} className="flex-1">
             <span className="title-5">{metric.value}</span>
-          </Metric>
+          </MetricWithTooltip>
         ))}
       </div>
       {market.irm.curve && <IrmChart data={market.irm.curve} currentUtilization={market.utilization} />}
@@ -349,9 +373,9 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
   return (
     <div className="grid grid-cols-1 gap-y-8 md:grid-cols-3 md:gap-y-10">
       {metrics.map((metric, i) => (
-        <Metric key={i} label={metric.label} description={metric.description}>
+        <MetricWithTooltip key={i} label={metric.label} tooltip={metric.description}>
           <span className="title-5">{metric.value}</span>
-        </Metric>
+        </MetricWithTooltip>
       ))}
     </div>
   );

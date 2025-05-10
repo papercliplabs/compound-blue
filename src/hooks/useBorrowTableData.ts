@@ -1,8 +1,10 @@
 "use client";
+import { useMemo } from "react";
+
 import { AccountMarketPosition } from "@/data/whisk/getAccountMarketPositions";
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
+
 import { useAccountMarketPositions } from "./useAccountMarketPosition";
-import { useMemo } from "react";
 
 export interface BorrowTableEntry {
   marketSummary: MarketSummary;

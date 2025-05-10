@@ -1,9 +1,11 @@
 "use client";
-import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import { formatNumber } from "@/utils/format";
-import { LineChart, Line, CartesianGrid, XAxis, DotProps, Tooltip, ReferenceLine, Label } from "recharts";
-import { ChartTooltip } from "@/components/ui/chart";
 import { ComponentProps } from "react";
+import { CartesianGrid, DotProps, Label, Line, LineChart, ReferenceLine, Tooltip, XAxis } from "recharts";
+
+import { ChartConfig, ChartContainer } from "@/components/ui/chart";
+import { ChartTooltip } from "@/components/ui/chart";
+import { formatNumber } from "@/utils/format";
+
 
 interface IrmChartDataEntry {
   utilization: number;

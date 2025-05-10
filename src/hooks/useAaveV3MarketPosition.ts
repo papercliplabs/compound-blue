@@ -1,9 +1,10 @@
 "use client";
+import { useQuery } from "@tanstack/react-query";
+import { useAccount } from "wagmi";
+
 import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
 import { AaveV3MarketPosition } from "@/data/whisk/getAaveV3MarketPosition";
 import { safeFetch } from "@/utils/fetch";
-import { useQuery } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
 
 export function useAaveV3MarketPosition() {
   const { address } = useAccount();

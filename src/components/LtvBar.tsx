@@ -1,11 +1,13 @@
 "use client";
 import clsx from "clsx";
-import PercentBar from "./ui/PercentBar";
-import { computeLtvHealth } from "@/utils/ltv";
-import { motion } from "motion/react";
-import NumberFlow from "./ui/NumberFlow";
-import { capitalizeFirstLetter } from "@/utils/format";
 import { Info } from "lucide-react";
+import { motion } from "motion/react";
+
+import { capitalizeFirstLetter } from "@/utils/format";
+import { computeLtvHealth } from "@/utils/ltv";
+
+import NumberFlow from "./ui/NumberFlow";
+import PercentBar from "./ui/PercentBar";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 
 interface LtvBarProps {

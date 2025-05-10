@@ -33,8 +33,9 @@
     --accent-ternary: 111 66 235;
 
     --button-supply: 0 194 137;
-    --button-supply-muted: 0 194 137;
+    --button-supply-deemphasized: 197 235 223;
     --button-borrow: 111 66 235;
+    --button-borrow-deemphasized: 218 204 255;
     --button-neutral: 216 223 229;
     --button-disabled: 240 242 245;
 
@@ -66,8 +67,9 @@
     --accent-ternary: 143 102 255;
 
     --button-supply: 0 173 121;
-    --button-supply-muted: 7 62 46;
+    --button-supply-deemphasized: 7 62 46;
     --button-borrow: 111 66 235;
+    --button-borrow-deemphasized: 59 40 112;
     --button-neutral: 43 57 71;
     --button-disabled: 23 33 43;
   }

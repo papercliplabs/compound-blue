@@ -1,17 +1,20 @@
-import { createPublicClient, http, Address, parseUnits } from "viem";
+import { AnvilTestClient } from "@morpho-org/test";
+import { createViemTest } from "@morpho-org/test/vitest";
+import { Address, createPublicClient, http, parseUnits } from "viem";
+import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { polygon } from "viem/chains";
 import { describe, expect } from "vitest";
-import { AnvilTestClient } from "@morpho-org/test";
-import { PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
-import { USDC_ADDRESS, USDT_ADDRESS } from "../../helpers/constants";
+
+
 import "dotenv/config";
-import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
 import { createBundle, paraswapBuy } from "@/actions/bundler3";
-import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
-import { getErc20BalanceOf } from "../../helpers/erc20";
-import { GetParaswapReturnType, SupportedDex } from "@/data/paraswap/types";
 import { SUPPORTED_DEXS } from "@/data/paraswap/config";
-import { createViemTest } from "@morpho-org/test/vitest";
+import { getParaswapExactBuy } from "@/data/paraswap/getParaswapExactBuy";
+import { GetParaswapReturnType, SupportedDex } from "@/data/paraswap/types";
+import { PARASWAP_ADAPTER_ADDRESS } from "@/utils/constants";
+
+import { USDC_ADDRESS, USDT_ADDRESS } from "../../helpers/constants";
+import { getErc20BalanceOf } from "../../helpers/erc20";
 
 const polygonClient = createPublicClient({
   chain: polygon,

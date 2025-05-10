@@ -1,5 +1,6 @@
 "server-only";
 import { cache } from "react";
+
 import { trackEvent } from "./trackEvent";
 
 const MAX_RETRIES = 5;

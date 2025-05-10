@@ -1,5 +1,6 @@
-import { getAccountVaultPositions } from "@/data/whisk/getAccountVaultPositions";
 import { getAddress } from "viem";
+
+import { getAccountVaultPositions } from "@/data/whisk/getAccountVaultPositions";
 
 export async function GET(request: Request, { params }: { params: Promise<{ accountAddress: string }> }) {
   const accountAddress = getAddress((await params).accountAddress);

@@ -1,8 +1,9 @@
-import { PrepareActionReturnType } from "@/actions/helpers";
 import { AnvilTestClient } from "@morpho-org/test";
-import { expect } from "vitest";
-import { getTransactionReceipt, sendTransaction } from "viem/actions";
 import { Hex, Log } from "viem";
+import { getTransactionReceipt, sendTransaction } from "viem/actions";
+import { expect } from "vitest";
+
+import { PrepareActionReturnType } from "@/actions/helpers";
 
 export async function executeAction(client: AnvilTestClient, action: PrepareActionReturnType): Promise<Log[]> {
   if (action.status == "error") {

@@ -1,12 +1,16 @@
 "use client";
-import { MarketActionsProps } from "..";
-import MarketSupplyCollateralBorrow from "./MarketSupplyCollateralBorrow";
-import MarketLeverageBorrow from "./MarketLeverageBorrow";
-import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
+import { useMemo } from "react";
+import { getAddress } from "viem";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { isAssetVaultShare } from "@/utils/isAssetVaultShare";
-import { getAddress } from "viem";
-import { useMemo } from "react";
+
+import { MarketActionsProps } from "..";
+
+import MarketLeverageBorrow from "./MarketLeverageBorrow";
+import MarketSupplyCollateralBorrow from "./MarketSupplyCollateralBorrow";
+
 
 export default function MarketBorrow({
   market,

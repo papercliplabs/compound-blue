@@ -1,18 +1,19 @@
+import { MarketId, MathLib } from "@morpho-org/blue-sdk";
+import {
+  InputBundlerOperation,
+  SignatureRequirement,
+  TransactionRequirement,
+  encodeBundle,
+  finalizeBundle,
+  populateBundle,
+} from "@morpho-org/bundler-sdk-viem";
+import { MaybeDraft, SimulationResult, SimulationState } from "@morpho-org/simulation-sdk";
+import { Address, Client } from "viem";
+
 import { SignatureRequest, TransactionRequest } from "@/components/ActionFlowDialog/ActionFlowProvider";
 import { PUBLIC_ALLOCATOR_SUPPLY_TARGET_UTILIZATION } from "@/config";
 import { getSimulationState } from "@/data/getSimulationState";
 import { WAD } from "@/utils/constants";
-import { MarketId, MathLib } from "@morpho-org/blue-sdk";
-import {
-  encodeBundle,
-  finalizeBundle,
-  InputBundlerOperation,
-  populateBundle,
-  SignatureRequirement,
-  TransactionRequirement,
-} from "@morpho-org/bundler-sdk-viem";
-import { MaybeDraft, SimulationResult, SimulationState } from "@morpho-org/simulation-sdk";
-import { Address, Client } from "viem";
 
 // Allow 0.03% buffer for max transfers on rebasing tokens
 // This gives ~1 day grace period for execution if rebasing at 10% APY, which is useful for multisigs (also aligns with bundler permits).

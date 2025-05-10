@@ -1,13 +1,15 @@
 "use client";
-import { AaveV3ReservePosition } from "@/data/whisk/getAaveV3MarketPosition";
-import { useAccount } from "wagmi";
 import { useEffect, useMemo, useState } from "react";
-import { isAddressEqual, getAddress } from "viem";
+import { getAddress, isAddressEqual } from "viem";
+import { useAccount } from "wagmi";
+
 import { trackEvent } from "@/data/trackEvent";
-import { useAaveV3MarketPosition } from "./useAaveV3MarketPosition";
+import { AaveV3ReservePosition } from "@/data/whisk/getAaveV3MarketPosition";
 import { AccountMarketPosition } from "@/data/whisk/getAccountMarketPositions";
-import { useAccountMarketPositions } from "./useAccountMarketPosition";
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
+
+import { useAaveV3MarketPosition } from "./useAaveV3MarketPosition";
+import { useAccountMarketPositions } from "./useAccountMarketPosition";
 
 export interface MarketMigrationTableEntry {
   aaveV3CollateralReservePosition: AaveV3ReservePosition;

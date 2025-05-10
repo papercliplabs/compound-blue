@@ -1,16 +1,18 @@
 "use client";
-import { descaleBigIntToNumber } from "@/utils/format";
-import { getAddress } from "viem";
-import { ReactNode } from "react";
-import { Skeleton } from "./ui/skeleton";
-import Metric from "./Metric";
-import { useAccount } from "wagmi";
 import Image from "next/image";
-import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
-import Apy from "./Apy";
-import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
+import { ReactNode } from "react";
+import { getAddress } from "viem";
+import { useAccount } from "wagmi";
+
 import { Vault } from "@/data/whisk/getVault";
 import { useAccountVaultPosition, useAccountVaultPositionAggregate } from "@/hooks/useAccountVaultPosition";
+import { descaleBigIntToNumber } from "@/utils/format";
+
+import Apy from "./Apy";
+import { MetricWithTooltip } from "./Metric";
+import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
+import { Skeleton } from "./ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 
 interface VaultPositionProps {
   vault: Vault;
@@ -19,11 +21,13 @@ interface VaultPositionProps {
 export function AccountVaultPosition({ vault }: VaultPositionProps) {
   const { data: vaultPosition, isLoading } = useAccountVaultPosition(getAddress(vault.vaultAddress));
 
+  const balance = descaleBigIntToNumber(vaultPosition?.supplyAssets ?? 0n, vault.asset.decimals);
+
   const items: { label: string; description: string; value: ReactNode }[] = [
     {
       label: "Balance",
       description: "Your position's balance.",
-      value: <NumberFlow value={vaultPosition?.supplyAssetsUsd ?? 0} format={{ currency: "USD" }} />,
+      value: <NumberFlow value={balance} />,
     },
     {
       label: "APY",
@@ -58,13 +62,13 @@ export function AccountVaultPositionHighlight({ vault }: { vault: Vault }) {
 
   return (
     <div className="flex flex-col md:items-end md:text-end">
-      <Metric
+      <MetricWithTooltip
         label={<span className="justify-end text-accent-secondary">Supplying</span>}
-        description="Your supply balance in this vault."
+        tooltip="Your supply balance in this vault."
         className="title-3 md:items-end"
       >
         <NumberFlow value={vaultPosition.supplyAssetsUsd} format={{ currency: "USD" }} />
-      </Metric>
+      </MetricWithTooltip>
       <div className="flex items-center gap-1 text-content-secondary label-sm">
         {vault.asset.icon && (
           <Image src={vault.asset.icon} width={12} height={12} alt={vault.asset.symbol} className="rounded-full" />
@@ -82,9 +86,9 @@ export function AccountVaultPositionAggregate() {
   const { data: accountVaultPositionAggregate, isLoading } = useAccountVaultPositionAggregate();
   return (
     <div className="flex gap-10 md:text-end">
-      <Metric
+      <MetricWithTooltip
         label={<span className="justify-end text-accent-secondary">Your Deposits</span>}
-        description="Your total deposit balance across all vaults."
+        tooltip="Your total deposit balance across all vaults."
         className="title-3 md:items-end"
       >
         <NumberFlowWithLoading
@@ -93,11 +97,11 @@ export function AccountVaultPositionAggregate() {
           isLoading={isLoading}
           loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
         />
-      </Metric>
+      </MetricWithTooltip>
 
-      <Metric
+      <MetricWithTooltip
         label={<span className="justify-end">Avg. Earn APY</span>}
-        description="Your average supply APY across all vaults, including rewards and fees."
+        tooltip="Your average supply APY across all vaults, including rewards and fees."
         className="title-3 md:items-end"
       >
         <NumberFlowWithLoading
@@ -106,7 +110,7 @@ export function AccountVaultPositionAggregate() {
           isLoading={isLoading}
           loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
         />
-      </Metric>
+      </MetricWithTooltip>
     </div>
   );
 }

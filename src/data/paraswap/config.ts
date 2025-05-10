@@ -1,4 +1,5 @@
 import { ContractMethodV6 } from "@paraswap/sdk";
+
 import { SupportedContractMethod } from "./types";
 import { ParaswapOffsets } from "./types";
 

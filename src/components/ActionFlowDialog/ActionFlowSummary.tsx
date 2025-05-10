@@ -1,11 +1,13 @@
 "use client";
-import { HTMLAttributes, useMemo } from "react";
-import { useActionFlowContext } from "./ActionFlowProvider";
-import { cn } from "@/utils/shadcn";
-import Image from "next/image";
-import { formatNumber } from "@/utils/format";
 import clsx from "clsx";
 import { CircleMinus, CirclePlus } from "lucide-react";
+import Image from "next/image";
+import { HTMLAttributes, useMemo } from "react";
+
+import { formatNumber } from "@/utils/format";
+import { cn } from "@/utils/shadcn";
+
+import { useActionFlowContext } from "./ActionFlowProvider";
 
 export function ActionFlowSummary({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
   const { flowState } = useActionFlowContext();

@@ -1,5 +1,6 @@
-import ContactUs from "@/components/ContactUs";
 import Link from "next/link";
+
+import ContactUs from "@/components/ContactUs";
 
 export default function TermsPage() {
   return (

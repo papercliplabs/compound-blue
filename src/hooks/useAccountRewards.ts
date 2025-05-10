@@ -1,9 +1,10 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { safeFetch } from "@/utils/fetch";
 import { useAccount } from "wagmi";
-import { AccountRewards } from "@/data/whisk/getAccountRewards";
+
 import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
+import { AccountRewards } from "@/data/whisk/getAccountRewards";
+import { safeFetch } from "@/utils/fetch";
 
 export function useAccountRewards() {
   const { address } = useAccount();

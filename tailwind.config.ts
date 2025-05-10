@@ -50,8 +50,12 @@ export default {
           supply: {
             DEFAULT: "rgb(var(--button-supply))",
             muted: "rgb(var(--button-supply-muted))",
+            deemphasized: "rgb(var(--button-supply-deemphasized))",
           },
-          borrow: "rgb(var(--button-borrow))",
+          borrow: {
+            DEFAULT: "rgb(var(--button-borrow))",
+            deemphasized: "rgb(var(--button-borrow-deemphasized))",
+          },
           neutral: "rgb(var(--button-neutral))",
           disabled: "rgb(var(--button-disabled))",
         },

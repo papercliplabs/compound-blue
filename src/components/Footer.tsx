@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ModeToggle } from "./ModeToggle";
+
 import LinkExternal from "./LinkExternal";
+import { ModeToggle } from "./ModeToggle";
 import PoweredByMorpho from "./ui/icons/PoweredByMorpho";
 
 export default function Footer() {

@@ -1,9 +1,11 @@
 import "server-only";
-import { graphql } from "@/generated/gql/whisk";
-import { whiskClient } from "./client";
 import { Address, getAddress } from "viem";
+
 import { CHAIN_ID, MERKL_REWARD_TOKEN_ADDRESSES } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
+import { graphql } from "@/generated/gql/whisk";
+
+import { whiskClient } from "./client";
 
 const query = graphql(`
   query getAccountRewards($chainId: Number!, $address: String!) {

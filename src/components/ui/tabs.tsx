@@ -1,9 +1,10 @@
 "use client";
 
-import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
+import * as React from "react";
 
 import { cn } from "@/utils/shadcn";
+
 import { Button } from "./button";
 
 const Tabs = TabsPrimitive.Root;
@@ -30,11 +31,14 @@ const TabsTrigger = React.forwardRef<
   return (
     <TabsPrimitive.Trigger
       ref={ref}
-      className={cn("w-full", "disabled:pointer-events-none disabled:opacity-50", className)}
+      className={cn("w-full", "group disabled:pointer-events-none disabled:opacity-50", className)}
       asChild
       {...props}
     >
-      <Button size="sm" className="w-full bg-transparent hover:bg-button-neutral data-[state=active]:bg-button-neutral">
+      <Button
+        size="sm"
+        className="w-full bg-transparent text-content-secondary hover:bg-button-neutral data-[state=active]:bg-button-neutral data-[state=active]:text-content-primary"
+      >
         {children}
       </Button>
     </TabsPrimitive.Trigger>

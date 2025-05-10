@@ -1,5 +1,3 @@
-import { CHAIN_ID } from "@/config";
-import { SUPPORTED_ADDAPTERS, WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
 import { Holding, MarketId, NATIVE_ADDRESS, Position, VaultMarketConfig, VaultUser } from "@morpho-org/blue-sdk";
 import {
   fetchAccrualVault,
@@ -14,6 +12,9 @@ import {
 import { SimulationState } from "@morpho-org/simulation-sdk";
 import { Address, Client, zeroAddress } from "viem";
 import { getBlock } from "viem/actions";
+
+import { CHAIN_ID } from "@/config";
+import { SUPPORTED_ADDAPTERS, WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
 
 type GetSimulationStateMarketTypeParameters = {
   actionType: "market";

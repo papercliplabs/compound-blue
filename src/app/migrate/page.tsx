@@ -1,8 +1,9 @@
 import { Metadata } from "next";
 import Image from "next/image";
-import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
+
 import MigratePageContent from "@/components/MigratePageContent";
 import { getMarketSummaries } from "@/data/whisk/getMarketSummaries";
+import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
 export const metadata: Metadata = {
   title: "Compound Blue | Migrate",
 };

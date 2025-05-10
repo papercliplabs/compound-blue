@@ -1,5 +1,6 @@
-import { cn } from "@/utils/shadcn";
 import { SVGProps } from "react";
+
+import { cn } from "@/utils/shadcn";
 
 type SortState = "asc" | "desc" | false;
 
