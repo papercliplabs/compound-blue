@@ -194,7 +194,9 @@ async function VaultState({ vaultAddress }: { vaultAddress: Address }) {
         <div key={i} className="flex-1">
           <TooltipPopover>
             <TooltipPopoverTrigger>
-              <Metric label={metric.label}>{metric.value}</Metric>
+              <Metric label={metric.label} className="gap-1">
+                {metric.value}
+              </Metric>
             </TooltipPopoverTrigger>
             <TooltipPopoverContent>{metric.tooltip}</TooltipPopoverContent>
           </TooltipPopover>
