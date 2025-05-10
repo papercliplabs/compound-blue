@@ -398,7 +398,7 @@ export default function MarketLeverageBorrow({
               </div>
             </div>
           </ActionFlowReview>
-          <ActionFlowButton className="bg-accent-ternary">Multiply</ActionFlowButton>
+          <ActionFlowButton variant="borrow">Multiply</ActionFlowButton>
         </ActionFlowDialog>
       )}
     </>

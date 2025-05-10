@@ -8,7 +8,6 @@ import MarketMigrationAction from "./MigrationActions/MarketMigrationAction";
 import { Button } from "./ui/button";
 import NumberFlow from "./ui/NumberFlow";
 
-
 export default function MarketMigrationCallout({ market }: { market: MarketSummary }) {
   const [open, setOpen] = useState(false);
   const { data: entries } = useMarketMigrationTableData({ marketSummaries: [market] });
@@ -33,7 +32,7 @@ export default function MarketMigrationCallout({ market }: { market: MarketSumma
           )}
           <span>Migrate your position from Aave</span>
         </div>
-        <Button size="sm" onClick={() => setOpen(true)} className="bg-accent-ternary">
+        <Button size="sm" onClick={() => setOpen(true)} variant="borrow">
           Migrate
         </Button>
       </div>

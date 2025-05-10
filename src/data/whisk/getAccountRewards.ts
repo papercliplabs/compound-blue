@@ -12,10 +12,7 @@ const query = graphql(`
     merklAccountRewards(chainId: $chainId, accountAddress: $address) {
       rewards {
         token {
-          address
-          symbol
-          icon
-          decimals
+          ...TokenConfigFragment
         }
         amount
         proof

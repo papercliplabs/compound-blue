@@ -11,14 +11,12 @@ const query = graphql(`
       name
       isIdle
       collateralAsset {
-        symbol
-        icon
-        address
+        ...TokenConfigFragment
+        priceUsd
       }
       loanAsset {
-        symbol
-        icon
-        address
+        ...TokenConfigFragment
+        priceUsd
       }
       lltv
       borrowApy {
@@ -26,8 +24,7 @@ const query = graphql(`
         total
         rewards {
           asset {
-            symbol
-            icon
+            ...TokenConfigFragment
           }
           apr
         }
@@ -44,13 +41,18 @@ const query = graphql(`
           vaultAddress
         }
       }
+      collateralPriceInLoanAsset
     }
   }
 `);
 
 export const getMarketSummaries = cacheAndCatch(async () => {
   const marketSummaries = await whiskClient.request(query, { chainId: CHAIN_ID, marketIds: WHITELISTED_MARKET_IDS });
-  return marketSummaries.morphoMarkets.filter((summary) => !summary.isIdle);
+  return marketSummaries.morphoMarkets.filter((summary) => !summary.isIdle && !!summary.collateralAsset);
 }, "getMarketSummaries");
 
-export type MarketSummary = NonNullable<Awaited<ReturnType<typeof getMarketSummaries>>>[number];
+type MarketSummaryWithIdle = NonNullable<Awaited<ReturnType<typeof getMarketSummaries>>>[number];
+export type MarketSummary = MarketSummaryWithIdle & {
+  isIdle: false;
+  collateralAsset: NonNullable<MarketSummaryWithIdle["collateralAsset"]>;
+};

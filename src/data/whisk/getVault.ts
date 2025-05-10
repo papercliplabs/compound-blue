@@ -30,10 +30,7 @@ const query = graphql(`
       liquidityAssetsUsd
 
       asset {
-        address
-        symbol
-        icon
-        decimals
+        ...TokenConfigFragment
         priceUsd
       }
 
@@ -42,8 +39,7 @@ const query = graphql(`
         total
         rewards {
           asset {
-            symbol
-            icon
+            ...TokenConfigFragment
           }
           apr
         }
@@ -57,14 +53,10 @@ const query = graphql(`
           name
           lltv
           loanAsset {
-            symbol
-            icon
-            address
+            ...TokenConfigFragment
           }
           collateralAsset {
-            symbol
-            icon
-            address
+            ...TokenConfigFragment
           }
           supplyApy {
             total

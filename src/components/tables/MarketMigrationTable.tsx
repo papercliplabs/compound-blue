@@ -9,7 +9,6 @@ import Apy from "../Apy";
 import { Button } from "../ui/button";
 import NumberFlow from "../ui/NumberFlow";
 
-
 import { Table } from "./Table";
 
 interface TableProps {
@@ -137,7 +136,7 @@ const columns: ColumnDef<MarketMigrationTableEntry>[] = [
     cell: () => {
       return (
         <div className="flex w-full items-center justify-end">
-          <Button size="md" className="bg-accent-ternary">
+          <Button size="md" variant="borrow">
             <div>Migrate</div>
           </Button>
         </div>

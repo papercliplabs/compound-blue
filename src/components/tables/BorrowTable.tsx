@@ -14,8 +14,6 @@ import { Skeleton } from "../ui/skeleton";
 
 import { Table } from "./Table";
 
-
-
 interface TableProps {
   marketSummaries: MarketSummary[];
 }

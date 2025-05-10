@@ -6,7 +6,7 @@ import { AccountMarketPositionAggregate } from "@/components/AccountMarketPositi
 import BorrowTable from "@/components/tables/BorrowTable";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMarketSummaries } from "@/data/whisk/getMarketSummaries";
+import { MarketSummary, getMarketSummaries } from "@/data/whisk/getMarketSummaries";
 
 export const metadata: Metadata = {
   title: "Compound Blue | Borrow",
@@ -43,7 +43,7 @@ export default function BorrowPage() {
 
 async function BorrowTableWrapper() {
   const marketSummaries = await getMarketSummaries();
-  return <BorrowTable marketSummaries={marketSummaries ?? []} />;
+  return <BorrowTable marketSummaries={(marketSummaries as MarketSummary[]) ?? []} />;
 }
 
 export const dynamic = "force-static";

@@ -208,7 +208,8 @@ export default function MarketRepayWithdrawCollateral({
               <div className="flex min-w-0 flex-col gap-2">
                 <Button
                   type="submit"
-                  className="w-full bg-accent-ternary"
+                  className="w-full"
+                  variant="borrow"
                   disabled={simulatingBundle || (repayAmount == 0 && withdrawCollateralAmount == 0)}
                   isLoading={simulatingBundle}
                   loadingMessage="Simulating"
@@ -267,17 +268,11 @@ export default function MarketRepayWithdrawCollateral({
               <MetricChange
                 name={`Collateral (${market.collateralAsset.symbol})`}
                 initialValue={formatNumber(
-                  descaleBigIntToNumber(
-                    preparedAction.positionCollateralChange.before,
-                    market.collateralAsset.decimals
-                  ) * (market.collateralAsset.priceUsd ?? 0),
+                  preparedAction.positionCollateralChange.before.amount * (market.collateralAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
                 finalValue={formatNumber(
-                  descaleBigIntToNumber(
-                    preparedAction.positionCollateralChange.after,
-                    market.collateralAsset.decimals
-                  ) * (market.collateralAsset.priceUsd ?? 0),
+                  preparedAction.positionCollateralChange.after.amount * (market.collateralAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
               />
@@ -286,13 +281,11 @@ export default function MarketRepayWithdrawCollateral({
               <MetricChange
                 name={`Loan (${market.loanAsset.symbol})`}
                 initialValue={formatNumber(
-                  descaleBigIntToNumber(preparedAction.positionLoanChange.before, market.loanAsset.decimals) *
-                    (market.loanAsset.priceUsd ?? 0),
+                  preparedAction.positionLoanChange.before.amount * (market.loanAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
                 finalValue={formatNumber(
-                  descaleBigIntToNumber(preparedAction.positionLoanChange.after, market.loanAsset.decimals) *
-                    (market.loanAsset.priceUsd ?? 0),
+                  preparedAction.positionLoanChange.after.amount * (market.loanAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
               />
@@ -302,19 +295,19 @@ export default function MarketRepayWithdrawCollateral({
               <div className="flex items-center gap-1 label-md">
                 <span className="text-content-secondary">
                   (
-                  {formatNumber(descaleBigIntToNumber(preparedAction.positionLtvChange.before, 18), {
+                  {formatNumber(preparedAction.positionLtvChange.before, {
                     style: "percent",
                   })}
                 </span>
                 <ArrowRight size={14} className="stroke-content-secondary" />
-                {formatNumber(descaleBigIntToNumber(preparedAction.positionLtvChange.after, 18), {
+                {formatNumber(preparedAction.positionLtvChange.after, {
                   style: "percent",
                 })}
                 ) / {formatNumber(market.lltv, { style: "percent" })}
               </div>
             </div>
           </ActionFlowReview>
-          <ActionFlowButton className="bg-accent-ternary">
+          <ActionFlowButton variant="borrow">
             {repayAmount > 0 && "Repay"}
             {repayAmount > 0 && withdrawCollateralAmount > 0 && " & "}
             {withdrawCollateralAmount > 0 && "Withdraw Collateral"}

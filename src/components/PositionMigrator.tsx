@@ -21,13 +21,12 @@ import Wallet from "./ui/icons/Wallet";
 import NumberFlow from "./ui/NumberFlow";
 import { Skeleton } from "./ui/skeleton";
 
-
-interface MigrateContentProps {
+interface PositionMigratorProps {
   vaultSummaries: VaultSummary[];
   marketSummaries: MarketSummary[];
 }
 
-export default function MigratePageContent({ vaultSummaries, marketSummaries }: MigrateContentProps) {
+export default function PositionMigrator({ vaultSummaries, marketSummaries }: PositionMigratorProps) {
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
 
@@ -59,14 +58,14 @@ export default function MigratePageContent({ vaultSummaries, marketSummaries }: 
       <Card>
         <CardHeader>Borrow</CardHeader>
         <CardContent className="p-0">
-          <MarketMigrationTableWrapper marketSummaries={marketSummaries} />
+          <MarketMigrationTableWrapper marketSummaries={marketSummaries as MarketSummary[]} />
         </CardContent>
       </Card>
     </>
   );
 }
 
-function VaultMigrationTableWrapper({ vaultSummaries }: { vaultSummaries: MigrateContentProps["vaultSummaries"] }) {
+function VaultMigrationTableWrapper({ vaultSummaries }: { vaultSummaries: PositionMigratorProps["vaultSummaries"] }) {
   const [selected, setSelected] = useState<VaultMigrationTableEntry | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -119,7 +118,11 @@ function VaultMigrationTableWrapper({ vaultSummaries }: { vaultSummaries: Migrat
   );
 }
 
-function MarketMigrationTableWrapper({ marketSummaries }: { marketSummaries: MigrateContentProps["marketSummaries"] }) {
+function MarketMigrationTableWrapper({
+  marketSummaries,
+}: {
+  marketSummaries: PositionMigratorProps["marketSummaries"];
+}) {
   const [selected, setSelected] = useState<MarketMigrationTableEntry | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -140,7 +143,7 @@ function MarketMigrationTableWrapper({ marketSummaries }: { marketSummaries: Mig
         </div>
         <div className="flex w-full flex-col justify-center gap-6 md:flex-row">
           <Link href="/borrow">
-            <Button className="bg-accent-ternary">Go to Borrow</Button>
+            <Button variant="borrow">Go to Borrow</Button>
           </Link>
         </div>
       </div>

@@ -1,0 +1,210 @@
+import { ArrowRight, Info } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { useFormContext } from "react-hook-form";
+import { useDebounce } from "use-debounce";
+import { Hex } from "viem";
+
+import { MarketSummary } from "@/data/whisk/getMarketSummaries";
+import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
+import { useWatchNumberField } from "@/hooks/useWatchNumberField";
+import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+import { computeNewBorrowMax } from "@/utils/market";
+
+import Apy from "../Apy";
+import AssetFormField from "../FormFields/AssetFormField";
+import { NumberInputFormField } from "../FormFields/NumberInputFormField";
+import { MarketIcon } from "../MarketIdentifier";
+import { MetricChange } from "../MetricChange";
+import { Button } from "../ui/button";
+import { CardContent } from "../ui/card";
+import { NumberFlowWithLoading } from "../ui/NumberFlow";
+import { Skeleton } from "../ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
+
+import { ProtocolMigratorFormValues } from "./ProtocolMigratorController";
+
+interface ProtocolMigratorMarketDestinationProps {
+  market: MarketSummary;
+  migrateValueUsd: number;
+  openChange: () => void;
+}
+
+export function ProtocolMigratorMarketDestination({
+  market,
+  migrateValueUsd,
+  openChange,
+}: ProtocolMigratorMarketDestinationProps) {
+  const { data: position, isLoading } = useAccountMarketPosition(market.marketId as Hex);
+
+  const { currentCollateralBalance, currentLoanBalance } = useMemo(() => {
+    if (!position) {
+      return {
+        currentCollateralBalance: undefined,
+        currentLoanBalance: undefined,
+      };
+    }
+    return {
+      currentCollateralBalance: position?.collateralAssets
+        ? descaleBigIntToNumber(position?.collateralAssets ?? 0, market.collateralAsset.decimals)
+        : undefined,
+      currentLoanBalance: position?.borrowAssets
+        ? descaleBigIntToNumber(position?.borrowAssets ?? 0, market.loanAsset.decimals)
+        : undefined,
+    };
+  }, [position, market.collateralAsset, market.loanAsset]);
+
+  const migrateValueInCollateral = useMemo(() => {
+    return migrateValueUsd / (market.collateralAsset.priceUsd ?? 0);
+  }, [migrateValueUsd, market]);
+
+  const form = useFormContext<ProtocolMigratorFormValues>();
+
+  const borrowMax = useMemo(() => {
+    return computeNewBorrowMax(market, migrateValueInCollateral, position);
+  }, [market, migrateValueInCollateral, position]);
+
+  const borrowAmount = useWatchNumberField({ control: form.control, name: "borrowAmount" });
+  const [borrowAmountDebounced] = useDebounce(borrowAmount, 200);
+
+  // borrowAmount validation for borrowMax
+  useEffect(() => {
+    const errorMessage = "Amount exceeds borrow capacity.";
+    const isInvalid = borrowAmount > borrowMax;
+    const currentError = form.getFieldState("borrowAmount").error;
+
+    if (isInvalid) {
+      if (!currentError || currentError.message !== errorMessage) {
+        form.setError("borrowAmount", {
+          type: "manual",
+          message: "Amount exceeds borrow capacity.",
+        });
+      }
+    } else if (currentError?.type === "manual" && currentError.message === errorMessage) {
+      // Only clear if *we* set the manual error
+      form.clearErrors("borrowAmount");
+    }
+  }, [borrowAmount, borrowMax, form]);
+
+  return (
+    <CardContent className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <MarketIcon loanAssetInfo={market.loanAsset} collateralAssetInfo={market.collateralAsset} />
+          <div>
+            <h3 className="label-md">{market.name}</h3>
+            <div className="text-content-secondary label-sm">
+              Market • <Apy apy={market.borrowApy} type="borrow" />
+            </div>
+          </div>
+        </div>
+        <Button variant="secondary" size="sm" onClick={openChange}>
+          Change
+        </Button>
+      </div>
+      <div className="h-[1px] w-full bg-border-primary" />
+      <div className="[&_label]:text-accent-ternary">
+        <AssetFormField
+          control={form.control}
+          name="borrowAmount"
+          actionName="Borrow"
+          asset={market.loanAsset}
+          descaledAvailableBalance={borrowMax}
+        />
+      </div>
+      <div className="h-[1px] w-full bg-border-primary" />
+      <MetricChange
+        name={`Collateral (${market.collateralAsset?.symbol})`}
+        initialValue={
+          <NumberFlowWithLoading
+            value={currentCollateralBalance == undefined ? undefined : currentCollateralBalance}
+            isLoading={isLoading}
+            loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
+          />
+        }
+        finalValue={
+          <NumberFlowWithLoading
+            value={
+              currentCollateralBalance == undefined ? undefined : currentCollateralBalance + migrateValueInCollateral
+            }
+            isLoading={isLoading}
+            loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
+          />
+        }
+      />
+      <MetricChange
+        name={`Loan (${market.loanAsset.symbol})`}
+        initialValue={
+          <NumberFlowWithLoading
+            value={currentLoanBalance == undefined ? undefined : currentLoanBalance}
+            isLoading={isLoading}
+            loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
+          />
+        }
+        finalValue={
+          <NumberFlowWithLoading
+            value={currentLoanBalance == undefined ? undefined : currentLoanBalance + (borrowAmountDebounced ?? 0)}
+            isLoading={isLoading}
+            loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
+          />
+        }
+      />
+      <div className="flex items-center justify-between">
+        <span>LTV / LLTV</span>
+        <div className="flex items-center gap-1 label-md">
+          (
+          <span className="text-content-secondary">
+            <NumberFlowWithLoading
+              value={
+                !position
+                  ? undefined
+                  : position.collateralAssetsUsd == 0
+                    ? 0
+                    : position.borrowAssetsUsd / position.collateralAssetsUsd
+              }
+              isLoading={isLoading}
+              loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
+              format={{ style: "percent" }}
+            />
+          </span>
+          <ArrowRight size={14} className="stroke-content-secondary" />
+          <NumberFlowWithLoading
+            value={
+              !position
+                ? undefined
+                : position.collateralAssetsUsd == 0
+                  ? 0
+                  : (position.borrowAssetsUsd + borrowAmountDebounced * (market.loanAsset.priceUsd ?? 0)) /
+                    (position.collateralAssetsUsd + migrateValueUsd)
+            }
+            isLoading={isLoading}
+            loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
+            format={{ style: "percent" }}
+          />
+          ) / {formatNumber(market.lltv, { style: "percent" })}
+        </div>
+      </div>
+      <div>
+        <NumberInputFormField
+          labelContent={
+            <TooltipPopover>
+              <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
+                Max Slippage
+                <Info size={16} />
+              </TooltipPopoverTrigger>
+              <TooltipPopoverContent className="flex flex-col gap-2">
+                <p>The maximum deviation from the quote you are willing to accept.</p>
+                <p>
+                  Higher slippages increase success rates but may result in worse prices, while lower slippages ensure
+                  better prices but may cause transactions to fail.
+                </p>
+              </TooltipPopoverContent>
+            </TooltipPopover>
+          }
+          unit="%"
+          control={form.control}
+          name="maxSlippageTolerancePercent"
+        />
+      </div>
+    </CardContent>
+  );
+}
