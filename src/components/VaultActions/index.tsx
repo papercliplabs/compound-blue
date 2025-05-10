@@ -72,7 +72,7 @@ function VaultActionsDesktop({ vault, hasSupplyPosition }: { hasSupplyPosition: 
         </div>
       )}
 
-      <div className="rounded-[12px] bg-button-supply-muted">
+      <div className="bg-button-supply-deemphasized rounded-[12px]">
         <VaultMigrationCallout vault={vault} />
         <Card>
           <CardContent>
@@ -97,7 +97,7 @@ function VaultActionsMobile({ vault, hasSupplyPosition }: { hasSupplyPosition: b
             <Button className="w-full">Supply</Button>
           </DrawerTrigger>
           <DrawerContent>
-            <div className="flex rounded-[12px] bg-button-supply-muted">
+            <div className="bg-button-supply-deemphasized flex rounded-[12px]">
               <VaultMigrationCallout vault={vault} />
             </div>
             <VisuallyHidden>

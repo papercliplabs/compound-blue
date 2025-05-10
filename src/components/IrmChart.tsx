@@ -6,7 +6,6 @@ import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { ChartTooltip } from "@/components/ui/chart";
 import { formatNumber } from "@/utils/format";
 
-
 interface IrmChartDataEntry {
   utilization: number;
   supplyApy: number;
@@ -98,7 +97,7 @@ function CustomActiveDot({ cx, cy, color }: DotProps) {
 function CustomTooltip({ active, payload }: ComponentProps<typeof Tooltip>) {
   if (active && payload && payload.length) {
     return (
-      <div className="label-sm flex flex-col gap-4 rounded-lg bg-background-secondary px-5 py-4 shadow-card">
+      <div className="flex flex-col gap-4 rounded-lg bg-background-secondary px-5 py-4 shadow-card label-sm">
         <div className="flex items-center justify-between gap-6">
           <span>Utilization:</span>
           {formatNumber(payload[0]?.payload?.utilization ?? 0, { style: "percent" })}

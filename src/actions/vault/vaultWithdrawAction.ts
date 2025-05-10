@@ -73,6 +73,9 @@ export async function vaultWithdrawAction({
       positionBalanceChange: {
         before: preparedAction.initialSimulationState.getHolding(accountAddress, vaultAddress).balance,
         after: preparedAction.finalSimulationState.getHolding(accountAddress, vaultAddress).balance,
+        delta:
+          (preparedAction.finalSimulationState.getHolding(accountAddress, vaultAddress).balance ?? 0n) -
+          preparedAction.initialSimulationState.getHolding(accountAddress, vaultAddress).balance,
       },
     };
   } else {

@@ -1,9 +1,12 @@
 import { Metadata } from "next";
 import Image from "next/image";
 
-import MigratePageContent from "@/components/MigratePageContent";
-import { getMarketSummaries } from "@/data/whisk/getMarketSummaries";
+import PositionMigrator from "@/components/PositionMigrator";
+import ProtocolMigratorTableWrapper from "@/components/ProtocolMigrator/ProtocolMigratorTableWrapper";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MarketSummary, getMarketSummaries } from "@/data/whisk/getMarketSummaries";
 import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
+
 export const metadata: Metadata = {
   title: "Compound Blue | Migrate",
 };
@@ -16,27 +19,50 @@ export default function MigratePage() {
           <Image src="/migrate.png" width={56} height={56} alt="Migrate" className="rounded-[12px]" />
           <div className="flex h-full flex-col justify-between">
             <h1 className="title-2">Migrate</h1>
-            <p className="text-content-secondary">Move your positions to Compound Blue.</p>
+            <p className="text-content-secondary">
+              Seamlessly move your supplied and borrowed assets to Compound Blue with just a few clicks.
+            </p>
           </div>
         </div>
       </section>
 
-      <div className="flex flex-col gap-5">
-        <MigrateContentWrapper />
-      </div>
+      <Tabs defaultValue="protocol" className="flex flex-col gap-8">
+        <TabsList className="w-[254px]">
+          <TabsTrigger value="protocol">Protocol</TabsTrigger>
+          <TabsTrigger value="position">Position</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="protocol">
+          <ProtocolMigratorTableWrapperWrapper />
+        </TabsContent>
+
+        <TabsContent value="position">
+          <div className="flex flex-col gap-5">
+            <PositionMigratorWrapper />
+          </div>
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
 
-async function MigrateContentWrapper() {
+async function PositionMigratorWrapper() {
   const [vaultSummaries, marketSummaries] = await Promise.all([getVaultSummaries(), getMarketSummaries()]);
 
   if (!vaultSummaries || !marketSummaries) {
-    // Should never get here, if we do it means the getVaultSummaries call failed, and we will see it in logs
-    console.error("MigrateContentWrapper: No summaries found");
     return null;
   }
-  return <MigratePageContent vaultSummaries={vaultSummaries} marketSummaries={marketSummaries} />;
+  return <PositionMigrator vaultSummaries={vaultSummaries} marketSummaries={marketSummaries as MarketSummary[]} />;
+}
+
+async function ProtocolMigratorTableWrapperWrapper() {
+  const vaultSummaries = await getVaultSummaries();
+
+  if (!vaultSummaries) {
+    return null;
+  }
+
+  return <ProtocolMigratorTableWrapper vaultSummaries={vaultSummaries} />;
 }
 
 export const dynamic = "force-static";

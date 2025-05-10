@@ -23,13 +23,12 @@ import {
 } from "@/components/ActionFlowDialog";
 import AssetFormField from "@/components/FormFields/AssetFormField";
 import { Form } from "@/components/ui/form";
-import { MAX_BORROW_LTV_MARGIN } from "@/config";
-import { AccountMarketPosition } from "@/data/whisk/getAccountMarketPositions";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 import { isAssetVaultShare } from "@/utils/isAssetVaultShare";
+import { computeNewBorrowMax } from "@/utils/market";
 
 import { MetricChange } from "../../MetricChange";
 import { Button } from "../../ui/button";
@@ -268,17 +267,11 @@ export default function MarketSupplyCollateralBorrow({
               <MetricChange
                 name={`Collateral (${market.collateralAsset.symbol})`}
                 initialValue={formatNumber(
-                  descaleBigIntToNumber(
-                    preparedAction.positionCollateralChange.before,
-                    market.collateralAsset.decimals
-                  ) * (market.collateralAsset.priceUsd ?? 0),
+                  preparedAction.positionCollateralChange.before.amount * (market.collateralAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
                 finalValue={formatNumber(
-                  descaleBigIntToNumber(
-                    preparedAction.positionCollateralChange.after,
-                    market.collateralAsset.decimals
-                  ) * (market.collateralAsset.priceUsd ?? 0),
+                  preparedAction.positionCollateralChange.after.amount * (market.collateralAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
               />
@@ -287,13 +280,11 @@ export default function MarketSupplyCollateralBorrow({
               <MetricChange
                 name={`Loan (${market.loanAsset.symbol})`}
                 initialValue={formatNumber(
-                  descaleBigIntToNumber(preparedAction.positionLoanChange.before, market.loanAsset.decimals) *
-                    (market.loanAsset.priceUsd ?? 0),
+                  preparedAction.positionLoanChange.before.amount * (market.loanAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
                 finalValue={formatNumber(
-                  descaleBigIntToNumber(preparedAction.positionLoanChange.after, market.loanAsset.decimals) *
-                    (market.loanAsset.priceUsd ?? 0),
+                  preparedAction.positionLoanChange.after.amount * (market.loanAsset.priceUsd ?? 0),
                   { currency: "USD" }
                 )}
               />
@@ -303,19 +294,19 @@ export default function MarketSupplyCollateralBorrow({
               <div className="flex items-center gap-1 label-md">
                 <span className="text-content-secondary">
                   (
-                  {formatNumber(descaleBigIntToNumber(preparedAction.positionLtvChange.before, 18), {
+                  {formatNumber(preparedAction.positionLtvChange.before, {
                     style: "percent",
                   })}
                 </span>
                 <ArrowRight size={14} className="stroke-content-secondary" />
-                {formatNumber(descaleBigIntToNumber(preparedAction.positionLtvChange.after, 18), {
+                {formatNumber(preparedAction.positionLtvChange.after, {
                   style: "percent",
                 })}
                 ) / {formatNumber(market.lltv, { style: "percent" })}
               </div>
             </div>
           </ActionFlowReview>
-          <ActionFlowButton className="bg-accent-ternary">
+          <ActionFlowButton variant="borrow">
             {supplyCollateralAmount > 0 && "Supply Collateral"}
             {supplyCollateralAmount > 0 && borrowAmount > 0 && " & "}
             {borrowAmount > 0 && "Borrow"}
@@ -324,17 +315,4 @@ export default function MarketSupplyCollateralBorrow({
       )}
     </>
   );
-}
-
-function computeNewBorrowMax(market: MarketNonIdle, newCollateral: number, position?: AccountMarketPosition): number {
-  if (!position) {
-    return 0;
-  }
-
-  const currentCollateral = descaleBigIntToNumber(position.collateralAssets, market.collateralAsset.decimals);
-  const currentLoan = descaleBigIntToNumber(position.borrowAssets, market.loanAsset.decimals);
-  const newTotalCollateral = currentCollateral + newCollateral;
-  const maxLoan = newTotalCollateral * market.collateralPriceInLoanAsset * (market.lltv - MAX_BORROW_LTV_MARGIN);
-
-  return Math.max(maxLoan - currentLoan, 0);
 }

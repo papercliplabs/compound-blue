@@ -95,6 +95,9 @@ export async function vaultSupplyBundle({
       positionBalanceChange: {
         before: positionBalanceBefore,
         after: vaultSupplySubbundle.finalSimulationState.getHolding(accountAddress, vaultAddress).balance,
+        delta:
+          (vaultSupplySubbundle.finalSimulationState.getHolding(accountAddress, vaultAddress).balance ?? 0n) -
+          positionBalanceBefore,
       },
     };
   } catch (e) {

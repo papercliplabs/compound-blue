@@ -1,0 +1,110 @@
+import { ArrowRight } from "lucide-react";
+
+import { AaveV3PortfolioMigrationToMarketAction } from "@/actions/migration/aaveV3PortfolioMigrationToMarketAction";
+import { MarketSummary } from "@/data/whisk/getMarketSummaries";
+import { formatNumber } from "@/utils/format";
+
+import {
+  ActionFlowButton,
+  ActionFlowDialog,
+  ActionFlowReview,
+  ActionFlowSummary,
+  ActionFlowSummaryAssetItem,
+} from "../ActionFlowDialog";
+import { MetricChange } from "../MetricChange";
+
+// TODO: could generalize this to be used for all market actions...
+
+interface ProtocolMigratorMarketActionFlowProps {
+  market?: MarketSummary;
+  action?: AaveV3PortfolioMigrationToMarketAction;
+
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function ProtocolMigratorMarketActionFlow({
+  market,
+  action,
+
+  open,
+  onOpenChange,
+}: ProtocolMigratorMarketActionFlowProps) {
+  if (!market || !action || action.status != "success") {
+    return null;
+  }
+
+  return (
+    <ActionFlowDialog
+      open={open}
+      onOpenChange={(open) => {
+        onOpenChange(open);
+        // if (!open && success) {
+        //   onCloseAfterSuccess?.();
+        // }
+      }}
+      signatureRequests={action.signatureRequests}
+      transactionRequests={action.transactionRequests}
+      //   flowCompletionCb={onFlowCompletion}
+    >
+      <ActionFlowSummary>
+        <ActionFlowSummaryAssetItem
+          asset={market.collateralAsset}
+          actionName="Add"
+          side="supply"
+          isIncreasing={true}
+          descaledAmount={action.summary.positionCollateralChange.delta.amount}
+          amountUsd={action.summary.positionCollateralChange.delta.amount * (market.collateralAsset.priceUsd ?? 0)}
+        />
+        <ActionFlowSummaryAssetItem
+          asset={market.loanAsset}
+          actionName="Borrow"
+          side="borrow"
+          isIncreasing={true}
+          descaledAmount={action.summary.positionLoanChange.delta.amount}
+          amountUsd={action.summary.positionLoanChange.delta.amount * (market.loanAsset.priceUsd ?? 0)}
+        />
+      </ActionFlowSummary>
+      <ActionFlowReview>
+        <MetricChange
+          name={`Collateral (${market.collateralAsset.symbol})`}
+          initialValue={formatNumber(
+            action.summary.positionCollateralChange.before.amount * (market.collateralAsset.priceUsd ?? 0),
+            { currency: "USD" }
+          )}
+          finalValue={formatNumber(
+            action.summary.positionCollateralChange.after.amount * (market.collateralAsset.priceUsd ?? 0),
+            { currency: "USD" }
+          )}
+        />
+        <MetricChange
+          name={`Loan (${market.loanAsset.symbol})`}
+          initialValue={formatNumber(
+            action.summary.positionLoanChange.before.amount * (market.loanAsset.priceUsd ?? 0),
+            { currency: "USD" }
+          )}
+          finalValue={formatNumber(action.summary.positionLoanChange.after.amount * (market.loanAsset.priceUsd ?? 0), {
+            currency: "USD",
+          })}
+        />
+        <div className="flex items-center justify-between">
+          <span>LTV / LLTV</span>
+          <div className="flex items-center gap-1 label-md">
+            <span className="text-content-secondary">
+              (
+              {formatNumber(action.summary.positionLtvChange.before, {
+                style: "percent",
+              })}
+            </span>
+            <ArrowRight size={14} className="stroke-content-secondary" />
+            {formatNumber(action.summary.positionLtvChange.after, {
+              style: "percent",
+            })}
+            ) / {formatNumber(market.lltv, { style: "percent" })}
+          </div>
+        </div>
+      </ActionFlowReview>
+      <ActionFlowButton variant="borrow">Migrate</ActionFlowButton>
+    </ActionFlowDialog>
+  );
+}

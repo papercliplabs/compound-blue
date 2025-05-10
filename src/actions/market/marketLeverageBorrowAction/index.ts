@@ -224,14 +224,18 @@ export async function marketLeveragedBorrowAction({
       positionCollateralChange: {
         before: positionCollateralBefore,
         after: userPositionAfter?.collateral ?? 0n,
+        delta: (userPositionAfter?.collateral ?? 0n) - positionCollateralBefore,
       },
       positionLoanChange: {
         before: positionLoanBefore,
         after: marketAfter?.toBorrowAssets(userPositionAfter?.borrowShares ?? 0n) ?? 0n,
+        delta: (marketAfter?.toBorrowAssets(userPositionAfter?.borrowShares ?? 0n) ?? 0n) - positionLoanBefore,
       },
       positionLtvChange: {
         before: positionLtvBefore,
         after: marketAfter?.getLtv(userPositionAfter ?? { collateral: 0n, borrowShares: 0n }) ?? 0n,
+        delta:
+          (marketAfter?.getLtv(userPositionAfter ?? { collateral: 0n, borrowShares: 0n }) ?? 0n) - positionLtvBefore,
       },
     };
   } catch (e) {

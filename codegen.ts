@@ -16,6 +16,9 @@ const config: CodegenConfig = {
           // Add more if your schema uses other custom number types
         },
       },
+      presetConfig: {
+        fragmentMasking: false,
+      },
     },
     "./src/generated/gql/schema.graphql": {
       plugins: ["schema-ast"],
