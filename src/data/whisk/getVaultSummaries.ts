@@ -14,9 +14,7 @@ const query = graphql(`
         riskTier
       }
       asset {
-        symbol
-        icon
-        address
+        ...TokenConfigFragment
       }
       ownerAddress
       supplyAssetsUsd
@@ -26,8 +24,7 @@ const query = graphql(`
         total
         rewards {
           asset {
-            symbol
-            icon
+            ...TokenConfigFragment
           }
           apr
         }
@@ -37,8 +34,7 @@ const query = graphql(`
       marketAllocations {
         market {
           collateralAsset {
-            icon
-            symbol
+            ...TokenConfigFragment
           }
         }
       }

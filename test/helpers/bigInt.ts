@@ -1,7 +1,3 @@
-import JSONbig from "json-bigint";
-
-export const JSONbigNative = JSONbig({ useNativeBigInt: true, alwaysParseAsBig: true });
-
 const BIGINT_MARKER = "__bigint__";
 
 // Serialize supporting bigint

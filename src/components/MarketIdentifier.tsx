@@ -4,11 +4,12 @@ import { cn } from "@/utils/shadcn";
 import clsx from "clsx";
 import { HTMLAttributes } from "react";
 import { formatNumber } from "@/utils/format";
+import { TokenConfig } from "@/data/whisk/fragments";
 
 interface MarketIdentifierProps {
   name: MarketSummary["name"];
-  collateralAsset?: MarketSummary["collateralAsset"];
-  loanAsset: MarketSummary["loanAsset"];
+  collateralAsset?: TokenConfig | null;
+  loanAsset: TokenConfig;
   lltv: MarketSummary["lltv"];
 }
 

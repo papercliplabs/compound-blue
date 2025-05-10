@@ -15,6 +15,7 @@ interface SliderFormFieldProps<TFieldValues extends Record<string, any>>
   sliderStep: number;
   showTicks?: boolean;
   unit?: string;
+  supply?: boolean;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -26,6 +27,7 @@ export default function SliderFormField<TFieldValues extends Record<string, any>
   sliderStep,
   showTicks = true,
   unit,
+  supply = false,
   ...props
 }: SliderFormFieldProps<TFieldValues>) {
   const ticks = useMemo(() => {
@@ -45,7 +47,7 @@ export default function SliderFormField<TFieldValues extends Record<string, any>
       render={({ field: { value, onChange } }) => (
         <FormItem className="flex flex-col gap-4">
           <div className="flex w-full items-center justify-between gap-2">
-            <FormLabel className="text-content-secondary">{labelContent}</FormLabel>
+            <FormLabel className="w-full text-content-secondary">{labelContent}</FormLabel>
             {includeInput && (
               <FormControl>
                 <div className="relative">
@@ -74,7 +76,14 @@ export default function SliderFormField<TFieldValues extends Record<string, any>
           </div>
 
           <FormControl>
-            <Slider min={sliderMin} max={sliderMax} step={sliderStep} value={[value]} onValueChange={onChange} />
+            <Slider
+              min={sliderMin}
+              max={sliderMax}
+              step={sliderStep}
+              value={[value]}
+              onValueChange={(value) => onChange(value[0])}
+              supply={supply}
+            />
           </FormControl>
 
           {showTicks && (

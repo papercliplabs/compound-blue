@@ -20,6 +20,7 @@ interface ApyProps extends HTMLAttributes<HTMLDivElement> {
     performanceFee?: number;
     total: number;
   };
+  middleContent?: ReactNode;
 }
 
 const APY_TOOLTIP_CONTENT: Record<ApyProps["type"], { title: string; description: string }> = {
@@ -33,15 +34,21 @@ const APY_TOOLTIP_CONTENT: Record<ApyProps["type"], { title: string; description
   },
 };
 
-export default function Apy({ type, apy, className }: ApyProps) {
+export default function Apy({ type, apy, className, middleContent }: ApyProps) {
   if (apy.rewards.length == 0) {
-    return formatNumber(apy.total, { style: "percent" });
+    return (
+      <div className={cn("flex items-center gap-2", className)}>
+        <span>{formatNumber(apy.total, { style: "percent" })}</span>
+        {middleContent}
+      </div>
+    );
   }
 
   return (
     <TooltipPopover>
       <TooltipPopoverTrigger className={cn("flex items-center gap-2", className)}>
         <NumberFlow value={apy.total} format={{ style: "percent" }} />
+        {middleContent}
         <Sparkle className="h-5 w-5" />
       </TooltipPopoverTrigger>
       <TooltipPopoverContent className="flex max-w-[320px] flex-col gap-4">

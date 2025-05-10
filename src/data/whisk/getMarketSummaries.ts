@@ -10,14 +10,10 @@ const query = graphql(`
       name
       isIdle
       collateralAsset {
-        symbol
-        icon
-        address
+        ...TokenConfigFragment
       }
       loanAsset {
-        symbol
-        icon
-        address
+        ...TokenConfigFragment
       }
       lltv
       borrowApy {
@@ -25,8 +21,7 @@ const query = graphql(`
         total
         rewards {
           asset {
-            symbol
-            icon
+            ...TokenConfigFragment
           }
           apr
         }

@@ -11,20 +11,14 @@ const query = graphql(`
       isIdle
       name
       collateralAsset {
+        ...TokenConfigFragment
         priceUsd
-        address
-        decimals
-        symbol
-        icon
       }
       lltv
       liquidationPenalty
       loanAsset {
-        address
-        decimals
+        ...TokenConfigFragment
         priceUsd
-        symbol
-        icon
       }
       oracleAddress
       irm {
@@ -51,9 +45,8 @@ const query = graphql(`
         rewards {
           apr
           asset {
-            symbol
+            ...TokenConfigFragment
             priceUsd
-            icon
           }
         }
       }
@@ -76,8 +69,7 @@ const query = graphql(`
             riskTier
           }
           asset {
-            symbol
-            icon
+            ...TokenConfigFragment
           }
         }
         position {
