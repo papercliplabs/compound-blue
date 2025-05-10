@@ -1,6 +1,6 @@
 import { DEFAULT_SLIPPAGE_TOLERANCE, MathLib } from "@morpho-org/blue-sdk";
 import { BundlerAction } from "@morpho-org/bundler-sdk-viem";
-import { handleOperation } from "@morpho-org/simulation-sdk";
+import { handleOperation, produceImmutable } from "@morpho-org/simulation-sdk";
 import { Address, Client, maxUint256 } from "viem";
 
 import { CHAIN_ID, USDC_ADDRESS } from "@/config";
@@ -9,6 +9,7 @@ import { GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
 import { getSimulationState } from "../data/rpc/getSimulationState";
 import { aaveV3PortfolioWindDownSubbundle } from "../subbundles/aaveV3PortfolioWindDownSubbundle";
 import { createBundle } from "../utils/bundlerActions";
+import { VaultPositionChange, computeVaultPositionChange } from "../utils/positionChange";
 import { Action } from "../utils/types";
 
 // Hard code for now, could determine most liquid then use that in future to support larger migrations
@@ -24,6 +25,10 @@ interface AaveV3PortfolioMigrationToVaultActionParameters {
   vaultAddress: Address;
 }
 
+export type AaveV3PortfolioMigrationToVaultAction =
+  | (Extract<Action, { status: "success" }> & { summary: VaultPositionChange })
+  | Extract<Action, { status: "error" }>;
+
 export async function aaveV3PortfolioMigrationToVaultAction({
   publicClient,
   accountAddress,
@@ -32,16 +37,16 @@ export async function aaveV3PortfolioMigrationToVaultAction({
   maxSlippageTolerance,
 
   vaultAddress,
-}: AaveV3PortfolioMigrationToVaultActionParameters): Promise<Action> {
+}: AaveV3PortfolioMigrationToVaultActionParameters): Promise<AaveV3PortfolioMigrationToVaultAction> {
   // Note: Wind down subbundle does input validation on portfolioPercentage and maxTotalSlippageTolerance
-  const simulationState = await getSimulationState({
+  const initialSimulationState = await getSimulationState({
     actionType: "vault",
     accountAddress,
     vaultAddress,
     publicClient,
   });
 
-  const vault = simulationState.getVault(vaultAddress);
+  const vault = initialSimulationState.getVault(vaultAddress);
 
   try {
     const windDownSubbundle = await aaveV3PortfolioWindDownSubbundle({
@@ -53,22 +58,24 @@ export async function aaveV3PortfolioMigrationToVaultAction({
       outputAssetAddress: vault.asset,
     });
 
-    // Update simulation state to reflect the min output asset balance in GA1 from wind down
-    simulationState.getHolding(GENERAL_ADAPTER_1_ADDRESS, vault.asset).balance += windDownSubbundle.quotedOutputAssets;
+    const finalSimulationState = produceImmutable(initialSimulationState, (draft) => {
+      // Update simulation state to reflect the min output asset balance in GA1 from wind down
+      draft.getHolding(GENERAL_ADAPTER_1_ADDRESS, vault.asset).balance += windDownSubbundle.quotedOutputAssets;
 
-    // Simulate the deposit
-    handleOperation(
-      {
-        type: "MetaMorpho_Deposit",
-        sender: GENERAL_ADAPTER_1_ADDRESS,
-        address: vaultAddress,
-        args: {
-          assets: maxUint256, // Handles maxUint256
-          owner: accountAddress,
+      // Simulate the deposit
+      handleOperation(
+        {
+          type: "MetaMorpho_Deposit",
+          sender: GENERAL_ADAPTER_1_ADDRESS,
+          address: vaultAddress,
+          args: {
+            assets: maxUint256, // Handles maxUint256
+            owner: accountAddress,
+          },
         },
-      },
-      simulationState
-    );
+        draft
+      );
+    });
 
     const maxSharePriceE27 = vault.toAssets(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
     const bundlerCalls = [
@@ -86,6 +93,7 @@ export async function aaveV3PortfolioMigrationToVaultAction({
           tx: () => createBundle(bundlerCalls),
         },
       ],
+      summary: computeVaultPositionChange(vaultAddress, accountAddress, initialSimulationState, finalSimulationState),
     };
   } catch (e) {
     return {

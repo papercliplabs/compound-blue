@@ -24,7 +24,7 @@ export default function Nav() {
             variant={
               (item.href === "/" && (pathname === "/" || pathname.match(/^\/0x[a-fA-F0-9]{40}$/))) ||
               (item.href === "/borrow" && pathname.startsWith("/borrow")) ||
-              (item.href === "/migrate" && pathname == "/migrate")
+              (item.href === "/migrate" && pathname.startsWith("/migrate"))
                 ? "secondary"
                 : "ghost"
             }
@@ -34,7 +34,7 @@ export default function Nav() {
             {item.icon && item.icon}
             {item.name}
             {item.isNew && (
-              <span className="bg-background-accent h-4 rounded-[4px] px-1 text-xs text-accent-primary">New</span>
+              <span className="h-4 rounded-[4px] bg-background-accent px-1 text-xs text-accent-primary">New</span>
             )}
           </Button>
         </Link>

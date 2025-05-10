@@ -121,6 +121,8 @@ function prepareInputErc20TransferSubbundleWithoutSignatures({
     };
   }
 
+  const token = simulationState.getToken(tokenAddress);
+
   const accountErc20Holding = simulationState.getHolding(accountAddress, tokenAddress);
   const currentAllowance = accountErc20Holding.erc20Allowances["bundler3.generalAdapter1"];
   const requiresApproval = currentAllowance < requiredApprovalAmount;
@@ -131,7 +133,7 @@ function prepareInputErc20TransferSubbundleWithoutSignatures({
       ...(requiresApproval
         ? [
             {
-              name: "Approve Token",
+              name: `Approve ${token.symbol ?? "Token"}`,
               tx: () => ({
                 to: tokenAddress,
                 data: encodeFunctionData({

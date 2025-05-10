@@ -97,7 +97,9 @@ function MarketActionsMobile({ market, canRepayAndWithdraw }: MarketActionsProps
       <div className="fixed bottom-0 left-0 right-0 z-[20] flex items-center gap-[10px] bg-background-primary/15 px-4 py-3 backdrop-blur-lg">
         <Drawer open={borrowOpen} onOpenChange={setBorrowOpen}>
           <DrawerTrigger asChild>
-            <Button className="w-full bg-accent-ternary">Borrow</Button>
+            <Button className="w-full" variant="borrow">
+              Borrow
+            </Button>
           </DrawerTrigger>
           <DrawerContent>
             <div className="flex rounded-[12px] bg-[#3B2870]">

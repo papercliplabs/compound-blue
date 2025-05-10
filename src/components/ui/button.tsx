@@ -49,12 +49,22 @@ type ButtonProps = {
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { children, className, isLoading = false, loadingMessage = "Loading", variant, size, asChild = false, ...props },
+    {
+      children,
+      className,
+      isLoading = false,
+      loadingMessage = "Loading",
+      variant,
+      size,
+      asChild = false,
+      type,
+      ...props
+    },
     ref
   ) => {
     const Comp = asChild ? Slot : "button";
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props}>
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} type={type ?? "button"}>
         {isLoading ? (
           <div className="flex items-center gap-1">
             <LoaderCircle className="animate-spin" />

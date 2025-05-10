@@ -11,9 +11,7 @@ const query = graphql(`
   query getAccountTokenHolding($chainId: Number!, $tokenAddress: String!, $accountAddress: String!) {
     tokenHolding(chainId: $chainId, tokenAddress: $tokenAddress, accountAddress: $accountAddress) {
       token {
-        symbol
-        decimals
-        icon
+        ...TokenConfigFragment
         priceUsd
       }
       balance

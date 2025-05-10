@@ -190,7 +190,8 @@ export default function MarketRepayWithCollateral({
               <div className="flex min-w-0 flex-col gap-2">
                 <Button
                   type="submit"
-                  className="w-full bg-accent-ternary"
+                  className="w-full"
+                  variant="borrow"
                   disabled={simulatingBundle || repayAmount == 0 || !form.formState.isValid}
                   isLoading={simulatingBundle}
                   loadingMessage="Simulating"
@@ -308,7 +309,7 @@ export default function MarketRepayWithCollateral({
               </div>
             </div>
           </ActionFlowReview>
-          <ActionFlowButton className="bg-accent-ternary">Repay with Collateral</ActionFlowButton>
+          <ActionFlowButton variant="borrow">Repay with Collateral</ActionFlowButton>
         </ActionFlowDialog>
       )}
     </>

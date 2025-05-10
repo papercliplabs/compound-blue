@@ -1,5 +1,5 @@
 "use client";
-import { ButtonHTMLAttributes, HTMLAttributes } from "react";
+import { ComponentProps, HTMLAttributes } from "react";
 
 import { useResponsiveContext } from "@/providers/ResponsiveProvider";
 
@@ -18,7 +18,7 @@ export function TooltipPopover({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function TooltipPopoverTrigger(props: ButtonHTMLAttributes<HTMLButtonElement>) {
+export function TooltipPopoverTrigger(props: ComponentProps<typeof TooltipTrigger>) {
   const { isDesktop } = useResponsiveContext();
   return isDesktop ? <TooltipTrigger type="button" {...props} /> : <PopoverTrigger type="button" {...props} />;
 }

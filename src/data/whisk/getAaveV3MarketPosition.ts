@@ -19,15 +19,11 @@ const query = graphql(`
         lltvEffective
         reserve {
           underlyingAsset {
-            icon
-            symbol
-            address
-            decimals
+            ...TokenConfigFragment
             priceUsd
           }
           aToken {
-            address
-            decimals
+            ...TokenConfigFragment
           }
           supplyApy {
             total

@@ -20,7 +20,9 @@ export default function BorrowEducationalSummary({ showLink }: BorrowEducational
     <EducationalSummaryTemplate title="Borrow" subtitle="with Compound Blue Markets" items={items}>
       {showLink && (
         <Link href="/borrow">
-          <Button className="w-full bg-accent-ternary">Borrow</Button>
+          <Button className="w-full" variant="borrow">
+            Borrow
+          </Button>
         </Link>
       )}
     </EducationalSummaryTemplate>
