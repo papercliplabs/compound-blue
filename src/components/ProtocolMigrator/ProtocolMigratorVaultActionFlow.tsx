@@ -1,3 +1,7 @@
+"use client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import { AaveV3PortfolioMigrationToVaultAction } from "@/actions/migration/aaveV3PortfolioMigrationToVaultAction";
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
 import { formatNumber } from "@/utils/format";
@@ -29,24 +33,25 @@ export function ProtocolMigratorVaultActionFlow({
   open,
   onOpenChange,
 }: ProtocolMigratorVaultActionFlowProps) {
+  const [completed, setCompleted] = useState(false);
+  const router = useRouter();
+
   if (!vault || !action || action.status != "success") {
     return null;
   }
-
-  console.log("DEBUG", action.summary);
 
   return (
     <ActionFlowDialog
       open={open}
       onOpenChange={(open) => {
         onOpenChange(open);
-        // if (!open && success) {
-        //   onCloseAfterSuccess?.();
-        // }
+        if (!open && completed) {
+          router.push("/migrate");
+        }
       }}
       signatureRequests={action.signatureRequests}
       transactionRequests={action.transactionRequests}
-      //   flowCompletionCb={onFlowCompletion}
+      flowCompletionCb={() => setCompleted(true)}
     >
       <ActionFlowSummary>
         <ActionFlowSummaryAssetItem

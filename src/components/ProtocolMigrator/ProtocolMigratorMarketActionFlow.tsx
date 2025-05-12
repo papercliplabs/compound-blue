@@ -1,4 +1,7 @@
+"use client";
 import { ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { AaveV3PortfolioMigrationToMarketAction } from "@/actions/migration/aaveV3PortfolioMigrationToMarketAction";
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
@@ -30,6 +33,9 @@ export function ProtocolMigratorMarketActionFlow({
   open,
   onOpenChange,
 }: ProtocolMigratorMarketActionFlowProps) {
+  const [completed, setCompleted] = useState(false);
+  const router = useRouter();
+
   if (!market || !action || action.status != "success") {
     return null;
   }
@@ -39,13 +45,13 @@ export function ProtocolMigratorMarketActionFlow({
       open={open}
       onOpenChange={(open) => {
         onOpenChange(open);
-        // if (!open && success) {
-        //   onCloseAfterSuccess?.();
-        // }
+        if (!open && completed) {
+          router.push("/migrate");
+        }
       }}
       signatureRequests={action.signatureRequests}
       transactionRequests={action.transactionRequests}
-      //   flowCompletionCb={onFlowCompletion}
+      flowCompletionCb={() => setCompleted(true)}
     >
       <ActionFlowSummary>
         <ActionFlowSummaryAssetItem
