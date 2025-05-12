@@ -15,7 +15,7 @@ export default function MigratePage() {
   return (
     <>
       <section className="flex flex-col justify-between gap-8 pt-8 md:flex-row md:gap-2">
-        <div className="flex h-[60px] items-center gap-4">
+        <div className="flex items-start gap-4">
           <Image src="/migrate.png" width={56} height={56} alt="Migrate" className="rounded-[12px]" />
           <div className="flex h-full flex-col justify-between">
             <h1 className="title-2">Migrate</h1>

@@ -171,7 +171,7 @@ export function ProtocolMigratorMarketDestination({
             value={
               !position
                 ? undefined
-                : position.collateralAssetsUsd == 0
+                : position.collateralAssetsUsd + migrateValueUsd == 0
                   ? 0
                   : (position.borrowAssetsUsd + borrowAmountDebounced * (market.loanAsset.priceUsd ?? 0)) /
                     (position.collateralAssetsUsd + migrateValueUsd)
