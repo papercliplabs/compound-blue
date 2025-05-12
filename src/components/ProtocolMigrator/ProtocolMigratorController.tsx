@@ -2,6 +2,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { ArrowDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDebounce } from "use-debounce";
@@ -116,7 +117,17 @@ export default function ProtocolMigratorController({
   }, [protocolEntry, portfolioPercentDebounced]);
 
   const onSubmit = async (data: ProtocolMigratorFormValues) => {
-    if (!destinationSelection || !address || !publicClient) {
+    if (!address) {
+      openConnectModal?.();
+      return;
+    }
+
+    if (!publicClient) {
+      // Should never get here...
+      throw new Error("Missing pulic client");
+    }
+
+    if (!destinationSelection) {
       // Should not be possible to submit in this case
       return;
     }
@@ -184,30 +195,34 @@ export default function ProtocolMigratorController({
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <fieldset disabled={false} style={{ all: "unset", width: "100%" }}>
+          <fieldset
+            disabled={simulating || vaultActionFlowOpen || marketActionFlowOpen}
+            style={{ all: "unset", width: "100%" }}
+          >
             <div className="flex flex-col gap-8">
               <div className="flex flex-col gap-5 md:flex-row">
-                <Step
-                  number="1"
-                  title="Migration Details"
-                  description="Review the assets you're currently supplying and borrowing. This will migrate all the assets in Aave v3."
-                />
-                <Card className="w-full max-w-[400px]">
-                  {address ? (
-                    <ProtocolMigratorSourceCardContent
-                      protocolKey={protocolKey}
-                      control={form.control}
-                      name="portfolioPercent"
-                      migrateValueUsd={migrateValueUsd}
-                    />
-                  ) : (
-                    <CardContent className="flex h-full w-full flex-col items-center justify-center gap-4">
-                      <Wallet className="h-12 w-12 fill-content-secondary" />
-                      <div className="text-content-secondary label-lg">Connect wallet to begin migration.</div>
-                      <Button onClick={openConnectModal}>Connect Wallet</Button>
-                    </CardContent>
-                  )}
-                </Card>
+                <Step number="1" title="Migration Amount" description="Select how much of your portfolio to migrate." />
+                <div className="flex w-full max-w-[400px] flex-col gap-6">
+                  <Card className="w-full max-w-[400px]">
+                    {address ? (
+                      <ProtocolMigratorSourceCardContent
+                        protocolKey={protocolKey}
+                        control={form.control}
+                        name="portfolioPercent"
+                        migrateValueUsd={migrateValueUsd}
+                      />
+                    ) : (
+                      <CardContent className="flex h-full w-full flex-col items-center justify-center gap-4">
+                        <Wallet className="h-12 w-12 fill-content-secondary" />
+                        <div className="text-content-secondary label-lg">Connect wallet to begin migration.</div>
+                        <Button onClick={openConnectModal}>Connect Wallet</Button>
+                      </CardContent>
+                    )}
+                  </Card>
+                  <div className="hidden w-full items-center justify-center md:flex">
+                    <ArrowDown />
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col gap-5 md:flex-row">
