@@ -4,6 +4,7 @@ import { Address, Client, erc20Abi, getAddress, isAddressEqual, maxUint256 } fro
 import { readContract } from "viem/actions";
 
 import { CHAIN_ID, MAX_SLIPPAGE_TOLERANCE_LIMIT, WHITELISTED_VAULT_ADDRESSES } from "@/config";
+import { bigIntMax } from "@/utils/bigint";
 import {
   AAVE_V3_MIGRATION_ADAPTER_ADDRESS,
   GENERAL_ADAPTER_1_ADDRESS,
@@ -26,6 +27,8 @@ import { computeScaledAmount } from "../utils/math";
 
 import { inputTransferSubbundle } from "./inputTransferSubbundle";
 import { Subbundle } from "./types";
+
+export const PARASWAP_MIN_SWAP_AMOUNT = 50n;
 
 // See: ../docs/aave-wind-down/technical-explination.md for more details
 //
@@ -96,18 +99,24 @@ export async function aaveV3PortfolioWindDownSubbundle({
 
   const loanPositions = positions
     .filter((p) => BigInt(p.borrowBalance) > 0n)
-    .map((p) => ({
-      ...p,
-      migrationAmount: computeScaledAmount(
+    .map((p) => {
+      const migrationAmount = computeScaledAmount(
         p.borrowBalance,
         isFullWindDown ? 1.0003 : portfolioPercentage, // Rebasing margin for full wind down to leftover dust in AAVE
         "Down"
-      ),
-    }));
+      );
+      return {
+        ...p,
+        // For full wind down, ensure we swap for at least the min swap amount. Note that the extra dust will be swept back to the user
+        migrationAmount: isFullWindDown ? bigIntMax(migrationAmount, PARASWAP_MIN_SWAP_AMOUNT) : migrationAmount,
+      };
+    })
+    .filter((p) => p.migrationAmount > PARASWAP_MIN_SWAP_AMOUNT); // Exclude dust loan positions which cause swap quote failures
 
   const collateralPositions = positions
     .filter((p) => BigInt(p.supplyBalance) > 0n)
-    .map((p) => ({ ...p, migrationAmount: computeScaledAmount(p.supplyBalance, portfolioPercentage, "Down") }));
+    .map((p) => ({ ...p, migrationAmount: computeScaledAmount(p.supplyBalance, portfolioPercentage, "Down") }))
+    .filter((p) => p.migrationAmount > PARASWAP_MIN_SWAP_AMOUNT); // Exclude dust collateral which cause swap quote failures
 
   if (loanPositions.length == 0 && collateralPositions.length == 0) {
     throw new Error("No positions to wind down");

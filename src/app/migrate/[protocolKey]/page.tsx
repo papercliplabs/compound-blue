@@ -2,10 +2,12 @@ import { ArrowLeft } from "lucide-react";
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import BackButton from "@/components/BackButton";
 import ProtocolMigratorController from "@/components/ProtocolMigrator/ProtocolMigratorController";
 import ProtocolMigratorValueHighlight from "@/components/ProtocolMigrator/ProtocolMigratorValueHighlight";
+import { Skeletons } from "@/components/ui/skeleton";
 import { MarketSummary, getMarketSummaries } from "@/data/whisk/getMarketSummaries";
 import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
 import {
@@ -43,7 +45,9 @@ export default async function VaultPage({ params }: { params: Promise<{ protocol
       </section>
 
       <section>
-        <ProtocolMigratorControllerWrapper protocolKey={protocolKey} />
+        <Suspense fallback={<Skeletons count={2} className="mb-6 h-[250px] w-full max-w-[735px]" />}>
+          <ProtocolMigratorControllerWrapper protocolKey={protocolKey} />
+        </Suspense>
       </section>
     </>
   );

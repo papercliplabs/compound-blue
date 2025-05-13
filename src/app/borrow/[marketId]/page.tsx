@@ -316,7 +316,7 @@ async function MarketInfo({ marketId }: { marketId: Hex }) {
       value: formatNumber(market.lltv, { style: "percent" }),
     },
     {
-      label: "Liquidation Penality",
+      label: "Liquidation Penalty",
       description: "The penalty incurred by borrowers upon liquidation, designed to incentivize liquidators.",
       value: formatNumber(market.liquidationPenalty, { style: "percent" }),
     },

@@ -38,7 +38,7 @@ export default function Footer() {
               Docs
             </LinkExternal>
             <LinkExternal
-              href="mailto:contact@officesupply.biz"
+              href="https://compound.finance/discord"
               className="hover:underline hover:brightness-100"
               keepReferrer
               hideArrow
