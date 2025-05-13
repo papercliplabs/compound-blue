@@ -4,7 +4,10 @@ import { readContract } from "viem/actions";
 import { describe, expect } from "vitest";
 
 import { aaveV3UiPoolDataProviderAbi } from "@/abis/aaveV3UiPoolDataProviderAbi";
-import { aaveV3PortfolioWindDownSubbundle } from "@/actions/subbundles/aaveV3PortfolioWindDownSubbundle";
+import {
+  PARASWAP_MIN_SWAP_AMOUNT,
+  aaveV3PortfolioWindDownSubbundle,
+} from "@/actions/subbundles/aaveV3PortfolioWindDownSubbundle";
 import { createBundle } from "@/actions/utils/bundlerActions";
 import { computeScaledAmount } from "@/actions/utils/math";
 import { Action } from "@/actions/utils/types";
@@ -126,8 +129,13 @@ async function runAaveV3PortfolioWindDownSubbundleTest({
     const aaveLoanBalance = await getAaveV3LoanBalance(client, p.assetAddress);
 
     if (portfolioPercentage == 1) {
-      expect(aaveSupplyBalance).toBe(0n);
-      expect(aaveLoanBalance).toBe(0n);
+      if (p.supplyAmount < PARASWAP_MIN_SWAP_AMOUNT) {
+        // Won't pull out the dust
+        expect(aaveSupplyBalance).toEqual(p.supplyAmount);
+      } else {
+        expect(aaveSupplyBalance).toEqual(0n);
+      }
+      expect(aaveLoanBalance).toEqual(0n);
     } else {
       expect(aaveSupplyBalance).toBeGreaterThanOrEqual(
         computeScaledAmount(p.supplyAmount, 1 - portfolioPercentage, "Down")
@@ -324,6 +332,58 @@ describe("aaveV3PortfolioWindDownSubbundle", () => {
           ],
 
           minOutputAssets: parseUnits("1986", 18),
+        });
+      });
+
+      paraswapSnapshotTest("partial wind down - with dust (should ignore it)", async ({ client }) => {
+        await runAaveV3PortfolioWindDownSubbundleTest({
+          client,
+
+          portfolioPercentage: 0.5,
+          maxSlippageTolerance: 0.015,
+          flashLoanAssetAddress: USDC_ADDRESS,
+          outputAssetAddress: DAI_ADDRESS,
+
+          initialPositions: [
+            {
+              assetAddress: USDT_ADDRESS,
+              supplyAmount: 1n,
+              borrowAmount: 0n,
+            },
+            {
+              assetAddress: USDC_ADDRESS,
+              supplyAmount: parseUnits("1000", 6),
+              borrowAmount: 0n,
+            },
+          ],
+
+          minOutputAssets: parseUnits("495", 18),
+        });
+      });
+
+      paraswapSnapshotTest("full wind down - with dust (should swap extra for it)", async ({ client }) => {
+        await runAaveV3PortfolioWindDownSubbundleTest({
+          client,
+
+          portfolioPercentage: 1,
+          maxSlippageTolerance: 0.015,
+          flashLoanAssetAddress: USDC_ADDRESS,
+          outputAssetAddress: DAI_ADDRESS,
+
+          initialPositions: [
+            {
+              assetAddress: USDT_ADDRESS,
+              supplyAmount: 1n,
+              borrowAmount: 0n,
+            },
+            {
+              assetAddress: USDC_ADDRESS,
+              supplyAmount: parseUnits("1000", 6),
+              borrowAmount: 0n,
+            },
+          ],
+
+          minOutputAssets: parseUnits("990", 18),
         });
       });
     });

@@ -33,7 +33,7 @@ export default function MigratePage() {
         </TabsList>
 
         <TabsContent value="protocol">
-          <ProtocolMigratorTableWrapperWrapper />
+          <ProtocolMigratorTableWrapper />
         </TabsContent>
 
         <TabsContent value="position">
@@ -53,16 +53,6 @@ async function PositionMigratorWrapper() {
     return null;
   }
   return <PositionMigrator vaultSummaries={vaultSummaries} marketSummaries={marketSummaries as MarketSummary[]} />;
-}
-
-async function ProtocolMigratorTableWrapperWrapper() {
-  const vaultSummaries = await getVaultSummaries();
-
-  if (!vaultSummaries) {
-    return null;
-  }
-
-  return <ProtocolMigratorTableWrapper vaultSummaries={vaultSummaries} />;
 }
 
 export const dynamic = "force-static";

@@ -43,6 +43,7 @@ import {
   ProtocolMigratorVaultMarketSelectTrigger,
   ProtocolMigratorVaultMarketSelection,
 } from "./ProtocolMigratorVaultMarketSelect";
+import { ProtocolMigratorWarningBanner } from "./ProtocolMigratorWarningBanner";
 
 const baseFields = {
   portfolioPercent: z.coerce.number().min(0).max(100),
@@ -258,6 +259,7 @@ export default function ProtocolMigratorController({
                       />
                     </DialogDrawer>
                   </Card>
+                  <ProtocolMigratorWarningBanner />
                   <div className="flex min-w-0 flex-col gap-2">
                     <Button
                       type="submit"
