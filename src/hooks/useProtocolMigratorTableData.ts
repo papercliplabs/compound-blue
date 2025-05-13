@@ -39,17 +39,22 @@ export function useProtocolMigratorTableData(): {
     );
 
     const data = [
-      {
-        protocol: {
-          name: "Aave v3",
-          icon: "/aave.png",
-          key: "aave-v3" as SupportedProtocolsForProtocolMigration,
-        },
-        supplyAssets: aaveV3CollateralReservePositions.map((position) => position.reserve.underlyingAsset),
-        borrowAssets: aaveV3LoanReservePositions.map((position) => position.reserve.underlyingAsset),
-        totalMigratableValueUsd:
-          aaveV3MarketPosition.data.totalCollateralBalanceUsd - aaveV3MarketPosition.data.totalBorrowBalanceUsd,
-      },
+      ...(aaveV3CollateralReservePositions.length > 0 || aaveV3LoanReservePositions.length > 0
+        ? [
+            {
+              protocol: {
+                name: "Aave v3",
+                icon: "/aave.png",
+                key: "aave-v3" as SupportedProtocolsForProtocolMigration,
+              },
+              supplyAssets: aaveV3CollateralReservePositions.map((position) => position.reserve.underlyingAsset),
+              borrowAssets: aaveV3LoanReservePositions.map((position) => position.reserve.underlyingAsset),
+              totalMigratableValueUsd:
+                aaveV3CollateralReservePositions.reduce((acc, p) => acc + p.aTokenAssetsUsd, 0) -
+                aaveV3LoanReservePositions.reduce((acc, p) => acc + p.borrowAssetsUsd, 0),
+            },
+          ]
+        : []),
     ];
 
     return data;
