@@ -42,6 +42,8 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
 
   "0x18e2a37b9edab9d06b509a71f43f51d15581d1176aa91cf1a4cdf5ee3102ad37", // POL idle
   "0xa932e0d8a9bf52d45b8feac2584c7738c12cf63ba6dff0e8f199e289fb5ca9bb", // MATICx/POL - 91.5%
+  "0x28d8d92f5392c1b26e82dcbec25949ed028ea5b99d5a929ce485f0fd88e47fcc", // WETH/WPOL - 77%
+  "0x96e62bd75493006b81dae51d5db3c5af4b3ced65133dab60e70df9dc8e38bf2c", // WBTC/WPOL - 77%
 ];
 
 // Explicit callouts for a vault asset, this will be placed above the input field for the supply action
