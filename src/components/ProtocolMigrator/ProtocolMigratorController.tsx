@@ -2,7 +2,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Info } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDebounce } from "use-debounce";
@@ -28,10 +28,12 @@ import {
 import { useWatchNumberField } from "@/hooks/useWatchNumberField";
 import { numberToString } from "@/utils/format";
 
+import LinkExternal from "../LinkExternal";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { DialogDrawer } from "../ui/dialogDrawer";
 import Wallet from "../ui/icons/Wallet";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
 
 import { ProtocolMigratorMarketActionFlow } from "./ProtocolMigratorMarketActionFlow";
 import { ProtocolMigratorMarketDestination } from "./ProtocolMigratorMarketDestination";
@@ -46,8 +48,8 @@ import {
 import { ProtocolMigratorWarningBanner } from "./ProtocolMigratorWarningBanner";
 
 const baseFields = {
-  portfolioPercent: z.coerce.number().min(0).max(100),
-  maxSlippageTolerancePercent: z.coerce.number().min(0).max(100),
+  portfolioPercent: z.coerce.number().min(5, { message: "Minimum 5%" }).max(100, { message: "Maximum 100%" }),
+  maxSlippageTolerancePercent: z.coerce.number().min(0.2).max(100),
 };
 
 const protocolMigratorFormSchema = z.discriminatedUnion("destinationType", [
@@ -109,11 +111,17 @@ export default function ProtocolMigratorController({
 
   const portfolioPercent = useWatchNumberField({ control: form.control, name: "portfolioPercent" });
   const [portfolioPercentDebounced] = useDebounce(portfolioPercent, 200);
-  const migrateValueUsd = useMemo(() => {
+  const { supplyMigrateValueUsd, borrowMigrateValueUsd, totalMigrateValueUsd } = useMemo(() => {
     if (!protocolEntry) {
-      return 0;
+      return { supplyMigrateValueUsd: 0, borrowMigrateValueUsd: 0, totalMigrateValueUsd: 0 };
     } else {
-      return protocolEntry.totalMigratableValueUsd * (portfolioPercentDebounced / 100);
+      const supplyMigrateValueUsd = protocolEntry.totalSupplyValueUsd * (portfolioPercentDebounced / 100);
+      const borrowMigrateValueUsd = protocolEntry.totalBorrowValueUsd * (portfolioPercentDebounced / 100);
+      return {
+        supplyMigrateValueUsd,
+        borrowMigrateValueUsd,
+        totalMigrateValueUsd: supplyMigrateValueUsd - borrowMigrateValueUsd,
+      };
     }
   }, [protocolEntry, portfolioPercentDebounced]);
 
@@ -187,8 +195,10 @@ export default function ProtocolMigratorController({
   useEffect(() => {
     if (destinationSelection?.type == "vault") {
       form.setValue("destinationType", "vault", { shouldValidate: true, shouldDirty: true });
+      void form.trigger();
     } else if (destinationSelection?.type == "market") {
       form.setValue("destinationType", "market", { shouldValidate: true, shouldDirty: true });
+      void form.trigger();
     }
   }, [destinationSelection?.type, form]);
 
@@ -208,20 +218,36 @@ export default function ProtocolMigratorController({
                     {address ? (
                       <ProtocolMigratorSourceCardContent
                         protocolKey={protocolKey}
-                        control={form.control}
-                        name="portfolioPercent"
-                        migrateValueUsd={migrateValueUsd}
+                        supplyMigrateValueUsd={supplyMigrateValueUsd}
+                        borrowMigrateValueUsd={borrowMigrateValueUsd}
+                        totalMigrateValueUsd={totalMigrateValueUsd}
                       />
                     ) : (
-                      <CardContent className="flex h-full w-full flex-col items-center justify-center gap-4">
+                      <CardContent className="flex h-full w-full flex-col items-center justify-center gap-4 px-6 py-4">
                         <Wallet className="h-12 w-12 fill-content-secondary" />
                         <div className="text-content-secondary label-lg">Connect wallet to begin migration.</div>
                         <Button onClick={openConnectModal}>Connect Wallet</Button>
                       </CardContent>
                     )}
                   </Card>
-                  <div className="hidden w-full items-center justify-center md:flex">
+                  <div className="hidden w-full items-center justify-between px-8 md:flex">
                     <ArrowDown />
+                    <TooltipPopover>
+                      <TooltipPopoverTrigger className="flex items-center gap-1 text-content-secondary">
+                        <p>Swap via Velora</p>
+                        <Info size={16} />
+                      </TooltipPopoverTrigger>
+                      <TooltipPopoverContent className="flex flex-col gap-4">
+                        <p className="text-content-secondary">
+                          Your assets are swapped into the vault underlying asset, or market collateral asset which you
+                          choose to migrate to.
+                        </p>
+                        <div className="h-[1px] w-full bg-border-primary" />
+                        <LinkExternal href="https://www.velora.xyz" className="label-md">
+                          Powered by Velora
+                        </LinkExternal>
+                      </TooltipPopoverContent>
+                    </TooltipPopover>
                   </div>
                 </div>
               </div>
@@ -238,13 +264,13 @@ export default function ProtocolMigratorController({
                       {destinationSelection?.type == "vault" ? (
                         <ProtocolMigratorVaultDestination
                           vault={destinationSelection.vault}
-                          migrateValueUsd={migrateValueUsd}
+                          migrateValueUsd={totalMigrateValueUsd}
                           openChange={() => setDestinationSelectOpen(true)}
                         />
                       ) : destinationSelection?.type == "market" ? (
                         <ProtocolMigratorMarketDestination
                           market={destinationSelection.market}
-                          migrateValueUsd={migrateValueUsd}
+                          migrateValueUsd={totalMigrateValueUsd}
                           openChange={() => setDestinationSelectOpen(true)}
                         />
                       ) : (

@@ -8,7 +8,7 @@ import { ReactNode } from "react";
 import { cn } from "@/utils/shadcn";
 
 interface MetricChangeProps extends HTMLAttributes<HTMLDivElement> {
-  name: string;
+  name: ReactNode;
   initialValue: ReactNode;
   finalValue?: ReactNode;
 }

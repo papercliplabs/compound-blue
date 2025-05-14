@@ -28,7 +28,8 @@ import { computeScaledAmount } from "../utils/math";
 import { inputTransferSubbundle } from "./inputTransferSubbundle";
 import { Subbundle } from "./types";
 
-export const PARASWAP_MIN_SWAP_AMOUNT = 50n;
+// Recomendation from Paraswap team
+export const PARASWAP_MIN_SWAP_AMOUNT = 1000n;
 
 // See: ../docs/aave-wind-down/technical-explination.md for more details
 //
@@ -111,12 +112,12 @@ export async function aaveV3PortfolioWindDownSubbundle({
         migrationAmount: isFullWindDown ? bigIntMax(migrationAmount, PARASWAP_MIN_SWAP_AMOUNT) : migrationAmount,
       };
     })
-    .filter((p) => p.migrationAmount > PARASWAP_MIN_SWAP_AMOUNT); // Exclude dust loan positions which cause swap quote failures
+    .filter((p) => p.migrationAmount >= PARASWAP_MIN_SWAP_AMOUNT); // Exclude dust loan positions which cause swap quote failures
 
   const collateralPositions = positions
     .filter((p) => BigInt(p.supplyBalance) > 0n)
     .map((p) => ({ ...p, migrationAmount: computeScaledAmount(p.supplyBalance, portfolioPercentage, "Down") }))
-    .filter((p) => p.migrationAmount > PARASWAP_MIN_SWAP_AMOUNT); // Exclude dust collateral which cause swap quote failures
+    .filter((p) => p.migrationAmount >= PARASWAP_MIN_SWAP_AMOUNT); // Exclude dust collateral which cause swap quote failures
 
   if (loanPositions.length == 0 && collateralPositions.length == 0) {
     throw new Error("No positions to wind down");
