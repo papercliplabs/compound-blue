@@ -312,4 +312,4 @@ async function AccountVaultPositionHighlightWrapper({ vaultAddress }: { vaultAdd
 }
 
 export const dynamic = "force-static";
-export const revalidate = 60;
+export const revalidate = 300; // 5 min

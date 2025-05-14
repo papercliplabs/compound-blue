@@ -7,7 +7,14 @@ import { useTheme } from "@/hooks/useTheme";
 
 import { wagmiConfig } from "./wagmi";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchInterval: 300_000, // 5 min
+      staleTime: 300_000, // 5 min
+    },
+  },
+});
 
 export default function WalletProvider({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();

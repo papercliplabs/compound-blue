@@ -10,7 +10,7 @@ import { SignatureRequest, TransactionRequest } from "@/actions/utils/types";
 import { CHAIN_ID } from "@/config";
 import { trackEvent } from "@/data/trackEvent";
 import { safeFetch } from "@/utils/fetch";
-import { revalidateDynamicPages } from "@/utils/revalidateDynamicPages";
+import { revalidatePages } from "@/utils/revalidatePages";
 
 export type ActionFlowState = "review" | "active" | "success" | "failed";
 export type ActionState = "pending-wallet" | "pending-transaction";
@@ -154,7 +154,7 @@ export function ActionFlowProvider({
             setActiveStep((step) => step + 1);
 
             // Trigger data revalidation
-            void revalidateDynamicPages();
+            void revalidatePages();
             void queryClient.invalidateQueries({ type: "all" });
             void queryClient.refetchQueries({ type: "all" });
           } else {
