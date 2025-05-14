@@ -57,7 +57,7 @@ export function ApyTrigger({ className, total }: { total: number } & React.Compo
 
 export default function Apy({ type, apy, className, showTooltip = true }: ApyProps) {
   if (apy.rewards.length == 0) {
-    return formatNumber(apy.total, { style: "percent" });
+    return <div className={cn("flex", className)}>{formatNumber(apy.total, { style: "percent" })}</div>;
   }
 
   return showTooltip ? (

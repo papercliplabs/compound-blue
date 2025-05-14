@@ -85,3 +85,6 @@ async function ProtocolMigratorControllerWrapper({
     />
   );
 }
+
+export const dynamic = "force-static";
+export const revalidate = 300; // 5 min

@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { Address, getAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
 import { AccountVaultPosition, AccountVaultPositions } from "@/data/whisk/getAccountVaultPositions";
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
 import { safeFetch } from "@/utils/fetch";
@@ -15,7 +14,6 @@ export function useAccountVaultPositions() {
     queryKey: ["account-vault-positions", address],
     queryFn: async () => safeFetch<AccountVaultPositions>(`/api/account/${address}/vault-positions`, {}, true),
     enabled: !!address,
-    refetchInterval: ACCOUNT_STATE_POLLING_INTERVAL_MS,
   });
 }
 
