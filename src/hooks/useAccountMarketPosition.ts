@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
 
-import { ACCOUNT_STATE_POLLING_INTERVAL_MS } from "@/config";
 import { AccountMarketPositions } from "@/data/whisk/getAccountMarketPositions";
 import { safeFetch } from "@/utils/fetch";
 
@@ -14,7 +13,6 @@ export function useAccountMarketPositions() {
     queryKey: ["user-market-positions", address],
     queryFn: async () => safeFetch<AccountMarketPositions>(`/api/account/${address}/market-positions`, {}, true),
     enabled: !!address,
-    refetchInterval: ACCOUNT_STATE_POLLING_INTERVAL_MS,
   });
 }
 
