@@ -15,6 +15,8 @@ export interface ProtocolMigrationTableEntry {
   };
   supplyAssets: TokenConfig[];
   borrowAssets: TokenConfig[];
+  totalSupplyValueUsd: number;
+  totalBorrowValueUsd: number;
   totalMigratableValueUsd: number;
 }
 
@@ -38,6 +40,10 @@ export function useProtocolMigratorTableData(): {
       (r) => BigInt(r.borrowAssets) > 0n
     );
 
+    const aaveTotalSupplyValueUsd = aaveV3CollateralReservePositions.reduce((acc, p) => acc + p.aTokenAssetsUsd, 0);
+    const aaveTotalBorrowValueUsd = aaveV3LoanReservePositions.reduce((acc, p) => acc + p.borrowAssetsUsd, 0);
+    const aaveTotalMigratableValueUsd = aaveTotalSupplyValueUsd - aaveTotalBorrowValueUsd;
+
     const data = [
       ...(aaveV3CollateralReservePositions.length > 0 || aaveV3LoanReservePositions.length > 0
         ? [
@@ -49,9 +55,9 @@ export function useProtocolMigratorTableData(): {
               },
               supplyAssets: aaveV3CollateralReservePositions.map((position) => position.reserve.underlyingAsset),
               borrowAssets: aaveV3LoanReservePositions.map((position) => position.reserve.underlyingAsset),
-              totalMigratableValueUsd:
-                aaveV3CollateralReservePositions.reduce((acc, p) => acc + p.aTokenAssetsUsd, 0) -
-                aaveV3LoanReservePositions.reduce((acc, p) => acc + p.borrowAssetsUsd, 0),
+              totalSupplyValueUsd: aaveTotalSupplyValueUsd,
+              totalBorrowValueUsd: aaveTotalBorrowValueUsd,
+              totalMigratableValueUsd: aaveTotalMigratableValueUsd,
             },
           ]
         : []),

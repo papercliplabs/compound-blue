@@ -1,4 +1,4 @@
-import { ArrowRight, Info } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useDebounce } from "use-debounce";
@@ -12,14 +12,12 @@ import { computeNewBorrowMax } from "@/utils/market";
 
 import Apy from "../Apy";
 import AssetFormField from "../FormFields/AssetFormField";
-import { NumberInputFormField } from "../FormFields/NumberInputFormField";
 import { MarketIcon } from "../MarketIdentifier";
 import { MetricChange } from "../MetricChange";
 import { Button } from "../ui/button";
 import { CardContent } from "../ui/card";
 import { NumberFlowWithLoading } from "../ui/NumberFlow";
 import { Skeleton } from "../ui/skeleton";
-import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
 
 import { ProtocolMigratorFormValues } from "./ProtocolMigratorController";
 
@@ -182,28 +180,6 @@ export function ProtocolMigratorMarketDestination({
           />
           ) / {formatNumber(market.lltv, { style: "percent" })}
         </div>
-      </div>
-      <div>
-        <NumberInputFormField
-          labelContent={
-            <TooltipPopover>
-              <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
-                Max Slippage
-                <Info size={16} />
-              </TooltipPopoverTrigger>
-              <TooltipPopoverContent className="flex flex-col gap-2">
-                <p>The maximum deviation from the quote you are willing to accept.</p>
-                <p>
-                  Higher slippages increase success rates but may result in worse prices, while lower slippages ensure
-                  better prices but may cause transactions to fail.
-                </p>
-              </TooltipPopoverContent>
-            </TooltipPopover>
-          }
-          unit="%"
-          control={form.control}
-          name="maxSlippageTolerancePercent"
-        />
       </div>
     </CardContent>
   );

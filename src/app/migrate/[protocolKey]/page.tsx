@@ -32,10 +32,15 @@ export default async function VaultPage({ params }: { params: Promise<{ protocol
           <ArrowLeft size={16} className="stroke-content-secondary" /> Migrate
         </Link>
 
-        <div className="flex justify-between">
+        <div className="flex flex-col justify-between gap-8 md:flex-row">
           <div className="flex items-center gap-4">
-            <Image src="/polygon.png" alt="Polygon" width={36} height={36} className="size-9 rounded-full" />
-            <h2>Aave v3</h2>
+            <Image src="/aave.png" alt="Polygon" width={56} height={56} className="size-[56px] rounded-[12px]" />
+            <div className="flex h-full flex-col gap-1">
+              <h2 className="inline text-content-secondary">
+                <span className="text-content-primary">Aave v3</span> • Polygon
+              </h2>
+              <p className="text-content-secondary">Migrate your assets in Aave v3 over to Compound Blue.</p>
+            </div>
           </div>
 
           <ProtocolMigratorValueHighlight protocolKey={protocolKey} />

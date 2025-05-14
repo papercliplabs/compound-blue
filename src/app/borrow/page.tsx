@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Suspense } from "react";
 
 import { AccountMarketPositionAggregate } from "@/components/AccountMarketPosition";
+import ProtocolMigratorBanner from "@/components/ProtocolMigrator/ProtocolMigratorBanner";
 import BorrowTable from "@/components/tables/BorrowTable";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,19 +16,23 @@ export const metadata: Metadata = {
 export default function BorrowPage() {
   return (
     <>
-      <section className="flex flex-col justify-between gap-8 pt-8 md:flex-row md:gap-2">
-        <div className="flex h-[60px] items-center gap-4">
-          <Image src="/polygon.png" width={56} height={56} alt="Polygon" className="rounded-[12px]" />
-          <div className="flex h-full flex-col justify-between">
-            <h1 className="title-2">
-              Borrow <span className="text-content-secondary">• Polygon</span>
-            </h1>
-            <p className="text-content-secondary">Provide collateral to borrow any asset.</p>
-          </div>
-        </div>
+      <div className="flex flex-col gap-8 pt-8">
+        <ProtocolMigratorBanner variant="borrow" />
 
-        <AccountMarketPositionAggregate />
-      </section>
+        <section className="flex flex-col justify-between gap-8 md:flex-row md:gap-2">
+          <div className="flex h-[60px] items-center gap-4">
+            <Image src="/polygon.png" width={56} height={56} alt="Polygon" className="rounded-[12px]" />
+            <div className="flex h-full flex-col justify-between">
+              <h1 className="title-2">
+                Borrow <span className="text-content-secondary">• Polygon</span>
+              </h1>
+              <p className="text-content-secondary">Provide collateral to borrow any asset.</p>
+            </div>
+          </div>
+
+          <AccountMarketPositionAggregate />
+        </section>
+      </div>
 
       <Card>
         <CardHeader>Markets</CardHeader>
