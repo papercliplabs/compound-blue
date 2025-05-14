@@ -5,7 +5,13 @@ import { readContract } from "viem/actions";
 import { computeAmountWithSlippageSurplus } from "@/actions/utils/math";
 import { MAX_SLIPPAGE_TOLERANCE_LIMIT, PARASWAP_PARTNER_ADDRESS, PARASWAP_PARTNER_NAME } from "@/config";
 
-import { OFFSET_LOOKUP_TABLE, PARASWAP_MAX_PRICE_IMPACT_PCT, SUPPORTED_CONTRACT_METHODS, paraswapSdk } from "./config";
+import {
+  OFFSET_LOOKUP_TABLE,
+  PARASWAP_EXCLUDE_DEXS,
+  PARASWAP_MAX_PRICE_IMPACT_PCT,
+  SUPPORTED_CONTRACT_METHODS,
+  paraswapSdk,
+} from "./config";
 import { ParaswapBaseTxPayload, SupportedContractMethod } from "./types";
 
 export type ParaswapExactBuyParameters = {
@@ -75,6 +81,7 @@ export async function getParaswapExactBuyQuote({
       ignoreBadUsdPrice: true,
       partner: PARASWAP_PARTNER_NAME,
       maxImpact: PARASWAP_MAX_PRICE_IMPACT_PCT,
+      excludeDEXS: PARASWAP_EXCLUDE_DEXS,
     },
   });
 

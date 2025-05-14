@@ -7,6 +7,10 @@ import { useProtocoMigratorTableDataEntry } from "@/hooks/useProtocolMigratorTab
 import { formatNumber } from "@/utils/format";
 
 import { Button } from "../ui/button";
+
+// Hide unless they have over this amount of USD value to migrate
+const VALUE_USD_THRESHOLD = 1;
+
 interface ProtocolMigratorBannerProps {
   variant: "earn" | "borrow";
 }
@@ -14,7 +18,7 @@ interface ProtocolMigratorBannerProps {
 export default function ProtocolMigratorBanner({ variant }: ProtocolMigratorBannerProps) {
   const { data: protocolEntry } = useProtocoMigratorTableDataEntry("aave-v3");
 
-  if (!protocolEntry || protocolEntry.totalMigratableValueUsd == 0) {
+  if (!protocolEntry || protocolEntry.totalMigratableValueUsd < VALUE_USD_THRESHOLD) {
     return null;
   }
 

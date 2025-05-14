@@ -49,3 +49,6 @@ export const OFFSET_LOOKUP_TABLE: Record<SupportedContractMethod, ParaswapOffset
   //   quotedAmount: BigInt(4 + 2 * 32),
   // },
 };
+
+// Paraswap has a routing bug using Uniswap V4, they are working on a fix but we need to exclude it for now
+export const PARASWAP_EXCLUDE_DEXS = ["UniswapV4"];
