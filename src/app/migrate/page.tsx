@@ -19,9 +19,7 @@ export default function MigratePage() {
           <Image src="/migrate.png" width={56} height={56} alt="Migrate" className="rounded-[12px]" />
           <div className="flex h-full flex-col justify-between">
             <h1 className="title-2">Migrate</h1>
-            <p className="text-content-secondary">
-              Seamlessly move your supplied and borrowed assets to Compound Blue with just a few clicks.
-            </p>
+            <p className="text-content-secondary">Move your supplied and borrowed assets to Compound Blue.</p>
           </div>
         </div>
       </section>

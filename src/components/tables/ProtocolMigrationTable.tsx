@@ -39,8 +39,15 @@ const columns: ColumnDef<ProtocolMigrationTableEntry>[] = [
     accessorFn: (row) => row.supplyAssets.length,
     header: "Supplying",
     cell: ({ row }) => {
-      const { supplyAssets } = row.original;
-      return <RowIcons icons={supplyAssets.map((a) => ({ src: a.icon ?? "", alt: a.symbol }))} size={24} />;
+      const { supplyAssets, totalSupplyValueUsd } = row.original;
+      return (
+        <div className="flex flex-col gap-1">
+          <span>
+            <NumberFlow value={totalSupplyValueUsd} format={{ currency: "USD" }} />
+          </span>
+          <RowIcons icons={supplyAssets.map((a) => ({ src: a.icon ?? "", alt: a.symbol }))} size={24} />
+        </div>
+      );
     },
     meta: {
       tooltip: "Assets supplied within the protocol.",
@@ -52,11 +59,16 @@ const columns: ColumnDef<ProtocolMigrationTableEntry>[] = [
     accessorFn: (row) => row.borrowAssets.length,
     header: "Borrowing",
     cell: ({ row }) => {
-      const { borrowAssets } = row.original;
+      const { borrowAssets, totalBorrowValueUsd } = row.original;
       return borrowAssets.length == 0 ? (
         <span className="text-content-secondary">None</span>
       ) : (
-        <RowIcons icons={borrowAssets.map((a) => ({ src: a.icon ?? "", alt: a.symbol }))} size={24} />
+        <div className="flex flex-col gap-1">
+          <span>
+            <NumberFlow value={-totalBorrowValueUsd} format={{ currency: "USD" }} className="text-semantic-negative" />
+          </span>
+          <RowIcons icons={borrowAssets.map((a) => ({ src: a.icon ?? "", alt: a.symbol }))} size={24} />
+        </div>
       );
     },
     meta: {
@@ -68,7 +80,9 @@ const columns: ColumnDef<ProtocolMigrationTableEntry>[] = [
     accessorKey: "totalMigratableValueUsd",
     header: "Total Migratable",
     cell: ({ row }) => {
-      return <NumberFlow value={row.original.totalMigratableValueUsd} format={{ currency: "USD" }} />;
+      return (
+        <NumberFlow value={row.original.totalMigratableValueUsd} format={{ currency: "USD" }} className="label-lg" />
+      );
     },
     meta: {
       tooltip: "Total value that can be migrated (supply - borrow).",

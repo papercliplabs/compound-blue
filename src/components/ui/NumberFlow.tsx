@@ -30,9 +30,10 @@ export default function NumberFlow({ className, format, value, ...props }: Numbe
     notation: notation == "compact" && (displayValue > 9999 || displayValue < -9999) ? "compact" : "standard",
     minimumFractionDigits,
     maximumFractionDigits,
+    style: currency ? "currency" : format?.style,
     ...restOptions,
   };
-  let prefix = currency === "USD" ? "$" : currency === "ETH" ? "Ξ" : "";
+  let prefix = "";
 
   // Clamp to max USD value
   if (currency === "USD" && value > MAX_USD_VALUE) {

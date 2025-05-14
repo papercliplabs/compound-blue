@@ -3,7 +3,8 @@ import clsx from "clsx";
 import { ChevronDown, Info } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
-import { ComponentProps, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useFormContext } from "react-hook-form";
 
 import { AaveV3ReservePosition } from "@/data/whisk/getAaveV3MarketPosition";
 import { useAaveV3MarketPosition } from "@/hooks/useAaveV3MarketPosition";
@@ -13,28 +14,32 @@ import {
 } from "@/hooks/useProtocolMigratorTableData";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 
+import { NumberInputFormField } from "../FormFields/NumberInputFormField";
 import SliderFormField from "../FormFields/SliderFormField";
 import { MetricChange } from "../MetricChange";
 import { CardContent, CardHeader } from "../ui/card";
-import { FormField } from "../ui/form";
 import NumberFlow, { NumberFlowWithLoading } from "../ui/NumberFlow";
 import { Skeleton } from "../ui/skeleton";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-interface ProtocolMigratorSourceCardContentProps<TFieldValues extends Record<string, any>>
-  extends Omit<ComponentProps<typeof FormField<TFieldValues>>, "render"> {
+import { ProtocolMigratorFormValues } from "./ProtocolMigratorController";
+import ProtocolMigratorHowItWorks from "./ProtocolMigratorHowItWorks";
+
+interface ProtocolMigratorSourceCardContentProps {
   protocolKey: SupportedProtocolsForProtocolMigration;
-  migrateValueUsd: number;
+  supplyMigrateValueUsd: number;
+  borrowMigrateValueUsd: number;
+  totalMigrateValueUsd: number;
 }
 
 // Assume account is connected (handle in parent)
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export default function ProtocolMigratorSourceCardContent<TFieldValues extends Record<string, any>>({
+
+export default function ProtocolMigratorSourceCardContent({
   protocolKey,
-  migrateValueUsd,
-  ...props
-}: ProtocolMigratorSourceCardContentProps<TFieldValues>) {
+  supplyMigrateValueUsd,
+  borrowMigrateValueUsd,
+  totalMigrateValueUsd,
+}: ProtocolMigratorSourceCardContentProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: protocolEntry, isLoading } = useProtocoMigratorTableDataEntry(protocolKey);
   const { data: position } = useAaveV3MarketPosition();
@@ -51,10 +56,12 @@ export default function ProtocolMigratorSourceCardContent<TFieldValues extends R
     return { supplyingPositions, borrowingPositions };
   }, [position]);
 
+  const form = useFormContext<ProtocolMigratorFormValues>();
+
   return (
     <>
       <button onClick={() => setIsExpanded(!isExpanded)} className="w-full" type="button">
-        <CardHeader className="h-fit py-4 text-content-primary">
+        <CardHeader className="h-fit px-6 py-4 text-content-primary">
           <div className="flex gap-4">
             <Image src="/aave.png" alt="Aave" width={40} height={40} className="rounded-[8px]" />
 
@@ -65,13 +72,16 @@ export default function ProtocolMigratorSourceCardContent<TFieldValues extends R
           </div>
 
           <div className="-mr-2 flex items-center gap-1">
-            <NumberFlowWithLoading
-              value={protocolEntry?.totalMigratableValueUsd}
-              format={{ currency: "USD" }}
-              isLoading={isLoading}
-              loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
-              className="h-[36px]label-lg"
-            />
+            <div className="flex flex-col items-end">
+              <NumberFlowWithLoading
+                value={protocolEntry?.totalMigratableValueUsd}
+                format={{ currency: "USD" }}
+                isLoading={isLoading}
+                loadingContent={<Skeleton className="h-[24px] w-[70px]" />}
+                className="h-[24px] label-lg"
+              />
+              <span className="text-content-secondary paragraph-sm">Available to Migrate</span>
+            </div>
             <ChevronDown className={clsx("transition-transform duration-300", isExpanded && "-rotate-180")} />
           </div>
         </CardHeader>
@@ -82,7 +92,7 @@ export default function ProtocolMigratorSourceCardContent<TFieldValues extends R
         animate={{ height: isExpanded ? "auto" : "0px" }}
         className="w-full overflow-hidden bg-background-inverse"
       >
-        <div className="flex flex-col gap-6 px-8 py-3">
+        <div className="flex flex-col gap-6 px-6 pb-6 pt-4">
           <div>
             <span className="text-accent-secondary label-lg">Supplying</span>
             <div className="flex flex-col gap-2 pt-4">
@@ -102,31 +112,38 @@ export default function ProtocolMigratorSourceCardContent<TFieldValues extends R
             </div>
             {borrowingPositions.length === 0 && <div className="text-content-secondary">None</div>}
           </div>
+
+          <div className="h-[1px] w-full bg-border-primary" />
+
+          <div className="flex items-center justify-between">
+            <span className="label-lg">Total Migratable</span>
+            <span className="paragraph-lg">
+              {formatNumber(protocolEntry?.totalMigratableValueUsd ?? 0, { currency: "USD" })}
+            </span>
+          </div>
         </div>
       </motion.div>
 
-      <CardContent className="flex flex-col gap-8">
+      <CardContent className="flex flex-col gap-6 px-6 pt-4">
         <div>
           <SliderFormField
-            {...props}
+            control={form.control}
+            name="portfolioPercent"
             includeInput={false}
             labelContent={
               <div className="flex w-full justify-between">
                 <TooltipPopover>
                   <TooltipPopoverTrigger className="flex items-center gap-1">
-                    Amount to migrate
-                    <Info size={16} />
+                    Select amount to migrate
+                    <Info size={14} />
                   </TooltipPopoverTrigger>
                   <TooltipPopoverContent className="flex flex-col gap-2">
-                    <p>
-                      The percentage of your entire Aave v3 balance you want to migrate. This includes all lending and
-                      borrowing positions.
-                    </p>
+                    <p>The percentage of your Aave v3 supply and loan positions to migrate.</p>
                   </TooltipPopoverContent>
                 </TooltipPopover>
 
                 <NumberFlow
-                  value={migrateValueUsd}
+                  value={totalMigrateValueUsd}
                   format={{ currency: "USD" }}
                   className="h-[36px] text-content-primary label-lg"
                 />
@@ -144,18 +161,71 @@ export default function ProtocolMigratorSourceCardContent<TFieldValues extends R
 
         <div className="flex flex-col gap-2">
           <MetricChange
-            name="Balance (Aave v3)"
-            initialValue={
-              <NumberFlow value={protocolEntry?.totalMigratableValueUsd ?? 0} format={{ currency: "USD" }} />
+            name={
+              <TooltipPopover>
+                <TooltipPopoverTrigger className="flex items-center gap-1">
+                  Supplied
+                  <Info size={14} className="text-content-secondary" />
+                </TooltipPopoverTrigger>
+                <TooltipPopoverContent className="flex flex-col gap-2">
+                  The sum of all your supplied assets in Aave v3.
+                </TooltipPopoverContent>
+              </TooltipPopover>
             }
+            initialValue={<NumberFlow value={protocolEntry?.totalSupplyValueUsd ?? 0} format={{ currency: "USD" }} />}
             finalValue={
               <NumberFlow
-                value={Math.max((protocolEntry?.totalMigratableValueUsd ?? 0) - migrateValueUsd, 0)}
+                value={Math.max((protocolEntry?.totalSupplyValueUsd ?? 0) - supplyMigrateValueUsd, 0)}
+                format={{ currency: "USD" }}
+              />
+            }
+          />
+          <MetricChange
+            name={
+              <TooltipPopover>
+                <TooltipPopoverTrigger className="flex items-center gap-1">
+                  Borrowed
+                  <Info size={14} className="text-content-secondary" />
+                </TooltipPopoverTrigger>
+                <TooltipPopoverContent className="flex flex-col gap-2">
+                  The sum of all your borrow assets in Aave v3.
+                </TooltipPopoverContent>
+              </TooltipPopover>
+            }
+            initialValue={<NumberFlow value={protocolEntry?.totalBorrowValueUsd ?? 0} format={{ currency: "USD" }} />}
+            finalValue={
+              <NumberFlow
+                value={Math.max((protocolEntry?.totalBorrowValueUsd ?? 0) - borrowMigrateValueUsd, 0)}
                 format={{ currency: "USD" }}
               />
             }
           />
         </div>
+
+        <div className="h-[1px] w-full bg-border-primary" />
+
+        <NumberInputFormField
+          control={form.control}
+          name="maxSlippageTolerancePercent"
+          labelContent={
+            <TooltipPopover>
+              <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
+                Max Slippage
+                <Info size={14} />
+              </TooltipPopoverTrigger>
+              <TooltipPopoverContent className="flex flex-col gap-2">
+                <p>The maximum deviation from the quote you are willing to accept.</p>
+                <p>
+                  Higher slippages increase success rates but may result in worse prices, while lower slippages ensure
+                  better prices but may cause transactions to fail.
+                </p>
+              </TooltipPopoverContent>
+            </TooltipPopover>
+          }
+          unit="%"
+        />
+
+        <ProtocolMigratorHowItWorks />
       </CardContent>
     </>
   );
@@ -188,8 +258,8 @@ function ReservePositionRow({
           )}
         </span>
       </div>
-      <div className="ml-auto label-lg">
-        {formatNumber(type == "supplying" ? reservePosition.aTokenAssetsUsd : reservePosition.borrowAssetsUsd, {
+      <div className={clsx("ml-auto label-lg", type == "borrowing" && "text-semantic-negative")}>
+        {formatNumber(type == "supplying" ? reservePosition.aTokenAssetsUsd : -reservePosition.borrowAssetsUsd, {
           currency: "USD",
         })}
       </div>

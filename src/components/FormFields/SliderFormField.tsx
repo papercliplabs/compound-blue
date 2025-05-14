@@ -47,7 +47,7 @@ export default function SliderFormField<TFieldValues extends Record<string, any>
     <FormField
       {...props}
       render={({ field: { value, onChange } }) => (
-        <FormItem className="flex flex-col gap-4">
+        <FormItem className="flex flex-col gap-2">
           <div className="flex w-full items-center justify-between gap-2">
             <FormLabel className="w-full text-content-secondary">{labelContent}</FormLabel>
             {includeInput && (
