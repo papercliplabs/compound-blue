@@ -32,11 +32,14 @@ export default function ProtocolMigratorBanner({ variant }: ProtocolMigratorBann
       )}
     >
       <ArrowBigDownDash
-        className={clsx("size-6 shrink-0", variant == "borrow" ? "text-button-borrow" : "text-button-supply")}
+        className={clsx(
+          "size-6 shrink-0",
+          variant == "borrow" ? "text-accent-secondary-deemphasized" : "text-button-supply"
+        )}
       />
       <div className="label-lg">
         You have{" "}
-        <span className={clsx(variant == "borrow" ? "text-button-borrow" : "text-button-supply")}>
+        <span className={clsx(variant == "borrow" ? "text-accent-secondary-deemphasized" : "text-button-supply")}>
           {formatNumber(protocolEntry.totalMigratableValueUsd, { currency: "USD" })}
         </span>{" "}
         that you could be {variant == "borrow" ? "borrowing" : "earning"} more with.

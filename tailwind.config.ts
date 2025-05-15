@@ -43,7 +43,10 @@ export default {
         },
         accent: {
           primary: "rgb(var(--accent-primary))",
-          secondary: "rgb(var(--accent-secondary))",
+          secondary: {
+            DEFAULT: "rgb(var(--accent-secondary))",
+            deemphasized: "rgb(var(--accent-secondary-deemphasized))",
+          },
           ternary: "rgb(var(--accent-ternary))",
         },
         button: {
