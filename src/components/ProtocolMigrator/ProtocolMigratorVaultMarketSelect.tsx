@@ -2,7 +2,9 @@
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import { useMemo } from "react";
+import { getAddress } from "viem";
 
+import { ASSETS_EXCLUDED_FROM_SWAPS } from "@/config";
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
 import { formatNumber } from "@/utils/format";
@@ -53,12 +55,18 @@ export function ProtocolMigratorVaultMarketSelectContent({
   close,
 }: ProtocolMigratorVaultMarketSelectProps) {
   const sortedVaultSummaries = useMemo(
-    () => vaultSummaries.sort((a, b) => b.supplyApy.total - a.supplyApy.total),
+    () =>
+      vaultSummaries
+        .sort((a, b) => b.supplyApy.total - a.supplyApy.total)
+        .filter((vault) => !ASSETS_EXCLUDED_FROM_SWAPS.includes(getAddress(vault.asset.address))), // Filter out vaults with underlyings excluded from swaps
     [vaultSummaries]
   );
 
   const sortedMarketSummaries = useMemo(
-    () => marketSummaries.sort((a, b) => a.borrowApy.total - b.borrowApy.total),
+    () =>
+      marketSummaries
+        .sort((a, b) => a.borrowApy.total - b.borrowApy.total)
+        .filter((market) => !ASSETS_EXCLUDED_FROM_SWAPS.includes(getAddress(market.collateralAsset.address))), // Filter out markets with collateral excluded from swaps
     [marketSummaries]
   );
   return (
