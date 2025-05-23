@@ -32,7 +32,7 @@ export function inputTransferSubbundle({
   recipientAddress,
   config: { tokenIsRebasing, allowWrappingNativeAssets },
   simulationState,
-}: InputTransferSubbundleParameters): Subbundle {
+}: InputTransferSubbundleParameters): Subbundle & { erc20Amount: bigint; nativeAmount: bigint } {
   const isMaxTransfer = amount == maxUint256;
   const isWrappedNative = isAddressEqual(tokenAddress, WRAPPED_NATIVE_ADDRESS);
 
@@ -92,6 +92,8 @@ export function inputTransferSubbundle({
       ...sendAndWrapNativeSubbundle.transactionRequirements,
     ],
     bundlerCalls: () => [...inputErc20TransferSubbundle.bundlerCalls(), ...sendAndWrapNativeSubbundle.bundlerCalls()],
+    erc20Amount: erc20Amount,
+    nativeAmount: nativeAmountToWrap,
   };
 }
 
