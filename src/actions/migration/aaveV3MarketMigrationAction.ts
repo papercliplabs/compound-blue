@@ -151,7 +151,12 @@ export async function aaveV3MarketMigrationAction({
     );
     const borrowSubBundleEncoded = encodeBundle(borrowSubBundle, simulationState, !isContract);
 
-    const maxSharePriceE27 = market.toSupplyShares(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
+    // Just used for dust, priced based on WAD assets
+    const maxSharePriceE27 = MathLib.mulDivUp(
+      MathLib.WAD,
+      MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE),
+      market.toBorrowShares(MathLib.WAD)
+    );
 
     function getBundleTx() {
       const encodedBorrowBundlerCalls = borrowSubBundleEncoded.actions.map((action) =>

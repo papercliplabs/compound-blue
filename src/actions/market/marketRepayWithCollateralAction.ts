@@ -96,6 +96,16 @@ export async function marketRepayWithCollateralAction({
   }
 
   try {
+    const { assets: repaidAssets, shares: repaidShares } = market.repay(
+      closingPosition ? 0n : loanRepayAmount,
+      closingPosition ? accountPosition.borrowShares : 0n
+    );
+    const maxSharePriceE27 = MathLib.mulDivUp(
+      repaidAssets,
+      MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE),
+      repaidShares
+    );
+
     // Exact buy of loan assets
     const paraswapQuote = await getParaswapExactBuyTxPayload({
       publicClient: publicClient,
@@ -130,8 +140,6 @@ export async function marketRepayWithCollateralAction({
     );
 
     const collateralWithdrawSubBundleEncoded = encodeBundle(collateralWithdrawSubBundle, simulationState, !isContract);
-
-    const maxSharePriceE27 = market.toSupplyShares(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
 
     function getBundleTx() {
       const encodedWithdrawCollateralBundlerCalls = collateralWithdrawSubBundleEncoded.actions.map((action) =>

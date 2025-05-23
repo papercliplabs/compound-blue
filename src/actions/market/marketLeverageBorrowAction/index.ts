@@ -138,8 +138,6 @@ export async function marketLeveragedBorrowAction({
 
     const borrowSubBundleEncoded = encodeBundle(borrowSubBundle, simulationState, !isContract);
 
-    const maxSharePriceE27 = market.toSupplyShares(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
-
     const paraswapQuote = await getParaswapExactBuyTxPayload({
       publicClient: publicClient,
       accountAddress: PARASWAP_ADAPTER_ADDRESS, // User is the paraswap adapter
@@ -149,6 +147,13 @@ export async function marketLeveragedBorrowAction({
       maxSrcTokenAmount: loanAmount,
       exactDestTokenAmount: requiredSwapCollateralAmount,
     });
+
+    // Just used for dust, priced based on WAD assets
+    const maxSharePriceE27 = MathLib.mulDivUp(
+      MathLib.WAD,
+      MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE),
+      market.toBorrowShares(MathLib.WAD)
+    );
 
     function getBundleTx() {
       const encodedBorrowBundlerCalls = borrowSubBundleEncoded.actions.map((action) =>

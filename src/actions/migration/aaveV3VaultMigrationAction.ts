@@ -69,7 +69,11 @@ export async function aaveV3VaultMigrationAction({
       simulationState,
     });
 
-    const maxSharePriceE27 = vault.toAssets(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
+    const maxSharePriceE27 = MathLib.mulDivUp(
+      inputBundle.erc20Amount,
+      MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE),
+      vault.toShares(inputBundle.erc20Amount)
+    );
 
     function getBundleTx() {
       const bundlerCalls: BundlerCall[] = [
