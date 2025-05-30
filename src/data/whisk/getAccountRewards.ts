@@ -4,6 +4,7 @@ import { Address, getAddress } from "viem";
 import { CHAIN_ID, MERKL_REWARD_TOKEN_ADDRESSES } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 import { graphql } from "@/generated/gql/whisk";
+import { GetAccountRewardsQuery } from "@/generated/gql/whisk/graphql";
 
 import { whiskClient } from "./client";
 
@@ -25,7 +26,7 @@ const query = graphql(`
 `);
 
 export const getAccountRewards = cacheAndCatch(async (address: Address) => {
-  const accountRewards = await whiskClient.request(query, { chainId: CHAIN_ID, address });
+  const accountRewards = await whiskClient.request<GetAccountRewardsQuery>(query, { chainId: CHAIN_ID, address });
   return accountRewards.merklAccountRewards?.rewards.filter(
     (r) =>
       r.token && MERKL_REWARD_TOKEN_ADDRESSES.includes(getAddress(r.token.address)) && (r.unclaimedAmountUsd ?? 0) > 0

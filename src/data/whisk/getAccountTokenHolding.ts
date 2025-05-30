@@ -4,6 +4,7 @@ import { Address } from "viem";
 import { CHAIN_ID } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 import { graphql } from "@/generated/gql/whisk";
+import { GetAccountTokenHoldingQuery } from "@/generated/gql/whisk/graphql";
 
 import { whiskClient } from "./client";
 
@@ -21,7 +22,11 @@ const query = graphql(`
 `);
 
 export const getAccountTokenHolding = cacheAndCatch(async (tokenAddress: Address, accountAddress: Address) => {
-  const tokenHoldings = await whiskClient.request(query, { chainId: CHAIN_ID, tokenAddress, accountAddress });
+  const tokenHoldings = await whiskClient.request<GetAccountTokenHoldingQuery>(query, {
+    chainId: CHAIN_ID,
+    tokenAddress,
+    accountAddress,
+  });
   return tokenHoldings.tokenHolding;
 }, "getAccountTokenHolding");
 

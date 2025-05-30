@@ -2,6 +2,7 @@ import "server-only";
 import { CHAIN_ID, WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 import { graphql } from "@/generated/gql/whisk";
+import { GetVaultSummarysQuery } from "@/generated/gql/whisk/graphql";
 
 import { whiskClient } from "./client";
 
@@ -45,7 +46,7 @@ const query = graphql(`
 `);
 
 export const getVaultSummaries = cacheAndCatch(async () => {
-  const vaultSummaries = await whiskClient.request(query, {
+  const vaultSummaries = await whiskClient.request<GetVaultSummarysQuery>(query, {
     chainId: CHAIN_ID,
     addresses: WHITELISTED_VAULT_ADDRESSES,
   });
