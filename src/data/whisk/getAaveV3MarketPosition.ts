@@ -3,7 +3,7 @@ import { Address } from "viem";
 
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 import { graphql } from "@/generated/gql/whisk";
-import { MarketIdentifierInput } from "@/generated/gql/whisk/graphql";
+import { GetAaveV3MarketPositionQuery, MarketIdentifierInput } from "@/generated/gql/whisk/graphql";
 
 import { whiskClient } from "./client";
 
@@ -44,7 +44,7 @@ const query = graphql(`
 `);
 
 export const getAaveV3MarketPosition = cacheAndCatch(async (accountAddress: Address) => {
-  const aaveV3MarketPosition = await whiskClient.request(query, {
+  const aaveV3MarketPosition = await whiskClient.request<GetAaveV3MarketPositionQuery>(query, {
     marketIdentifier: MarketIdentifierInput.PolygonCore,
     accountAddress,
   });

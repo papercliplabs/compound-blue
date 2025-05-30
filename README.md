@@ -8,35 +8,35 @@ An open source [Next.js](https://nextjs.org/) frontend for [Compound](https://co
 
 Install Dependencies
 ```bash
-bun i
+pnpm i
 ```
 
 Create and populate environment variables
 ```bash
 cp .env.example .env
-# Now populate the .env file
+# Now populate the .env file 
 ```
 
 Start the development server
 ```bash
-bun dev
+pnpm dev
 ```
 
 Run tests
 ```bash
 # Run all tests
-bun run test
+pnpm test
 
 # Vitest only
-bun run test:vitest
+pnpm test:vitest
 
 # Playwright only
-bun run test:playwright
+pnpm test:playwright
 ```
 
 Build
 ```bash
-bun run build
+pnpm build
 ```
 
 ---

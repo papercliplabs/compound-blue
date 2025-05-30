@@ -4,6 +4,7 @@ import { Address } from "viem";
 import { CHAIN_ID, WHITELISTED_VAULT_ADDRESSES } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 import { graphql } from "@/generated/gql/whisk";
+import { GetVaultPositionsQuery } from "@/generated/gql/whisk/graphql";
 
 import { whiskClient } from "./client";
 
@@ -26,7 +27,7 @@ const query = graphql(`
 `);
 
 export const getAccountVaultPositions = cacheAndCatch(async (accountAddress: Address) => {
-  const accountVaultPositions = await whiskClient.request(query, {
+  const accountVaultPositions = await whiskClient.request<GetVaultPositionsQuery>(query, {
     chainId: CHAIN_ID,
     vaultAddresses: WHITELISTED_VAULT_ADDRESSES,
     accountAddress,
