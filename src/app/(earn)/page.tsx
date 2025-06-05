@@ -30,6 +30,7 @@ export default async function EarnPage() {
             </div>
           </div>
         </section>
+
         <Suspense fallback={<EarnSummaryMetricsSkeleton />}>
           <EarnSummaryMetricsWrapper />
         </Suspense>
