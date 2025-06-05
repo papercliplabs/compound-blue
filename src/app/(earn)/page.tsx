@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Suspense } from "react";
 
 import { AccountVaultPositionAggregate } from "@/components/AccountVaultPosition";
+import { EarnSummaryMetrics, EarnSummaryMetricsSkeleton } from "@/components/EarnSummaryMetrics";
 import ProtocolMigratorBanner from "@/components/ProtocolMigrator/ProtocolMigratorBanner";
 import EarnTable from "@/components/tables/EarnTable";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -28,9 +29,10 @@ export default async function EarnPage() {
               <p className="text-content-secondary">Earn yield on assets by lending them out.</p>
             </div>
           </div>
-
-          <AccountVaultPositionAggregate />
         </section>
+        <Suspense fallback={<EarnSummaryMetricsSkeleton />}>
+          <EarnSummaryMetricsWrapper />
+        </Suspense>
       </div>
 
       <Card>
@@ -43,6 +45,11 @@ export default async function EarnPage() {
       </Card>
     </>
   );
+}
+
+async function EarnSummaryMetricsWrapper() {
+  const vaultSummaries = await getVaultSummaries();
+  return <EarnSummaryMetrics vaultSummaries={vaultSummaries ?? []} />;
 }
 
 async function EarnTableWrapper() {
