@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import Image from "next/image";
 import { Suspense } from "react";
 
-import { AccountMarketPositionAggregate } from "@/components/AccountMarketPosition";
 import { BorrowSummaryMetrics, BorrowSummaryMetricsSkeleton } from "@/components/BorrowSummaryMetrics";
 import ProtocolMigratorBanner from "@/components/ProtocolMigrator/ProtocolMigratorBanner";
 import BorrowTable from "@/components/tables/BorrowTable";

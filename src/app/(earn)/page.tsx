@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import Image from "next/image";
 import { Suspense } from "react";
 
-import { AccountVaultPositionAggregate } from "@/components/AccountVaultPosition";
 import { EarnSummaryMetrics, EarnSummaryMetricsSkeleton } from "@/components/EarnSummaryMetrics";
 import ProtocolMigratorBanner from "@/components/ProtocolMigrator/ProtocolMigratorBanner";
 import EarnTable from "@/components/tables/EarnTable";

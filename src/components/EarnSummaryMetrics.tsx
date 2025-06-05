@@ -80,7 +80,6 @@ export function EarnSummaryMetricsSkeleton() {
 interface EarnSummaryMetricsLayoutProps {
   totalSupplied: ReactNode;
   totalBorrowed: ReactNode;
-
   userDeposited: ReactNode;
   userEarnApy: ReactNode;
 }

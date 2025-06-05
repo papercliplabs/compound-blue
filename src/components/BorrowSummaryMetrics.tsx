@@ -72,7 +72,6 @@ export function BorrowSummaryMetricsSkeleton() {
 
 interface BorrowSummaryMetricsLayoutProps {
   totalBorrowed: ReactNode;
-
   userBorrowed: ReactNode;
   userBorrowApy: ReactNode;
 }
