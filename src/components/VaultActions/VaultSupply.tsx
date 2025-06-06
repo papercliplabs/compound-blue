@@ -1,4 +1,5 @@
 "use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Info } from "lucide-react";
@@ -12,6 +13,7 @@ import { VaultSupplyAction, vaultSupplyBundle } from "@/actions/vault/vaultSuppl
 import { ActionFlowButton, ActionFlowDialog, ActionFlowReview } from "@/components/ActionFlowDialog";
 import { Form } from "@/components/ui/form";
 import { VAULT_ASSET_CALLOUT } from "@/config";
+import { Vault } from "@/data/whisk/getVault";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
@@ -216,6 +218,7 @@ export default function VaultSupply({
           signatureRequests={preparedAction?.status == "success" ? preparedAction?.signatureRequests : []}
           transactionRequests={preparedAction?.status == "success" ? preparedAction?.transactionRequests : []}
           flowCompletionCb={onFlowCompletion}
+          trackingPayload={getTrackingPayload(vault, preparedAction, "vault-supply")}
         >
           <ActionFlowSummary>
             <ActionFlowSummaryAssetItem
@@ -247,4 +250,21 @@ export default function VaultSupply({
       )}
     </>
   );
+}
+
+function getTrackingPayload(vault: Vault, action: VaultSupplyAction | null, tag: string) {
+  const basePayload = {
+    tag,
+    vaultId: vault.vaultAddress,
+  };
+
+  if (!action || action.status !== "success") {
+    return basePayload;
+  }
+
+  const delta = action.positionBalanceChange.after - action.positionBalanceChange.before;
+  return {
+    ...basePayload,
+    amount: Math.abs(descaleBigIntToNumber(delta, vault.decimals)),
+  };
 }

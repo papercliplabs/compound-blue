@@ -1,4 +1,5 @@
 "use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useCallback, useMemo, useState } from "react";
@@ -7,6 +8,7 @@ import { getAddress, maxUint256, parseUnits } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
 import { z } from "zod";
 
+import { VaultSupplyAction } from "@/actions/vault/vaultSupplyAction";
 import { VaultWithdrawAction, vaultWithdrawAction } from "@/actions/vault/vaultWithdrawAction";
 import {
   ActionFlowButton,
@@ -16,6 +18,7 @@ import {
   ActionFlowSummaryAssetItem,
 } from "@/components/ActionFlowDialog";
 import { Form } from "@/components/ui/form";
+import { Vault } from "@/data/whisk/getVault";
 import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
 import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
 
@@ -165,6 +168,7 @@ export default function VaultWithdraw({
           signatureRequests={preparedAction?.status == "success" ? preparedAction?.signatureRequests : []}
           transactionRequests={preparedAction?.status == "success" ? preparedAction?.transactionRequests : []}
           flowCompletionCb={onFlowCompletion}
+          trackingPayload={getTrackingPayload(vault, preparedAction, "vault-withdraw")}
         >
           <ActionFlowSummary>
             <ActionFlowSummaryAssetItem
@@ -196,4 +200,21 @@ export default function VaultWithdraw({
       )}
     </>
   );
+}
+
+function getTrackingPayload(vault: Vault, action: VaultSupplyAction | null, tag: string) {
+  const basePayload = {
+    tag,
+    vaultId: vault.vaultAddress,
+  };
+
+  if (!action || action.status !== "success") {
+    return basePayload;
+  }
+
+  const delta = action.positionBalanceChange.after - action.positionBalanceChange.before;
+  return {
+    ...basePayload,
+    amount: Math.abs(descaleBigIntToNumber(delta, vault.decimals)),
+  };
 }

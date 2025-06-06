@@ -43,6 +43,9 @@ interface ActionFlowProviderProps {
   transactionRequests: TransactionRequest[];
   flowCompletionCb?: () => void;
   children: ReactNode;
+  trackingPayload: {
+    tag: string;
+  } & Record<string, string | number>;
 }
 
 export function ActionFlowProvider({
@@ -50,6 +53,7 @@ export function ActionFlowProvider({
   flowCompletionCb,
   signatureRequests,
   transactionRequests,
+  trackingPayload,
 }: ActionFlowProviderProps) {
   const [flowState, setFlowState] = useState<ActionFlowState>("review");
   const [activeStep, setActiveStep] = useState<number>(0);
@@ -131,12 +135,19 @@ export function ActionFlowProvider({
               connector: connectorName,
               error: errorMessage,
               stepName: step.name,
+              ...trackingPayload,
             });
           }
 
           const hash = await sendTransaction(client, { ...txReq, gas: gasEstimateWithBuffer });
           setLastTransactionHash(hash);
-          void trackEvent("transaction", { hash, status: "pending", connector: connectorName, name: step.name });
+          void trackEvent("transaction", {
+            hash,
+            status: "pending",
+            connector: connectorName,
+            name: step.name,
+            ...trackingPayload,
+          });
 
           // Uses public client instead so polling happens through our RPC provider
           // Not the users wallet provider, which may be unreliable
@@ -150,7 +161,13 @@ export function ActionFlowProvider({
           });
 
           if (receipt.status == "success") {
-            void trackEvent("transaction", { hash, status: "success", connector: connectorName, name: step.name });
+            void trackEvent("transaction", {
+              hash,
+              status: "success",
+              connector: connectorName,
+              name: step.name,
+              ...trackingPayload,
+            });
             setActiveStep((step) => step + 1);
 
             // Trigger data revalidation
@@ -158,7 +175,13 @@ export function ActionFlowProvider({
             void queryClient.invalidateQueries({ type: "all" });
             void queryClient.refetchQueries({ type: "all" });
           } else {
-            void trackEvent("transaction", { hash, status: "failed", connector: connectorName, name: step.name });
+            void trackEvent("transaction", {
+              hash,
+              status: "failed",
+              connector: connectorName,
+              name: step.name,
+              ...trackingPayload,
+            });
             setFlowState("failed");
             return;
           }
@@ -172,6 +195,7 @@ export function ActionFlowProvider({
           accountAddress: client.account.address,
           connector: connectorName,
           error: errorMessage,
+          ...trackingPayload,
         });
         return;
       }
@@ -180,23 +204,24 @@ export function ActionFlowProvider({
       flowCompletionCb?.();
     }
   }, [
-    flowState,
-    setFlowState,
-    setActionState,
-    setActiveStep,
-    setLastTransactionHash,
-    setError,
-    client,
-    publicClient,
     chainId,
-    signatureRequests,
-    transactionRequests,
+    client,
+    connector,
+    flowCompletionCb,
+    flowState,
     openChainModal,
     openConnectModal,
-    flowCompletionCb,
-    switchChainAsync,
-    connector,
+    publicClient,
     queryClient,
+    setActionState,
+    setActiveStep,
+    setError,
+    setFlowState,
+    setLastTransactionHash,
+    signatureRequests,
+    switchChainAsync,
+    trackingPayload,
+    transactionRequests,
   ]);
 
   return (
