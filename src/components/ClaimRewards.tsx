@@ -139,11 +139,11 @@ function getTrackingPayload(rewards: AccountRewards, action: Action | null, tag:
   }
 
   const claimAmount = rewards.reduce((acc, reward) => {
-    if (!reward.token) {
+    if (!reward.token || !reward.unclaimedAmountUsd) {
       return 0;
     }
 
-    return acc + descaleBigIntToNumber(reward.unclaimedAmount, reward.token.decimals);
+    return acc + reward.unclaimedAmountUsd;
   }, 0);
 
   return {
