@@ -328,11 +328,24 @@ function getTrackingPayload(market: MarketNonIdle, action: MarketRepayWithCollat
     return basePayload;
   }
 
-  const collateralDelta = action.positionCollateralChange.after - action.positionCollateralChange.before;
-  const loanDelta = action.positionLoanChange.after - action.positionLoanChange.before;
+  const collateralDelta = descaleBigIntToNumber(
+    action.positionCollateralChange.after - action.positionCollateralChange.before,
+    market.collateralAsset.decimals
+  );
+  const loanDelta = descaleBigIntToNumber(
+    action.positionLoanChange.after - action.positionLoanChange.before,
+    market.loanAsset.decimals
+  );
+  const collateralDeltaUsd = market.collateralAsset.priceUsd
+    ? collateralDelta * market.collateralAsset.priceUsd
+    : undefined;
+  const loanDeltaUsd = market.loanAsset.priceUsd ? loanDelta * market.loanAsset.priceUsd : undefined;
+
   return {
     ...basePayload,
-    collateralAmount: Math.abs(descaleBigIntToNumber(collateralDelta, market.collateralAsset.decimals)),
-    loanAmount: Math.abs(descaleBigIntToNumber(loanDelta, market.loanAsset.decimals)),
+    collateralAmount: Math.abs(collateralDelta),
+    loanAmount: Math.abs(loanDelta),
+    collateralAmountUsd: collateralDeltaUsd ? Math.abs(collateralDeltaUsd) : "",
+    loanAmountUsd: loanDeltaUsd ? Math.abs(loanDeltaUsd) : "",
   };
 }

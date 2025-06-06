@@ -262,9 +262,14 @@ function getTrackingPayload(vault: Vault, action: VaultSupplyAction | null, tag:
     return basePayload;
   }
 
-  const delta = action.positionBalanceChange.after - action.positionBalanceChange.before;
+  const delta = descaleBigIntToNumber(
+    action.positionBalanceChange.after - action.positionBalanceChange.before,
+    vault.decimals
+  );
+  const deltaUsd = vault.asset.priceUsd ? delta * vault.asset.priceUsd : undefined;
   return {
     ...basePayload,
-    amount: Math.abs(descaleBigIntToNumber(delta, vault.decimals)),
+    amount: Math.abs(delta),
+    amountUsd: deltaUsd ? Math.abs(deltaUsd) : "",
   };
 }

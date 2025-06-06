@@ -8,7 +8,6 @@ import { getAddress, maxUint256, parseUnits } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
 import { z } from "zod";
 
-import { VaultSupplyAction } from "@/actions/vault/vaultSupplyAction";
 import { VaultWithdrawAction, vaultWithdrawAction } from "@/actions/vault/vaultWithdrawAction";
 import {
   ActionFlowButton,
@@ -202,7 +201,7 @@ export default function VaultWithdraw({
   );
 }
 
-function getTrackingPayload(vault: Vault, action: VaultSupplyAction | null, tag: string) {
+function getTrackingPayload(vault: Vault, action: VaultWithdrawAction | null, tag: string) {
   const basePayload = {
     tag,
     vaultId: vault.vaultAddress,
@@ -212,9 +211,14 @@ function getTrackingPayload(vault: Vault, action: VaultSupplyAction | null, tag:
     return basePayload;
   }
 
-  const delta = action.positionBalanceChange.after - action.positionBalanceChange.before;
+  const delta = descaleBigIntToNumber(
+    action.positionBalanceChange.after - action.positionBalanceChange.before,
+    vault.decimals
+  );
+  const deltaUsd = vault.asset.priceUsd ? delta * vault.asset.priceUsd : undefined;
   return {
     ...basePayload,
-    amount: Math.abs(descaleBigIntToNumber(delta, vault.decimals)),
+    amount: Math.abs(delta),
+    amountUsd: deltaUsd ? Math.abs(deltaUsd) : "",
   };
 }
