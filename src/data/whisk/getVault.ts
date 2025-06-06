@@ -4,6 +4,7 @@ import { Address } from "viem";
 import { CHAIN_ID } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 import { graphql } from "@/generated/gql/whisk";
+import { GetVaultQuery } from "@/generated/gql/whisk/graphql";
 
 import { whiskClient } from "./client";
 
@@ -73,7 +74,7 @@ const query = graphql(`
 `);
 
 export const getVault = cacheAndCatch(async (address: Address) => {
-  const vault = await whiskClient.request(query, { chainId: CHAIN_ID, address });
+  const vault = await whiskClient.request<GetVaultQuery>(query, { chainId: CHAIN_ID, address });
   return vault.morphoVault ?? null;
 }, "getVault");
 

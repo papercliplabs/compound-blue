@@ -4,6 +4,7 @@ import { Address } from "viem";
 import { CHAIN_ID, WHITELISTED_MARKET_IDS } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 import { graphql } from "@/generated/gql/whisk";
+import { GetMarketPositionsQuery } from "@/generated/gql/whisk/graphql";
 
 import { whiskClient } from "./client";
 
@@ -35,7 +36,7 @@ const query = graphql(`
 `);
 
 export const getAccountMarketPositions = cacheAndCatch(async (accountAddress: Address) => {
-  const marketPositions = await whiskClient.request(query, {
+  const marketPositions = await whiskClient.request<GetMarketPositionsQuery>(query, {
     chainId: CHAIN_ID,
     marketIds: WHITELISTED_MARKET_IDS,
     accountAddress,

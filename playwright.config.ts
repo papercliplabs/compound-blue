@@ -23,7 +23,7 @@ export default defineConfig({
 
   // Run local dev server before starting the tests:
   webServer: {
-    command: "bun next dev --turbopack",
+    command: "pnpm next dev --turbopack",
     url: baseUrl,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
