@@ -12,16 +12,20 @@ import { Button } from "../ui/button";
 import { CardContent } from "../ui/card";
 import { NumberFlowWithLoading } from "../ui/NumberFlow";
 import { Skeleton } from "../ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
+import { Info } from "lucide-react";
 
 interface ProtocolMigratorVaultDestinationProps {
   vault: VaultSummary;
-  migrateValueUsd: number;
+  quotedMigrateValueUsd: number;
+  minMigrateValueUsd: number;
   openChange: () => void;
 }
 
 export function ProtocolMigratorVaultDestination({
   vault,
-  migrateValueUsd,
+  quotedMigrateValueUsd,
+  minMigrateValueUsd,
   openChange,
 }: ProtocolMigratorVaultDestinationProps) {
   const { data: position, isLoading } = useAccountVaultPosition(getAddress(vault.vaultAddress));
@@ -32,9 +36,12 @@ export function ProtocolMigratorVaultDestination({
       : undefined;
   }, [position?.supplyAssets, vault.asset.decimals]);
 
-  const migrateValueInUnderlying = useMemo(() => {
-    return migrateValueUsd / (vault.asset.priceUsd ?? 0);
-  }, [migrateValueUsd, vault.asset.priceUsd]);
+  const { quotedMigrateValueInUnderlying, minMigrateValueInUnderlying } = useMemo(() => {
+    return {
+      quotedMigrateValueInUnderlying: quotedMigrateValueUsd / (vault.asset.priceUsd ?? 0),
+      minMigrateValueInUnderlying: minMigrateValueUsd / (vault.asset.priceUsd ?? 0),
+    };
+  }, [quotedMigrateValueUsd, minMigrateValueUsd, vault.asset.priceUsd]);
 
   return (
     <CardContent className="flex flex-col gap-4">
@@ -64,7 +71,34 @@ export function ProtocolMigratorVaultDestination({
         }
         finalValue={
           <NumberFlowWithLoading
-            value={currentBalance == undefined ? undefined : currentBalance + migrateValueInUnderlying}
+            value={currentBalance == undefined ? undefined : currentBalance + quotedMigrateValueInUnderlying}
+            isLoading={isLoading}
+            loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
+          />
+        }
+      />
+      <MetricChange
+        name={
+          <TooltipPopover>
+            <TooltipPopoverTrigger className="flex items-center gap-1">
+              <span>Min Balance ({vault.asset.symbol})</span>
+              <Info size={14} className="stroke-content-secondary" />
+            </TooltipPopoverTrigger>
+            <TooltipPopoverContent>
+              <p>Minimum balance after the migration, accounting for the worst case slippage.</p>
+            </TooltipPopoverContent>
+          </TooltipPopover>
+        }
+        initialValue={
+          <NumberFlowWithLoading
+            value={currentBalance == undefined ? undefined : currentBalance}
+            isLoading={isLoading}
+            loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
+          />
+        }
+        finalValue={
+          <NumberFlowWithLoading
+            value={currentBalance == undefined ? undefined : currentBalance + minMigrateValueInUnderlying}
             isLoading={isLoading}
             loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
           />

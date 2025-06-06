@@ -56,20 +56,20 @@ export function ProtocolMigratorVaultActionFlow({
       <ActionFlowSummary>
         <ActionFlowSummaryAssetItem
           asset={vault.asset}
-          actionName={action.summary.positionChange.delta.amount > 0 ? "Supply" : "Withdraw"}
+          actionName={action.quotedChange.positionChange.delta.amount > 0 ? "Supply" : "Withdraw"}
           side="supply"
-          isIncreasing={action.summary.positionChange.delta.amount > 0}
-          descaledAmount={Math.abs(action.summary.positionChange.delta.amount)}
-          amountUsd={Math.abs(action.summary.positionChange.delta.amount) * (vault.asset.priceUsd ?? 0)}
+          isIncreasing={action.quotedChange.positionChange.delta.amount > 0}
+          descaledAmount={Math.abs(action.quotedChange.positionChange.delta.amount)}
+          amountUsd={Math.abs(action.quotedChange.positionChange.delta.amount) * (vault.asset.priceUsd ?? 0)}
         />
       </ActionFlowSummary>
       <ActionFlowReview>
         <MetricChange
           name={`Position (${vault.asset.symbol})`}
-          initialValue={formatNumber(action.summary.positionChange.before.amount * (vault.asset.priceUsd ?? 0), {
+          initialValue={formatNumber(action.quotedChange.positionChange.before.amount * (vault.asset.priceUsd ?? 0), {
             currency: "USD",
           })}
-          finalValue={formatNumber(action.summary.positionChange.after.amount * (vault.asset.priceUsd ?? 0), {
+          finalValue={formatNumber(action.quotedChange.positionChange.after.amount * (vault.asset.priceUsd ?? 0), {
             currency: "USD",
           })}
         />

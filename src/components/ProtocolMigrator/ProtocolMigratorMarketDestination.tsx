@@ -23,13 +23,15 @@ import { ProtocolMigratorFormValues } from "./ProtocolMigratorController";
 
 interface ProtocolMigratorMarketDestinationProps {
   market: MarketSummary;
-  migrateValueUsd: number;
+  quotedMigrateValueUsd: number;
+  minMigrateValueUsd: number;
   openChange: () => void;
 }
 
 export function ProtocolMigratorMarketDestination({
   market,
-  migrateValueUsd,
+  quotedMigrateValueUsd,
+  minMigrateValueUsd,
   openChange,
 }: ProtocolMigratorMarketDestinationProps) {
   const { data: position, isLoading } = useAccountMarketPosition(market.marketId as Hex);
@@ -51,15 +53,18 @@ export function ProtocolMigratorMarketDestination({
     };
   }, [position, market.collateralAsset, market.loanAsset]);
 
-  const migrateValueInCollateral = useMemo(() => {
-    return migrateValueUsd / (market.collateralAsset.priceUsd ?? 0);
-  }, [migrateValueUsd, market]);
+  const { quotedMigrateValueInCollateral, minMigrateValueInCollateral } = useMemo(() => {
+    return {
+      quotedMigrateValueInCollateral: quotedMigrateValueUsd / (market.collateralAsset.priceUsd ?? 0),
+      minMigrateValueInCollateral: minMigrateValueUsd / (market.collateralAsset.priceUsd ?? 0),
+    };
+  }, [quotedMigrateValueUsd, minMigrateValueUsd, market.collateralAsset.priceUsd]);
 
   const form = useFormContext<ProtocolMigratorFormValues>();
 
   const borrowMax = useMemo(() => {
-    return computeNewBorrowMax(market, migrateValueInCollateral, position);
-  }, [market, migrateValueInCollateral, position]);
+    return computeNewBorrowMax(market, minMigrateValueInCollateral, position);
+  }, [market, minMigrateValueInCollateral, position]);
 
   const borrowAmount = useWatchNumberField({ control: form.control, name: "borrowAmount" });
   const [borrowAmountDebounced] = useDebounce(borrowAmount, 200);
@@ -122,7 +127,9 @@ export function ProtocolMigratorMarketDestination({
         finalValue={
           <NumberFlowWithLoading
             value={
-              currentCollateralBalance == undefined ? undefined : currentCollateralBalance + migrateValueInCollateral
+              currentCollateralBalance == undefined
+                ? undefined
+                : currentCollateralBalance + quotedMigrateValueInCollateral
             }
             isLoading={isLoading}
             loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
@@ -169,10 +176,10 @@ export function ProtocolMigratorMarketDestination({
             value={
               !position
                 ? undefined
-                : position.collateralAssetsUsd + migrateValueUsd == 0
+                : position.collateralAssetsUsd + quotedMigrateValueInCollateral == 0
                   ? 0
                   : (position.borrowAssetsUsd + borrowAmountDebounced * (market.loanAsset.priceUsd ?? 0)) /
-                    (position.collateralAssetsUsd + migrateValueUsd)
+                    (position.collateralAssetsUsd + quotedMigrateValueInCollateral)
             }
             isLoading={isLoading}
             loadingContent={<Skeleton className="h-[18px] w-[50px]" />}

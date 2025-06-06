@@ -59,51 +59,54 @@ export function ProtocolMigratorMarketActionFlow({
           actionName="Add"
           side="supply"
           isIncreasing={true}
-          descaledAmount={action.summary.positionCollateralChange.delta.amount}
-          amountUsd={action.summary.positionCollateralChange.delta.amount * (market.collateralAsset.priceUsd ?? 0)}
+          descaledAmount={action.quotedChange.positionCollateralChange.delta.amount}
+          amountUsd={action.quotedChange.positionCollateralChange.delta.amount * (market.collateralAsset.priceUsd ?? 0)}
         />
         <ActionFlowSummaryAssetItem
           asset={market.loanAsset}
           actionName="Borrow"
           side="borrow"
           isIncreasing={true}
-          descaledAmount={action.summary.positionLoanChange.delta.amount}
-          amountUsd={action.summary.positionLoanChange.delta.amount * (market.loanAsset.priceUsd ?? 0)}
+          descaledAmount={action.quotedChange.positionLoanChange.delta.amount}
+          amountUsd={action.quotedChange.positionLoanChange.delta.amount * (market.loanAsset.priceUsd ?? 0)}
         />
       </ActionFlowSummary>
       <ActionFlowReview>
         <MetricChange
           name={`Collateral (${market.collateralAsset.symbol})`}
           initialValue={formatNumber(
-            action.summary.positionCollateralChange.before.amount * (market.collateralAsset.priceUsd ?? 0),
+            action.quotedChange.positionCollateralChange.before.amount * (market.collateralAsset.priceUsd ?? 0),
             { currency: "USD" }
           )}
           finalValue={formatNumber(
-            action.summary.positionCollateralChange.after.amount * (market.collateralAsset.priceUsd ?? 0),
+            action.quotedChange.positionCollateralChange.after.amount * (market.collateralAsset.priceUsd ?? 0),
             { currency: "USD" }
           )}
         />
         <MetricChange
           name={`Loan (${market.loanAsset.symbol})`}
           initialValue={formatNumber(
-            action.summary.positionLoanChange.before.amount * (market.loanAsset.priceUsd ?? 0),
+            action.quotedChange.positionLoanChange.before.amount * (market.loanAsset.priceUsd ?? 0),
             { currency: "USD" }
           )}
-          finalValue={formatNumber(action.summary.positionLoanChange.after.amount * (market.loanAsset.priceUsd ?? 0), {
-            currency: "USD",
-          })}
+          finalValue={formatNumber(
+            action.quotedChange.positionLoanChange.after.amount * (market.loanAsset.priceUsd ?? 0),
+            {
+              currency: "USD",
+            }
+          )}
         />
         <div className="flex items-center justify-between">
           <span>LTV / LLTV</span>
           <div className="flex items-center gap-1 label-md">
             <span className="text-content-secondary">
               (
-              {formatNumber(action.summary.positionLtvChange.before, {
+              {formatNumber(action.quotedChange.positionLtvChange.before, {
                 style: "percent",
               })}
             </span>
             <ArrowRight size={14} className="stroke-content-secondary" />
-            {formatNumber(action.summary.positionLtvChange.after, {
+            {formatNumber(action.quotedChange.positionLtvChange.after, {
               style: "percent",
             })}
             ) / {formatNumber(market.lltv, { style: "percent" })}
