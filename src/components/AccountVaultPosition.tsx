@@ -5,12 +5,12 @@ import { getAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { Vault } from "@/data/whisk/getVault";
-import { useAccountVaultPosition, useAccountVaultPositionAggregate } from "@/hooks/useAccountVaultPosition";
+import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
 import { descaleBigIntToNumber } from "@/utils/format";
 
 import Apy from "./Apy";
 import { MetricWithTooltip } from "./Metric";
-import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
+import NumberFlow from "./ui/NumberFlow";
 import { Skeleton } from "./ui/skeleton";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 
@@ -78,39 +78,6 @@ export function AccountVaultPositionHighlight({ vault }: { vault: Vault }) {
           className="label-sm"
         />
       </div>
-    </div>
-  );
-}
-
-export function AccountVaultPositionAggregate() {
-  const { data: accountVaultPositionAggregate, isLoading } = useAccountVaultPositionAggregate();
-  return (
-    <div className="flex gap-10 md:text-end">
-      <MetricWithTooltip
-        label={<span className="justify-end text-accent-secondary">Your Deposits</span>}
-        tooltip="Your total deposit balance across all vaults."
-        className="title-3 md:items-end"
-      >
-        <NumberFlowWithLoading
-          value={accountVaultPositionAggregate?.totalSupplyUsd}
-          format={{ currency: "USD" }}
-          isLoading={isLoading}
-          loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
-        />
-      </MetricWithTooltip>
-
-      <MetricWithTooltip
-        label={<span className="justify-end">Avg. Earn APY</span>}
-        tooltip="Your average supply APY across all vaults, including rewards and fees."
-        className="title-3 md:items-end"
-      >
-        <NumberFlowWithLoading
-          value={accountVaultPositionAggregate?.avgApy}
-          format={{ style: "percent" }}
-          isLoading={isLoading}
-          loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
-        />
-      </MetricWithTooltip>
     </div>
   );
 }
