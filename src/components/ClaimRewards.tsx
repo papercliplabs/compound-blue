@@ -148,6 +148,6 @@ function getTrackingPayload(rewards: AccountRewards, action: Action | null, tag:
 
   return {
     ...basePayload,
-    amount: Math.abs(claimAmount),
+    amountUsd: Math.abs(claimAmount),
   };
 }

@@ -363,7 +363,7 @@ function getTrackingPayload(market: MarketNonIdle, action: MarketRepayAndWithdra
     ...basePayload,
     collateralAmount: Math.abs(collateralDelta),
     loanAmount: Math.abs(loanDelta),
-    collateralAmountUsd: collateralDeltaUsd ? Math.abs(collateralDeltaUsd) : "",
-    loanAmountUsd: loanDeltaUsd ? Math.abs(loanDeltaUsd) : "",
+    collateralAmountUsd: collateralDeltaUsd !== undefined ? Math.abs(collateralDeltaUsd) : "",
+    loanAmountUsd: loanDeltaUsd !== undefined ? Math.abs(loanDeltaUsd) : "",
   };
 }
