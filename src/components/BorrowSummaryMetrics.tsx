@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { ReactNode, useMemo } from "react";
 
 import { MetricWithTooltip } from "@/components/Metric";
-import { NumberFlowWithLoading } from "@/components/ui/NumberFlow";
+import NumberFlow, { NumberFlowWithLoading } from "@/components/ui/NumberFlow";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
 import { useAccountMarketPositionAggregate } from "@/hooks/useAccountMarketPosition";
@@ -30,13 +30,7 @@ export function BorrowSummaryMetrics({ marketSummaries }: BorrowSummaryMetricsPr
   return (
     <BorrowSummaryMetricsLayout
       totalBorrowed={
-        <NumberFlowWithLoading
-          isLoading={isLoading}
-          loadingContent={<MetricSkeleton className="w-[104px]" />}
-          value={borrowSummaryMetrics.totalBorrowedUsd}
-          format={{ currency: "USD" }}
-          className="title-3"
-        />
+        <NumberFlow value={borrowSummaryMetrics.totalBorrowedUsd} format={{ currency: "USD" }} className="title-3" />
       }
       userBorrowed={
         <NumberFlowWithLoading
