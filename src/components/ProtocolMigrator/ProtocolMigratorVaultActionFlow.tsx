@@ -52,6 +52,7 @@ export function ProtocolMigratorVaultActionFlow({
       signatureRequests={action.signatureRequests}
       transactionRequests={action.transactionRequests}
       flowCompletionCb={() => setCompleted(true)}
+      trackingPayload={{ tag: "vault-protocol-migrate" }} // TODO: Implement a tracking payload for this.
     >
       <ActionFlowSummary>
         <ActionFlowSummaryAssetItem

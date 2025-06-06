@@ -392,6 +392,7 @@ export default function MarketMigrationAction({
           flowCompletionCb={() => {
             onOpenChange(false);
           }}
+          trackingPayload={{ tag: "market-migrate" }} // TODO: Implement a tracking payload for this.
         >
           <ActionFlowSummary>
             <ActionFlowSummaryAssetItem

@@ -249,6 +249,7 @@ export default function VaultMigrationAction({
           flowCompletionCb={() => {
             onOpenChange(false);
           }}
+          trackingPayload={{ tag: "vault-migrate" }} // TODO: Implement a tracking payload for this.
         >
           <ActionFlowSummary>
             <ActionFlowSummaryAssetItem
