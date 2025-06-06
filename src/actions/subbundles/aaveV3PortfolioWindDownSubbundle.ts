@@ -27,6 +27,7 @@ import { computeScaledAmount } from "../utils/math";
 
 import { inputTransferSubbundle } from "./inputTransferSubbundle";
 import { Subbundle } from "./types";
+import { MathLib } from "@morpho-org/blue-sdk";
 
 // Recomendation from Paraswap team
 export const PARASWAP_MIN_SWAP_AMOUNT = 1000n;
@@ -267,7 +268,9 @@ export async function aaveV3PortfolioWindDownSubbundle({
     });
 
     quotedOutputAssets = outputAssetSwapTx.quoteDestTokenAmount;
-    minOutputAssets = outputAssetSwapTx.minDestTokenAmount;
+
+    // Apply linear scaling to the output quote to account for worst case slippage from the first 2 swap layers
+    minOutputAssets = MathLib.mulDivDown(outputAssetSwapTx.minDestTokenAmount, minF_R, F_R);
   } else {
     quotedOutputAssets = F_R;
     minOutputAssets = minF_R;
