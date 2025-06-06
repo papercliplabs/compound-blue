@@ -240,6 +240,7 @@ export default function MarketRepayWithdrawCollateral({
           signatureRequests={preparedAction?.status == "success" ? preparedAction?.signatureRequests : []}
           transactionRequests={preparedAction?.status == "success" ? preparedAction?.transactionRequests : []}
           flowCompletionCb={onFlowCompletion}
+          trackingPayload={getTrackingPayload(market, preparedAction, "market-repay-and-withdraw-collateral")}
         >
           <ActionFlowSummary>
             {repayAmount > 0 && (
@@ -333,4 +334,24 @@ function computeCollateralWithdrawMax(
   const minRequiredCollateral = newLoan / (market.lltv - MAX_BORROW_LTV_MARGIN) / market.collateralPriceInLoanAsset;
   const collateralWithdrawMax = collateral - minRequiredCollateral;
   return Math.max(collateralWithdrawMax, 0);
+}
+
+function getTrackingPayload(market: MarketNonIdle, action: MarketRepayAndWithdrawCollateralAction | null, tag: string) {
+  const basePayload = {
+    tag,
+    marketId: market.marketId,
+  };
+
+  if (!action || action.status !== "success") {
+    return basePayload;
+  }
+
+  const collateralDelta =
+    action.positionCollateralChange.after.rawAmount - action.positionCollateralChange.before.rawAmount;
+  const loanDelta = action.positionLoanChange.after.rawAmount - action.positionLoanChange.before.rawAmount;
+  return {
+    ...basePayload,
+    collateralAmount: Math.abs(descaleBigIntToNumber(collateralDelta, market.collateralAsset.decimals)),
+    loanAmount: Math.abs(descaleBigIntToNumber(loanDelta, market.loanAsset.decimals)),
+  };
 }

@@ -239,6 +239,7 @@ export default function MarketSupplyCollateralBorrow({
           signatureRequests={preparedAction?.status == "success" ? preparedAction?.signatureRequests : []}
           transactionRequests={preparedAction?.status == "success" ? preparedAction?.transactionRequests : []}
           flowCompletionCb={onFlowCompletion}
+          trackingPayload={getTrackingPayload(market, preparedAction, "market-supply-collateral-and-borrow")}
         >
           <ActionFlowSummary>
             {supplyCollateralAmount > 0 && (
@@ -315,4 +316,24 @@ export default function MarketSupplyCollateralBorrow({
       )}
     </>
   );
+}
+
+function getTrackingPayload(market: MarketNonIdle, action: MarketSupplyCollateralAndBorrowAction | null, tag: string) {
+  const basePayload = {
+    tag,
+    marketId: market.marketId,
+  };
+
+  if (!action || action.status !== "success") {
+    return basePayload;
+  }
+
+  const collateralDelta =
+    action.positionCollateralChange.after.rawAmount - action.positionCollateralChange.before.rawAmount;
+  const loanDelta = action.positionLoanChange.after.rawAmount - action.positionLoanChange.before.rawAmount;
+  return {
+    ...basePayload,
+    collateralAmount: Math.abs(descaleBigIntToNumber(collateralDelta, market.collateralAsset.decimals)),
+    loanAmount: Math.abs(descaleBigIntToNumber(loanDelta, market.loanAsset.decimals)),
+  };
 }

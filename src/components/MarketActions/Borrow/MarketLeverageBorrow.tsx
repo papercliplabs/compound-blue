@@ -1,4 +1,5 @@
 "use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarketId } from "@morpho-org/blue-sdk";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -311,6 +312,7 @@ export default function MarketLeverageBorrow({
           signatureRequests={preparedAction?.status == "success" ? preparedAction?.signatureRequests : []}
           transactionRequests={preparedAction?.status == "success" ? preparedAction?.transactionRequests : []}
           flowCompletionCb={onFlowCompletion}
+          trackingPayload={getTrackingPayload(market, preparedAction, "market-leverage-borrow")}
         >
           <ActionFlowSummary>
             <ActionFlowSummaryAssetItem
@@ -403,4 +405,23 @@ export default function MarketLeverageBorrow({
       )}
     </>
   );
+}
+
+function getTrackingPayload(market: MarketNonIdle, action: MarketLeveragedBorrowAction | null, tag: string) {
+  const basePayload = {
+    tag,
+    marketId: market.marketId,
+  };
+
+  if (!action || action.status !== "success") {
+    return basePayload;
+  }
+
+  const collateralDelta = action.positionCollateralChange.after - action.positionCollateralChange.before;
+  const loanDelta = action.positionLoanChange.after - action.positionLoanChange.before;
+  return {
+    ...basePayload,
+    collateralAmount: Math.abs(descaleBigIntToNumber(collateralDelta, market.collateralAsset.decimals)),
+    loanAmount: Math.abs(descaleBigIntToNumber(loanDelta, market.loanAsset.decimals)),
+  };
 }

@@ -5,6 +5,8 @@ import { Address, Hex, getAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { merklClaimAction } from "@/actions/rewards/merklClaimAction";
+import { Action } from "@/actions/utils/types";
+import { AccountRewards } from "@/data/whisk/getAccountRewards";
 import { useAccountRewards } from "@/hooks/useAccountRewards";
 import { useTheme } from "@/hooks/useTheme";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
@@ -93,6 +95,7 @@ export default function ClaimRewards() {
             </LinkExternal>
           }
           flowCompletionCb={() => setClaimed(true)}
+          trackingPayload={getTrackingPayload(data, preparedAction, "claim-rewards")}
         >
           <ActionFlowSummary>
             {data.map((reward, i) => {
@@ -124,4 +127,27 @@ export default function ClaimRewards() {
       )}
     </>
   );
+}
+
+function getTrackingPayload(rewards: AccountRewards, action: Action | null, tag: string) {
+  const basePayload = {
+    tag,
+  };
+
+  if (!action || action.status !== "success") {
+    return basePayload;
+  }
+
+  const claimAmount = rewards.reduce((acc, reward) => {
+    if (!reward.token) {
+      return 0;
+    }
+
+    return acc + descaleBigIntToNumber(reward.unclaimedAmount, reward.token.decimals);
+  }, 0);
+
+  return {
+    ...basePayload,
+    amount: Math.abs(claimAmount),
+  };
 }
