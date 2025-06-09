@@ -12,8 +12,8 @@ const LEVERAGE_FACTOR_CEILING = 100; // Only clamps if lltv * (1 - S) > 99%
 //  S: slippage tolerance (based on P_market) (0 < S < 1)
 
 // Market state:
-//  LLTV: market loan-to-value ratio
-//  P_market: price of the collateral in loan asset from market oracle (i.e 1 collateralAsset = P_market loanAssets, or C * P_market = loan asset equivalent of collateral)
+//  LLTV: market liquidation loan-to-value ratio
+//  P_market: price of 1 asset of collateral token quoted in 1 asset of loan token from the markets oracle. I.e P_market has units: [loan asset] / [collateral asset]
 
 // Derived variables:
 //  L_MAX: max leverage factor
@@ -33,7 +33,9 @@ const LEVERAGE_FACTOR_CEILING = 100; // Only clamps if lltv * (1 - S) > 99%
 
 // We must have LTV_MAX < LLTV
 //  =>  (L - 1) * (1 + S) / L < LLTV
-//  =>  L <= (1 + S) / (1 + S - LLTV)
+//  =>  L * (1 + S) - (1 + S) < LLTV * L  // Note L > 0
+//  =>  L * (1 + S - LLTV) < (1 + S)
+//  =>  L < (1 + S) / (1 + S - LLTV)      // Note 1 + S - LLTV > 0, since S > 0 and LLTV <= 1
 //  =>  L_MAX = (1 + S) / (1 + S - LLTV) -> Should also subtract MAX_BORROW_LTV_MARGIN from LLTV to prevent creating loans at the liq threshold (like we do in rest of app)
 
 // Then the max yield multiplier is (if this is preferred over considering leverage):
