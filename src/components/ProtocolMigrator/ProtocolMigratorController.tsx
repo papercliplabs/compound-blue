@@ -49,7 +49,10 @@ import { ProtocolMigratorWarningBanner } from "./ProtocolMigratorWarningBanner";
 
 const baseFields = {
   portfolioPercent: z.coerce.number().min(5, { message: "Minimum 5%" }).max(100, { message: "Maximum 100%" }),
-  maxSlippageTolerancePercent: z.coerce.number().min(0.2).max(100),
+  maxSlippageTolerancePercent: z.coerce
+    .number()
+    .min(0.2, { message: "Must be greater than or equal to 0.2%" })
+    .max(50, { message: "Must be less than or equal to 50%" }),
 };
 
 const protocolMigratorFormSchema = z.discriminatedUnion("destinationType", [
