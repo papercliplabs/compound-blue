@@ -25,7 +25,7 @@ const LEVERAGE_FACTOR_CEILING = 100; // Only clamps if lltv * (1 - S) > 99%
 //  B_QUOTE = (C - M) * P_market -> Quote at the market **oracle price** to swap to the reamining required collateral amount (C - M)
 //  B = B_QUOTE * (1 + S) -> Max amount needed account for slippage of exact output swap to the required collateral
 //    = (C - M) * P_market * (1 + S)
-//    = M * (L - 1) * P_market * (1 + S) -> Note that Y = (L - 1) * (1 + S) is the the yield multiplier
+//    = M * (L - 1) * P_market * (1 + S) -> Note that Y = (L - 1) * (1 + S) is the yield multiplier
 
 // LTV_MAX = B / (C * P_market) -> With worst case slippage
 //         = M * (L - 1) * P_market * (1 + S) / (M * L * P_market)

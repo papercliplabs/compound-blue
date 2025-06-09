@@ -121,8 +121,8 @@ export function computeVaultPositionChange(
   const balanceBefore = descaleBigIntToNumber(rawBalanceBefore, token.decimals);
 
   const vaultAfter = finalSimulationState.getVault(vaultAddress);
-  const sharedAfter = finalSimulationState.getHolding(accountAddress, vaultAddress);
-  const rawBalanceAfter = vaultAfter.toAssets(sharedAfter.balance);
+  const sharesAfter = finalSimulationState.getHolding(accountAddress, vaultAddress);
+  const rawBalanceAfter = vaultAfter.toAssets(sharesAfter.balance);
   const balanceAfter = descaleBigIntToNumber(rawBalanceAfter, token.decimals);
 
   return {

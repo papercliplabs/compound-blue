@@ -2,10 +2,10 @@ import { MathLib, RoundingDirection } from "@morpho-org/blue-sdk";
 
 // Allow 0.03% buffer for max transfers on rebasing tokens
 // This gives ~1 day grace period for execution if rebasing at 10% APY, which is useful for multisigs (also aligns with bundler permits).
-const TOKEN_REBASEING_MARGIN = 300000000000000n; // Scaled by WAD
+const TOKEN_REBASING_MARGIN = 300000000000000n; // Scaled by WAD
 
 export function computeAmountWithRebasingMargin(amount: bigint) {
-  return MathLib.mulDivDown(amount, MathLib.WAD + TOKEN_REBASEING_MARGIN, MathLib.WAD);
+  return MathLib.mulDivDown(amount, MathLib.WAD + TOKEN_REBASING_MARGIN, MathLib.WAD);
 }
 
 // maxSlippageTolerance is a percentage [0,1]
