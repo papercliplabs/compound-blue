@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useDebounce } from "use-debounce";
@@ -16,8 +16,9 @@ import { MarketIcon } from "../MarketIdentifier";
 import { MetricChange } from "../MetricChange";
 import { Button } from "../ui/button";
 import { CardContent } from "../ui/card";
-import { NumberFlowWithLoading } from "../ui/NumberFlow";
+import NumberFlow, { NumberFlowWithLoading } from "../ui/NumberFlow";
 import { Skeleton } from "../ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
 
 import { ProtocolMigratorFormValues } from "./ProtocolMigratorController";
 
@@ -54,15 +55,17 @@ export function ProtocolMigratorMarketDestination({
   }, [position, market.collateralAsset, market.loanAsset]);
 
   const { quotedMigrateValueInCollateral, minMigrateValueInCollateral } = useMemo(() => {
+    const priceUsd = market.collateralAsset.priceUsd ?? 0;
     return {
-      quotedMigrateValueInCollateral: quotedMigrateValueUsd / (market.collateralAsset.priceUsd ?? 0),
-      minMigrateValueInCollateral: minMigrateValueUsd / (market.collateralAsset.priceUsd ?? 0),
+      quotedMigrateValueInCollateral: priceUsd > 0 ? quotedMigrateValueUsd / priceUsd : 0,
+      minMigrateValueInCollateral: priceUsd > 0 ? minMigrateValueUsd / priceUsd : 0,
     };
-  }, [quotedMigrateValueUsd, minMigrateValueUsd, market.collateralAsset.priceUsd]);
+  }, [quotedMigrateValueUsd, minMigrateValueUsd, market.collateralAsset]);
 
   const form = useFormContext<ProtocolMigratorFormValues>();
 
   const borrowMax = useMemo(() => {
+    // Borrow max computed based on min collateral to ensure that in the worst case we always will respect the max LTV
     return computeNewBorrowMax(market, minMigrateValueInCollateral, position);
   }, [market, minMigrateValueInCollateral, position]);
 
@@ -116,7 +119,46 @@ export function ProtocolMigratorMarketDestination({
       </div>
       <div className="h-[1px] w-full bg-border-primary" />
       <MetricChange
-        name={`Collateral (${market.collateralAsset?.symbol})`}
+        name={
+          <TooltipPopover>
+            <TooltipPopoverTrigger className="flex items-center gap-1">
+              <span>Collateral ({market.collateralAsset?.symbol})</span>
+              <Info size={14} className="stroke-content-secondary" />
+            </TooltipPopoverTrigger>
+            <TooltipPopoverContent className="flex min-w-[280px] flex-col gap-2">
+              <p className="paragraph-sm">
+                Below are the estimated worst-case values based on the slippage you&apos;ve set.
+              </p>
+              <div className="flex flex-col gap-2 rounded-[8px] bg-background-inverse p-2 text-content-secondary">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="label-sm">Minimum collateral received:</span>
+                  <span className="inline-flex items-center gap-1 label-sm">
+                    <NumberFlow value={minMigrateValueInCollateral} />
+                    {market.collateralAsset?.symbol}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="label-sm">Maximum LTV:</span>
+                  <span className="label-sm">
+                    <NumberFlowWithLoading
+                      value={
+                        !position
+                          ? undefined
+                          : position.collateralAssetsUsd + minMigrateValueUsd == 0
+                            ? 0
+                            : (position.borrowAssetsUsd + borrowAmountDebounced * (market.loanAsset.priceUsd ?? 0)) /
+                              (position.collateralAssetsUsd + minMigrateValueUsd)
+                      }
+                      isLoading={isLoading}
+                      loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
+                      format={{ style: "percent" }}
+                    />
+                  </span>
+                </div>
+              </div>
+            </TooltipPopoverContent>
+          </TooltipPopover>
+        }
         initialValue={
           <NumberFlowWithLoading
             value={currentCollateralBalance == undefined ? undefined : currentCollateralBalance}
@@ -176,10 +218,10 @@ export function ProtocolMigratorMarketDestination({
             value={
               !position
                 ? undefined
-                : position.collateralAssetsUsd + quotedMigrateValueInCollateral == 0
+                : position.collateralAssetsUsd + quotedMigrateValueUsd == 0
                   ? 0
                   : (position.borrowAssetsUsd + borrowAmountDebounced * (market.loanAsset.priceUsd ?? 0)) /
-                    (position.collateralAssetsUsd + quotedMigrateValueInCollateral)
+                    (position.collateralAssetsUsd + quotedMigrateValueUsd)
             }
             isLoading={isLoading}
             loadingContent={<Skeleton className="h-[18px] w-[50px]" />}

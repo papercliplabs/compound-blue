@@ -1,5 +1,5 @@
 "use client";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -15,6 +15,7 @@ import {
   ActionFlowSummaryAssetItem,
 } from "../ActionFlowDialog";
 import { MetricChange } from "../MetricChange";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
 
 // TODO: could generalize this to be used for all market actions...
 
@@ -73,7 +74,35 @@ export function ProtocolMigratorMarketActionFlow({
       </ActionFlowSummary>
       <ActionFlowReview>
         <MetricChange
-          name={`Collateral (${market.collateralAsset.symbol})`}
+          name={
+            <TooltipPopover>
+              <TooltipPopoverTrigger className="flex items-center gap-1">
+                <span>Collateral ({market.collateralAsset?.symbol})</span>
+                <Info size={14} className="stroke-content-secondary" />
+              </TooltipPopoverTrigger>
+              <TooltipPopoverContent className="flex min-w-[280px] flex-col gap-2">
+                <p className="paragraph-sm">Below are the worst-case values based on the slippage you&apos;ve set.</p>
+                <div className="flex flex-col gap-2 rounded-[8px] bg-background-inverse p-2 text-content-secondary">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="label-sm">Minimum collateral received:</span>
+                    <span className="inline-flex items-center gap-1 label-sm">
+                      {formatNumber(
+                        action.worstCaseChange.positionCollateralChange.delta.amount *
+                          (market.collateralAsset.priceUsd ?? 0),
+                        { currency: "USD" }
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="label-sm">Maximum LTV:</span>
+                    <span className="label-sm">
+                      {formatNumber(action.worstCaseChange.positionLtvChange.after, { style: "percent" })}
+                    </span>
+                  </div>
+                </div>
+              </TooltipPopoverContent>
+            </TooltipPopover>
+          }
           initialValue={formatNumber(
             action.quotedChange.positionCollateralChange.before.amount * (market.collateralAsset.priceUsd ?? 0),
             { currency: "USD" }
