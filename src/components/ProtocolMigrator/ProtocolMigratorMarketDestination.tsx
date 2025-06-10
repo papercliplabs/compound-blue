@@ -6,7 +6,7 @@ import { Hex } from "viem";
 
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
-import { useWatchNumberField } from "@/hooks/useWatchNumberField";
+import { useWatchNumberField } from "@/hooks/useWatch";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 import { computeNewBorrowMax } from "@/utils/market";
 

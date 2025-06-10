@@ -4,7 +4,7 @@ import { CircleMinus, CirclePlus } from "lucide-react";
 import Image from "next/image";
 import { HTMLAttributes, useMemo } from "react";
 
-import { formatNumber } from "@/utils/format";
+import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 import { cn } from "@/utils/shadcn";
 
 import { useActionFlowContext } from "./ActionFlowProvider";
@@ -25,13 +25,14 @@ export function ActionFlowSummary({ className, children, ...props }: HTMLAttribu
 interface ActionFlowSummaryAssetItemProps extends HTMLAttributes<HTMLDivElement> {
   asset: {
     symbol: string;
+    decimals: number;
     icon?: string | null;
+    priceUsd?: number | null;
   };
   actionName: string; // Ex. Supply
   side: "supply" | "borrow";
   isIncreasing: boolean;
-  descaledAmount: number;
-  amountUsd?: number;
+  rawAmount: bigint;
   protocolName?: string;
 }
 
@@ -40,8 +41,7 @@ export function ActionFlowSummaryAssetItem({
   actionName,
   side,
   isIncreasing,
-  descaledAmount,
-  amountUsd,
+  rawAmount,
   protocolName,
   className,
   ...props
@@ -79,9 +79,11 @@ export function ActionFlowSummaryAssetItem({
         </div>
       </div>
       <div className="flex flex-col items-end">
-        <span>{formatNumber(descaledAmount)}</span>
-        {amountUsd && (
-          <span className="text-content-secondary label-sm">{formatNumber(amountUsd, { currency: "USD" })}</span>
+        <span>{formatNumber(descaleBigIntToNumber(rawAmount, asset.decimals))}</span>
+        {asset.priceUsd && (
+          <span className="text-content-secondary label-sm">
+            {formatNumber(descaleBigIntToNumber(rawAmount, asset.decimals) * asset.priceUsd, { currency: "USD" })}
+          </span>
         )}
       </div>
     </div>

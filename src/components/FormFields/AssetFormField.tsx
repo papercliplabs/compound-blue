@@ -2,16 +2,15 @@
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import { ComponentProps } from "react";
+import { formatUnits } from "viem";
 import { useAccount } from "wagmi";
 
-import { numberToString } from "@/utils/format";
+import { descaleBigIntToNumber } from "@/utils/format";
 
 import { Button } from "../ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
 import NumberFlow from "../ui/NumberFlow";
-
-
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface AssetFormFieldProps<TFieldValues extends Record<string, any>>
@@ -19,18 +18,19 @@ interface AssetFormFieldProps<TFieldValues extends Record<string, any>>
   actionName: string;
   asset: {
     symbol: string;
+    decimals: number;
     icon?: string | null;
     priceUsd?: number | null;
   };
   setIsMax?: (isMax: boolean) => void;
-  descaledAvailableBalance?: number;
+  rawAvailableBalance?: bigint;
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export default function AssetFormField<TFieldValues extends Record<string, any>>({
   actionName,
   asset,
-  descaledAvailableBalance,
+  rawAvailableBalance,
   setIsMax,
   ...props
 }: AssetFormFieldProps<TFieldValues>) {
@@ -58,7 +58,8 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
                   {...field}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (/^0*(\d+)?(\.\d*)?$/.test(value)) {
+                    // Validate numeric input and limit decimal places to token's precision
+                    if (new RegExp(`^0*(\\d+)?(\\.\\d{0,${asset.decimals}})?$`).test(value)) {
                       field.onChange(value);
                       setIsMax?.(false);
                     }
@@ -72,12 +73,11 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
                   variant="secondary"
                   size="sm"
                   type="button"
-                  disabled={!descaledAvailableBalance && !!address} // Something is wrong if so
                   onClick={() => {
-                    if (descaledAvailableBalance === undefined) {
+                    if (rawAvailableBalance === undefined) {
                       openConnectModal?.();
                     } else {
-                      field.onChange(numberToString(descaledAvailableBalance));
+                      field.onChange(formatUnits(rawAvailableBalance, asset.decimals));
                       setIsMax?.(true);
                     }
                   }}
@@ -88,15 +88,21 @@ export default function AssetFormField<TFieldValues extends Record<string, any>>
             </div>
             <div className="flex items-center justify-between text-content-secondary label-sm">
               {asset.priceUsd && (
-                <NumberFlow value={(field.value ?? 0) * asset.priceUsd} format={{ currency: "USD" }} />
+                <NumberFlow value={(parseFloat(field.value) || 0) * asset.priceUsd} format={{ currency: "USD" }} />
               )}
-              <div className="flex items-center gap-1">
-                {asset.icon && (
-                  <Image src={asset.icon} alt={asset.symbol} width={12} height={12} className="rounded-full" />
-                )}
-                <NumberFlow value={descaledAvailableBalance ?? 0} />
-                <span>Available</span>
-              </div>
+              {address && (
+                <div className="flex items-center gap-1">
+                  {asset.icon && (
+                    <Image src={asset.icon} alt={asset.symbol} width={12} height={12} className="rounded-full" />
+                  )}
+                  <NumberFlow
+                    value={
+                      rawAvailableBalance != undefined ? descaleBigIntToNumber(rawAvailableBalance, asset.decimals) : 0
+                    }
+                  />
+                  <span>Available</span>
+                </div>
+              )}
             </div>
           </div>
         </FormItem>

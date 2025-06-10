@@ -17,7 +17,8 @@ import {
 } from "@/components/ActionFlowDialog";
 import { Form } from "@/components/ui/form";
 import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
-import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
+import { useWatchParseUnits } from "@/hooks/useWatch";
+import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 
 import AssetFormField from "../FormFields/AssetFormField";
 import { MetricChange } from "../MetricChange";
@@ -40,25 +41,27 @@ export default function VaultWithdraw({
   const publicClient = usePublicClient();
   const { data: vaultPosition } = useAccountVaultPosition(getAddress(vault.vaultAddress));
 
-  const decaledPositionBalance = useMemo(
-    () => (vaultPosition ? descaleBigIntToNumber(vaultPosition.supplyAssets, vault.asset.decimals) : undefined),
-    [vaultPosition, vault.asset.decimals]
-  );
-
   const formSchema = useMemo(() => {
     return z.object({
       withdrawAmount: z
         .string({ required_error: "Amount is required" })
         .nonempty("Amount is required.")
-        .pipe(
-          z.coerce
-            .number()
-            .positive({ message: "Amount must be greater than zero." })
-            .max(decaledPositionBalance ?? Number.MAX_VALUE, { message: "Amount exceeds position balance." })
+        .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
+        .refine((val) => parseUnits(val, vault.asset.decimals) > 0n, "Amount must be greater than zero.") // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
+        .refine(
+          (val) => {
+            if (!vaultPosition) {
+              return true;
+            }
+
+            const rawWithdrawAmount = parseUnits(val, vault.asset.decimals);
+            return rawWithdrawAmount <= BigInt(vaultPosition.supplyAssets);
+          },
+          { message: "Amount exceeds position balance." }
         ),
       isMaxWithdraw: z.boolean(),
     });
-  }, [decaledPositionBalance]);
+  }, [vaultPosition, vault.asset.decimals]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
@@ -84,9 +87,7 @@ export default function VaultWithdraw({
 
       // Uint256 max if the user wants to withdraw their entire balance
       const { withdrawAmount, isMaxWithdraw } = values;
-      const withdrawAmountBigInt = isMaxWithdraw
-        ? maxUint256
-        : parseUnits(numberToString(withdrawAmount), vault.asset.decimals);
+      const withdrawAmountBigInt = isMaxWithdraw ? maxUint256 : parseUnits(withdrawAmount, vault.asset.decimals);
 
       const preparedAction = await vaultWithdrawAction({
         publicClient,
@@ -112,7 +113,11 @@ export default function VaultWithdraw({
     setSuccess(true);
   }, [form, setSuccess]);
 
-  const withdrawAmount = Number(form.watch("withdrawAmount") ?? 0);
+  const rawWithdrawAmount = useWatchParseUnits({
+    control: form.control,
+    name: "withdrawAmount",
+    decimals: vault.asset.decimals,
+  });
 
   return (
     <>
@@ -125,7 +130,7 @@ export default function VaultWithdraw({
                 name="withdrawAmount"
                 actionName="Withdraw"
                 asset={vault.asset}
-                descaledAvailableBalance={decaledPositionBalance}
+                rawAvailableBalance={vaultPosition ? BigInt(vaultPosition.supplyAssets) : undefined}
                 setIsMax={(isMax) => {
                   form.setValue("isMaxWithdraw", isMax);
                 }}
@@ -139,7 +144,7 @@ export default function VaultWithdraw({
                   isLoading={simulatingBundle}
                   loadingMessage="Simulating"
                 >
-                  {withdrawAmount == 0 ? "Enter Amount" : "Review Withdraw"}
+                  {rawWithdrawAmount == 0n ? "Enter Amount" : "Review Withdraw"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
@@ -172,8 +177,7 @@ export default function VaultWithdraw({
               actionName="Withdraw"
               side="supply"
               isIncreasing={false}
-              descaledAmount={withdrawAmount}
-              amountUsd={withdrawAmount * (vault.asset.priceUsd ?? 0)}
+              rawAmount={rawWithdrawAmount}
             />
           </ActionFlowSummary>
           <ActionFlowReview>

@@ -25,7 +25,7 @@ import {
   SupportedProtocolsForProtocolMigration,
   useProtocoMigratorTableDataEntry,
 } from "@/hooks/useProtocolMigratorTableData";
-import { useWatchNumberField } from "@/hooks/useWatchNumberField";
+import { useWatchNumberField } from "@/hooks/useWatch";
 import { numberToString } from "@/utils/format";
 
 import LinkExternal from "../LinkExternal";
