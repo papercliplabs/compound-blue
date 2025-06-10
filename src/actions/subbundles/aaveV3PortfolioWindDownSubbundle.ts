@@ -1,3 +1,4 @@
+import { MathLib } from "@morpho-org/blue-sdk";
 import { BundlerAction, BundlerCall } from "@morpho-org/bundler-sdk-viem";
 import Decimal from "decimal.js";
 import { Address, Client, erc20Abi, getAddress, isAddressEqual, maxUint256 } from "viem";
@@ -27,7 +28,6 @@ import { computeScaledAmount } from "../utils/math";
 
 import { inputTransferSubbundle } from "./inputTransferSubbundle";
 import { Subbundle } from "./types";
-import { MathLib } from "@morpho-org/blue-sdk";
 
 // Recomendation from Paraswap team
 export const PARASWAP_MIN_SWAP_AMOUNT = 1000n;
@@ -464,7 +464,7 @@ export async function aaveV3PortfolioWindDownSubbundle({
  * @param decimals - Decimals of the flash loan asset
  * @param performingOutputSwap - Whether an output swap is being performed
  */
-function computePerSwapMaxSlippageToleranceV2(
+export function computePerSwapMaxSlippageToleranceV2(
   S_T: number,
   rawC_D: bigint,
   rawL_D: bigint,
