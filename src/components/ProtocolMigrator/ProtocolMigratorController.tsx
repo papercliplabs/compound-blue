@@ -130,7 +130,7 @@ export default function ProtocolMigratorController({
           (supplyMigrateValueUsd - borrowMigrateValueUsd) / (1 + maxSlippageTolerancePercentPercentageDebounced / 100),
       };
     }
-  }, [protocolEntry, portfolioPercentDebounced]);
+  }, [protocolEntry, portfolioPercentDebounced, maxSlippageTolerancePercentPercentageDebounced]);
 
   const onSubmit = async (data: ProtocolMigratorFormValues) => {
     if (!address) {

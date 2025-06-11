@@ -1,7 +1,7 @@
 "use client";
 import { ArrowRight, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AaveV3PortfolioMigrationToMarketAction } from "@/actions/migration/aaveV3PortfolioMigrationToMarketAction";
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
@@ -15,6 +15,7 @@ import {
   ActionFlowSummaryAssetItem,
 } from "../ActionFlowDialog";
 import { MetricChange } from "../MetricChange";
+import { SlippageTooltipContent } from "../SlippageTooltipContent";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
 
 // TODO: could generalize this to be used for all market actions...
@@ -36,6 +37,18 @@ export function ProtocolMigratorMarketActionFlow({
 }: ProtocolMigratorMarketActionFlowProps) {
   const [completed, setCompleted] = useState(false);
   const router = useRouter();
+
+  const maxSlippageDerived = useMemo(() => {
+    if (action?.status != "success" || action.worstCaseChange.positionCollateralChange.delta.amount == 0) {
+      return 0;
+    }
+
+    return (
+      action.quotedChange.positionCollateralChange.delta.amount /
+        action.worstCaseChange.positionCollateralChange.delta.amount -
+      1
+    );
+  }, [action]);
 
   if (!market || !action || action.status != "success") {
     return null;
@@ -74,35 +87,7 @@ export function ProtocolMigratorMarketActionFlow({
       </ActionFlowSummary>
       <ActionFlowReview>
         <MetricChange
-          name={
-            <TooltipPopover>
-              <TooltipPopoverTrigger className="flex items-center gap-1">
-                <span>Collateral ({market.collateralAsset?.symbol})</span>
-                <Info size={14} className="stroke-content-secondary" />
-              </TooltipPopoverTrigger>
-              <TooltipPopoverContent className="flex min-w-[280px] flex-col gap-2">
-                <p className="paragraph-sm">Below are the worst-case values based on the slippage you&apos;ve set.</p>
-                <div className="flex flex-col gap-2 rounded-[8px] bg-background-inverse p-2 text-content-secondary">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="label-sm">Minimum collateral received:</span>
-                    <span className="inline-flex items-center gap-1 label-sm">
-                      {formatNumber(
-                        action.worstCaseChange.positionCollateralChange.delta.amount *
-                          (market.collateralAsset.priceUsd ?? 0),
-                        { currency: "USD" }
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="label-sm">Maximum LTV:</span>
-                    <span className="label-sm">
-                      {formatNumber(action.worstCaseChange.positionLtvChange.after, { style: "percent" })}
-                    </span>
-                  </div>
-                </div>
-              </TooltipPopoverContent>
-            </TooltipPopover>
-          }
+          name={`Collateral (${market.collateralAsset?.symbol})`}
           initialValue={formatNumber(
             action.quotedChange.positionCollateralChange.before.amount * (market.collateralAsset.priceUsd ?? 0),
             { currency: "USD" }
@@ -141,6 +126,33 @@ export function ProtocolMigratorMarketActionFlow({
             ) / {formatNumber(market.lltv, { style: "percent" })}
           </div>
         </div>
+        <div className="h-[1px] w-full bg-border-primary" />
+        <MetricChange
+          name={
+            <TooltipPopover>
+              <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
+                Max Slippage
+                <Info size={14} className="stroke-content-secondary" />
+              </TooltipPopoverTrigger>
+              <TooltipPopoverContent>
+                <SlippageTooltipContent
+                  isEstimate
+                  items={[
+                    {
+                      name: "Minimum collateral received",
+                      value: `${formatNumber(action.worstCaseChange.positionCollateralChange.delta.amount)} ${market.collateralAsset?.symbol}`,
+                    },
+                    {
+                      name: "Maximum LTV",
+                      value: `${formatNumber(action.worstCaseChange.positionLtvChange.after, { style: "percent" })}`,
+                    },
+                  ]}
+                />
+              </TooltipPopoverContent>
+            </TooltipPopover>
+          }
+          initialValue={formatNumber(maxSlippageDerived, { style: "percent" })}
+        />
       </ActionFlowReview>
       <ActionFlowButton variant="borrow">Migrate</ActionFlowButton>
     </ActionFlowDialog>

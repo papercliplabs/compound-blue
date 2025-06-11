@@ -1,6 +1,7 @@
 import { Info } from "lucide-react";
 import Image from "next/image";
 import { useMemo } from "react";
+import { useFormContext } from "react-hook-form";
 import { getAddress } from "viem";
 
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
@@ -8,12 +9,16 @@ import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 
 import Apy from "../Apy";
+import { NumberInputFormField } from "../FormFields/NumberInputFormField";
 import { MetricChange } from "../MetricChange";
+import { SlippageTooltipContent } from "../SlippageTooltipContent";
 import { Button } from "../ui/button";
 import { CardContent } from "../ui/card";
 import { NumberFlowWithLoading } from "../ui/NumberFlow";
 import { Skeleton } from "../ui/skeleton";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
+
+import { ProtocolMigratorFormValues } from "./ProtocolMigratorController";
 
 interface ProtocolMigratorVaultDestinationProps {
   vault: VaultSummary;
@@ -44,6 +49,8 @@ export function ProtocolMigratorVaultDestination({
     };
   }, [quotedMigrateValueUsd, minMigrateValueUsd, vault.asset]);
 
+  const form = useFormContext<ProtocolMigratorFormValues>();
+
   return (
     <CardContent className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -62,27 +69,7 @@ export function ProtocolMigratorVaultDestination({
       </div>
       <div className="h-[1px] w-full bg-border-primary" />
       <MetricChange
-        name={
-          <TooltipPopover>
-            <TooltipPopoverTrigger className="flex items-center gap-1">
-              <span>Balance ({vault.asset.symbol})</span>
-              <Info size={14} className="stroke-content-secondary" />
-            </TooltipPopoverTrigger>
-            <TooltipPopoverContent className="flex min-w-[280px] flex-col gap-2">
-              <p className="paragraph-sm">
-                Below are the estimated worst-case values based on the slippage you&apos;ve set.
-              </p>
-              <div className="flex flex-col gap-2 rounded-[8px] bg-background-inverse p-2 text-content-secondary">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="label-sm">Minimum received:</span>
-                  <span className="label-sm">
-                    {formatNumber(minMigrateValueInUnderlying)} {vault.asset.symbol}
-                  </span>
-                </div>
-              </div>
-            </TooltipPopoverContent>
-          </TooltipPopover>
-        }
+        name={`Balance (${vault.asset.symbol})`}
         initialValue={
           <NumberFlowWithLoading
             value={currentBalance == undefined ? undefined : currentBalance}
@@ -97,6 +84,33 @@ export function ProtocolMigratorVaultDestination({
             loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
           />
         }
+      />
+
+      <div className="h-[1px] w-full bg-border-primary" />
+
+      <NumberInputFormField
+        control={form.control}
+        name="maxSlippageTolerancePercent"
+        labelContent={
+          <TooltipPopover>
+            <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
+              Max Slippage
+              <Info size={14} className="stroke-content-secondary" />
+            </TooltipPopoverTrigger>
+            <TooltipPopoverContent>
+              <SlippageTooltipContent
+                isEstimate
+                items={[
+                  {
+                    name: "Minimum received",
+                    value: `${formatNumber(minMigrateValueInUnderlying)} ${vault.asset.symbol}`,
+                  },
+                ]}
+              />
+            </TooltipPopoverContent>
+          </TooltipPopover>
+        }
+        unit="%"
       />
     </CardContent>
   );

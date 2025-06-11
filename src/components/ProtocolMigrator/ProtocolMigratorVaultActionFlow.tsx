@@ -1,7 +1,7 @@
 "use client";
 import { Info } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AaveV3PortfolioMigrationToVaultAction } from "@/actions/migration/aaveV3PortfolioMigrationToVaultAction";
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
@@ -16,6 +16,7 @@ import {
 } from "../ActionFlowDialog";
 import Apy from "../Apy";
 import { MetricChange } from "../MetricChange";
+import { SlippageTooltipContent } from "../SlippageTooltipContent";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
 
 // TODO: could generalize this to be used for all vault actions...
@@ -37,6 +38,14 @@ export function ProtocolMigratorVaultActionFlow({
 }: ProtocolMigratorVaultActionFlowProps) {
   const [completed, setCompleted] = useState(false);
   const router = useRouter();
+
+  const maxSlippageDerived = useMemo(() => {
+    if (action?.status != "success" || action.worstCaseChange.positionChange.delta.amount == 0) {
+      return 0;
+    }
+
+    return action.quotedChange.positionChange.delta.amount / action.worstCaseChange.positionChange.delta.amount - 1;
+  }, [action]);
 
   if (!vault || !action || action.status != "success") {
     return null;
@@ -67,27 +76,7 @@ export function ProtocolMigratorVaultActionFlow({
       </ActionFlowSummary>
       <ActionFlowReview>
         <MetricChange
-          name={
-            <TooltipPopover>
-              <TooltipPopoverTrigger className="flex items-center gap-1">
-                <span>Balance ({vault.asset.symbol})</span>
-                <Info size={14} className="stroke-content-secondary" />
-              </TooltipPopoverTrigger>
-              <TooltipPopoverContent className="flex min-w-[280px] flex-col gap-2">
-                <p className="paragraph-sm">Below are the worst-case values based on the slippage you&apos;ve set.</p>
-                <div className="flex flex-col gap-2 rounded-[8px] bg-background-inverse p-2 text-content-secondary">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="label-sm">Minimum received:</span>
-                    <span className="label-sm">
-                      {formatNumber(action.worstCaseChange.positionChange.delta.amount * (vault.asset.priceUsd ?? 0), {
-                        currency: "USD",
-                      })}
-                    </span>
-                  </div>
-                </div>
-              </TooltipPopoverContent>
-            </TooltipPopover>
-          }
+          name={`Balance (${vault.asset.symbol})`}
           initialValue={formatNumber(action.quotedChange.positionChange.before.amount * (vault.asset.priceUsd ?? 0), {
             currency: "USD",
           })}
@@ -96,6 +85,28 @@ export function ProtocolMigratorVaultActionFlow({
           })}
         />
         <MetricChange name="APY" initialValue={<Apy apy={vault.supplyApy} type="supply" />} />
+        <div className="h-[1px] w-full bg-border-primary" />
+        <MetricChange
+          name={
+            <TooltipPopover>
+              <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
+                Max Slippage
+                <Info size={14} className="stroke-content-secondary" />
+              </TooltipPopoverTrigger>
+              <TooltipPopoverContent>
+                <SlippageTooltipContent
+                  items={[
+                    {
+                      name: "Minimum received",
+                      value: `${formatNumber(action.worstCaseChange.positionChange.delta.amount)} ${vault.asset.symbol}`,
+                    },
+                  ]}
+                />
+              </TooltipPopoverContent>
+            </TooltipPopover>
+          }
+          initialValue={formatNumber(maxSlippageDerived, { style: "percent" })}
+        />
       </ActionFlowReview>
       <ActionFlowButton>Migrate</ActionFlowButton>
     </ActionFlowDialog>
