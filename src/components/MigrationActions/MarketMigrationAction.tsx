@@ -7,7 +7,7 @@ import { ArrowDown, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { getAddress, maxUint256, parseUnits } from "viem";
+import { formatUnits, getAddress, maxUint256, parseUnits } from "viem";
 import { useAccount } from "wagmi";
 import { usePublicClient } from "wagmi";
 import { z } from "zod";
@@ -17,8 +17,9 @@ import { Action } from "@/actions/utils/types";
 import AssetFormField, { AssetFormFieldViewOnly } from "@/components/FormFields/AssetFormField";
 import { Form } from "@/components/ui/form";
 import { MarketMigrationTableEntry } from "@/hooks/useMarketMigrationTableData";
+import { useWatchParseUnits } from "@/hooks/useWatch";
 import { computeAaveEffectiveBorrowApy, computeAaveNewLltv } from "@/utils/aave";
-import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
+import { calculateUsdValue, descaleBigIntToNumber, formatNumber } from "@/utils/format";
 import { computeLtvHealth } from "@/utils/ltv";
 
 import { ActionFlowButton, ActionFlowReview, ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog";
@@ -83,28 +84,64 @@ export default function MarketMigrationAction({
 
   const formSchema = useMemo(() => {
     return z.object({
-      collateralMigrateAmount: z.coerce
-        .string()
-        .refine((val) => Number(val) <= collateralBalance, "Amount exceeds wallet balance.")
-        .transform((val) => Number(val)),
+      collateralMigrateAmount: z
+        .string({ required_error: "Amount is required" })
+        .nonempty("Amount is required.")
+        .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
+        .refine(
+          (val) => parseUnits(val, aaveV3CollateralReservePosition.reserve.aToken.decimals) > 0n,
+          "Amount must be greater than zero."
+        )
+        .refine((val) => {
+          const rawVal = parseUnits(val, aaveV3CollateralReservePosition.reserve.aToken.decimals);
+          return rawVal <= BigInt(aaveV3CollateralReservePosition.aTokenAssets);
+        }, "Amount exceeds wallet balance."),
       isMaxCollateral: z.boolean(),
-      loanMigrateAmount: z.coerce
-        .string()
-        .refine((val) => Number(val) <= loanBalance, "Amount exceeds loan balance.")
-        .transform((val) => Number(val)),
+      loanMigrateAmount: z
+        .string({ required_error: "Amount is required" })
+        .nonempty("Amount is required.")
+        .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
+        .refine(
+          (val) => parseUnits(val, aaveV3LoanReservePosition.reserve.underlyingAsset.decimals) > 0n,
+          "Amount must be greater than zero."
+        )
+        .refine((val) => {
+          const rawVal = parseUnits(val, aaveV3LoanReservePosition.reserve.underlyingAsset.decimals);
+          return rawVal <= BigInt(aaveV3LoanReservePosition.borrowAssets);
+        }, "Amount exceeds loan balance."),
       isMaxLoan: z.boolean(),
     });
-  }, [collateralBalance, loanBalance]);
+  }, [
+    aaveV3CollateralReservePosition.aTokenAssets,
+    aaveV3CollateralReservePosition.reserve.aToken.decimals,
+    aaveV3LoanReservePosition.borrowAssets,
+    aaveV3LoanReservePosition.reserve.underlyingAsset.decimals,
+  ]);
+
+  const defaultValues = useMemo(() => {
+    return {
+      collateralMigrateAmount: formatUnits(
+        BigInt(aaveV3CollateralReservePosition.aTokenAssets),
+        aaveV3CollateralReservePosition.reserve.aToken.decimals
+      ),
+      isMaxCollateral: true,
+      loanMigrateAmount: formatUnits(
+        BigInt(aaveV3LoanReservePosition.borrowAssets),
+        aaveV3LoanReservePosition.reserve.underlyingAsset.decimals
+      ),
+      isMaxLoan: true,
+    };
+  }, [
+    aaveV3CollateralReservePosition.aTokenAssets,
+    aaveV3CollateralReservePosition.reserve.aToken.decimals,
+    aaveV3LoanReservePosition.borrowAssets,
+    aaveV3LoanReservePosition.reserve.underlyingAsset.decimals,
+  ]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      collateralMigrateAmount: collateralBalance,
-      isMaxCollateral: true,
-      loanMigrateAmount: loanBalance,
-      isMaxLoan: true,
-    },
+    defaultValues,
   });
 
   const onSubmit = useCallback(
@@ -126,11 +163,11 @@ export default function MarketMigrationAction({
 
       const rawCollateralMigrateAmount = isMaxCollateral
         ? maxUint256
-        : parseUnits(numberToString(collateralMigrateAmount), aaveV3CollateralReservePosition.reserve.aToken.decimals);
+        : parseUnits(collateralMigrateAmount, aaveV3CollateralReservePosition.reserve.aToken.decimals);
 
       const rawLoanMigrateAmount = isMaxLoan
         ? maxUint256
-        : parseUnits(numberToString(loanMigrateAmount), aaveV3LoanReservePosition.reserve.underlyingAsset.decimals);
+        : parseUnits(loanMigrateAmount, aaveV3LoanReservePosition.reserve.underlyingAsset.decimals);
 
       const preparedAction = await aaveV3MarketMigrationAction({
         publicClient,
@@ -165,12 +202,7 @@ export default function MarketMigrationAction({
 
   // Reset form on new vaultReservePositionPairing
   useEffect(() => {
-    form.reset({
-      collateralMigrateAmount: collateralBalance,
-      isMaxCollateral: true,
-      loanMigrateAmount: loanBalance,
-      isMaxLoan: true,
-    });
+    form.reset(defaultValues);
   }, [
     destinationMarketPosition,
     aaveV3CollateralReservePosition,
@@ -178,13 +210,41 @@ export default function MarketMigrationAction({
     collateralBalance,
     loanBalance,
     form,
+    defaultValues,
   ]);
 
-  const collateralMigrateAmount = Number(form.watch("collateralMigrateAmount") ?? 0);
-  const loanMigrateAmount = Number(form.watch("loanMigrateAmount") ?? 0);
-  const collateralMigrateAmountUsd =
-    collateralMigrateAmount * (aaveV3CollateralReservePosition.reserve.underlyingAsset.priceUsd ?? 0);
-  const loanMigrateAmountUsd = loanMigrateAmount * (aaveV3LoanReservePosition.reserve.underlyingAsset.priceUsd ?? 0);
+  const rawCollateralMigrateAmount = useWatchParseUnits({
+    control: form.control,
+    name: "collateralMigrateAmount",
+    decimals: aaveV3CollateralReservePosition.reserve.aToken.decimals,
+  });
+  const rawLoanMigrateAmount = useWatchParseUnits({
+    control: form.control,
+    name: "loanMigrateAmount",
+    decimals: aaveV3LoanReservePosition.reserve.underlyingAsset.decimals,
+  });
+
+  const { collateralMigrateAmountUsd, loanMigrateAmountUsd } = useMemo(() => {
+    return {
+      collateralMigrateAmountUsd: calculateUsdValue(
+        rawCollateralMigrateAmount,
+        aaveV3CollateralReservePosition.reserve.aToken.decimals,
+        aaveV3CollateralReservePosition.reserve.underlyingAsset.priceUsd
+      ),
+      loanMigrateAmountUsd: calculateUsdValue(
+        rawLoanMigrateAmount,
+        aaveV3LoanReservePosition.reserve.underlyingAsset.decimals,
+        aaveV3LoanReservePosition.reserve.underlyingAsset.priceUsd
+      ),
+    };
+  }, [
+    aaveV3CollateralReservePosition.reserve.aToken.decimals,
+    aaveV3CollateralReservePosition.reserve.underlyingAsset.priceUsd,
+    aaveV3LoanReservePosition.reserve.underlyingAsset.decimals,
+    aaveV3LoanReservePosition.reserve.underlyingAsset.priceUsd,
+    rawCollateralMigrateAmount,
+    rawLoanMigrateAmount,
+  ]);
 
   const netApyMetricChange = useMemo(() => {
     const effectiveAaveV3BorrowApy = computeAaveEffectiveBorrowApy(
@@ -288,7 +348,7 @@ export default function MarketMigrationAction({
                             name="collateralMigrateAmount"
                             actionName="Withdraw"
                             asset={aaveV3CollateralReservePosition.reserve.underlyingAsset}
-                            descaledAvailableBalance={collateralBalance}
+                            rawAvailableBalance={BigInt(aaveV3CollateralReservePosition.aTokenAssets)}
                             setIsMax={(isMax) => {
                               form.setValue("isMaxCollateral", isMax);
                             }}
@@ -300,7 +360,7 @@ export default function MarketMigrationAction({
                               name="loanMigrateAmount"
                               actionName="Repay"
                               asset={aaveV3LoanReservePosition.reserve.underlyingAsset}
-                              descaledAvailableBalance={loanBalance}
+                              rawAvailableBalance={BigInt(aaveV3LoanReservePosition.borrowAssets)}
                               setIsMax={(isMax) => {
                                 form.setValue("isMaxLoan", isMax);
                               }}
@@ -328,16 +388,14 @@ export default function MarketMigrationAction({
                           <AssetFormFieldViewOnly
                             actionName="Add"
                             asset={collateralAsset}
-                            amount={collateralMigrateAmount}
-                            amountUsd={collateralMigrateAmountUsd}
+                            rawAmount={rawCollateralMigrateAmount}
                           />
                           <div className="h-[1px] w-full bg-border-primary" />
                           <div className="[&_label]:text-accent-ternary">
                             <AssetFormFieldViewOnly
                               actionName="Borrow"
                               asset={loanAsset}
-                              amount={loanMigrateAmount}
-                              amountUsd={loanMigrateAmountUsd}
+                              rawAmount={rawLoanMigrateAmount}
                             />
                           </div>
                         </div>
@@ -366,7 +424,9 @@ export default function MarketMigrationAction({
                       isLoading={simulatingBundle}
                       loadingMessage="Simulating"
                     >
-                      {collateralMigrateAmount == 0 && loanMigrateAmount == 0 ? "Enter Amount" : "Review Migration"}
+                      {rawCollateralMigrateAmount == 0n && rawLoanMigrateAmount == 0n
+                        ? "Enter Amount"
+                        : "Review Migration"}
                     </Button>
                     {preparedAction?.status == "error" && (
                       <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
@@ -399,8 +459,7 @@ export default function MarketMigrationAction({
               actionName="Migrate"
               side="borrow"
               isIncreasing={true}
-              descaledAmount={collateralMigrateAmount}
-              amountUsd={collateralMigrateAmountUsd}
+              rawAmount={rawCollateralMigrateAmount}
               protocolName="Compound Blue"
             />
             <ActionFlowSummaryAssetItem
@@ -408,8 +467,7 @@ export default function MarketMigrationAction({
               actionName="Borrow"
               side="supply"
               isIncreasing={true}
-              descaledAmount={loanMigrateAmount}
-              amountUsd={loanMigrateAmountUsd}
+              rawAmount={rawLoanMigrateAmount}
               protocolName="Compound Blue"
             />
           </ActionFlowSummary>

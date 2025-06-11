@@ -26,7 +26,6 @@ import {
   useProtocoMigratorTableDataEntry,
 } from "@/hooks/useProtocolMigratorTableData";
 import { useWatchNumberField } from "@/hooks/useWatch";
-import { numberToString } from "@/utils/format";
 
 import LinkExternal from "../LinkExternal";
 import { Button } from "../ui/button";
@@ -56,7 +55,7 @@ const protocolMigratorFormSchema = z.discriminatedUnion("destinationType", [
   z.object({
     ...baseFields,
     destinationType: z.literal("vault"),
-    borrowAmount: z.coerce.number().optional(),
+    borrowAmount: z.string().optional(),
   }),
   z.object({
     ...baseFields,
@@ -64,7 +63,12 @@ const protocolMigratorFormSchema = z.discriminatedUnion("destinationType", [
     borrowAmount: z
       .string({ required_error: "Amount is required" })
       .nonempty("Amount is required.")
-      .pipe(z.coerce.number().positive("Amount must be greater than zero.")),
+      .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
+      .refine(
+        (val) => parseUnits(val, 18) > 0n, // 18 decimals for most standard ERC-20's (this is the max for all supported on Compound Blue)
+        "Amount must be greater than zero."
+      ),
+    // Other validation is added manually where used
   }),
 ]);
 
@@ -164,10 +168,7 @@ export default function ProtocolMigratorController({
           message: "Borrow amount is required",
         });
       } else {
-        const rawBorrowAmount = parseUnits(
-          numberToString(data.borrowAmount),
-          destinationSelection.market.loanAsset.decimals
-        );
+        const rawBorrowAmount = parseUnits(data.borrowAmount, destinationSelection.market.loanAsset.decimals);
         const action = await aaveV3PortfolioMigrationToMarketAction({
           publicClient,
           accountAddress: address,

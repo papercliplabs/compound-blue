@@ -41,6 +41,7 @@ const query = graphql(`
       borrowAssetsUsd
       utilization
       collateralPriceInLoanAsset
+      rawCollateralPriceInLoanAsset
       borrowApy {
         base
         total

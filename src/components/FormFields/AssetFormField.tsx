@@ -5,7 +5,7 @@ import { ComponentProps } from "react";
 import { formatUnits } from "viem";
 import { useAccount } from "wagmi";
 
-import { descaleBigIntToNumber } from "@/utils/format";
+import { calculateUsdValue, descaleBigIntToNumber } from "@/utils/format";
 
 import { Button } from "../ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
@@ -115,22 +115,30 @@ interface AssetFormFieldViewOnlyProps {
   actionName: string;
   asset: {
     symbol: string;
+    decimals: number;
     icon?: string | null;
     priceUsd?: number | null;
   };
-  amount: number;
-  amountUsd: number;
+  rawAmount: bigint;
 }
 
-export function AssetFormFieldViewOnly({ actionName, asset, amount, amountUsd }: AssetFormFieldViewOnlyProps) {
+export function AssetFormFieldViewOnly({ actionName, asset, rawAmount }: AssetFormFieldViewOnlyProps) {
   return (
     <div className="flex flex-col gap-4 rounded-[12px]">
       <label className="text-accent-secondary label-sm">
         {actionName} {asset.symbol}
       </label>
       <div className="flex flex-col">
-        <NumberFlow value={amount} className="h-[44px] !font-medium title-2" format={{ maximumFractionDigits: 6 }} />
-        <NumberFlow value={amountUsd} format={{ currency: "USD" }} className="text-content-secondary label-sm" />
+        <NumberFlow
+          value={descaleBigIntToNumber(rawAmount, asset.decimals)}
+          className="h-[44px] !font-medium title-2"
+          format={{ maximumFractionDigits: 6 }}
+        />
+        <NumberFlow
+          value={calculateUsdValue(rawAmount, asset.decimals, asset.priceUsd)}
+          format={{ currency: "USD" }}
+          className="text-content-secondary label-sm"
+        />
       </div>
     </div>
   );

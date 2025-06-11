@@ -18,7 +18,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
 import { useWatchParseUnits } from "@/hooks/useWatch";
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+import { calculateUsdValue, formatNumber } from "@/utils/format";
 
 import AssetFormField from "../FormFields/AssetFormField";
 import { MetricChange } from "../MetricChange";
@@ -67,6 +67,7 @@ export default function VaultWithdraw({
     mode: "onChange",
     resolver: zodResolver(formSchema),
     defaultValues: {
+      withdrawAmount: "",
       isMaxWithdraw: false,
     },
   });
@@ -184,13 +185,19 @@ export default function VaultWithdraw({
             <MetricChange
               name={`Position (${vault.asset.symbol})`}
               initialValue={formatNumber(
-                descaleBigIntToNumber(preparedAction.positionBalanceChange.before, vault.decimals) *
-                  (vault.asset.priceUsd ?? 0),
+                calculateUsdValue(
+                  preparedAction.positionBalanceChange.before,
+                  vault.asset.decimals,
+                  vault.asset.priceUsd
+                ),
                 { currency: "USD" }
               )}
               finalValue={formatNumber(
-                descaleBigIntToNumber(preparedAction.positionBalanceChange.after, vault.decimals) *
-                  (vault.asset.priceUsd ?? 0),
+                calculateUsdValue(
+                  preparedAction.positionBalanceChange.after,
+                  vault.asset.decimals,
+                  vault.asset.priceUsd
+                ),
                 { currency: "USD" }
               )}
             />

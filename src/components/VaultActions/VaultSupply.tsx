@@ -15,7 +15,7 @@ import { VAULT_ASSET_CALLOUT } from "@/config";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useWatchParseUnits } from "@/hooks/useWatch";
 import { WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+import { calculateUsdValue, formatNumber } from "@/utils/format";
 
 import { ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog/ActionFlowSummary";
 import AssetFormField from "../FormFields/AssetFormField";
@@ -232,13 +232,19 @@ export default function VaultSupply({
             <MetricChange
               name={`Position (${vault.asset.symbol})`}
               initialValue={formatNumber(
-                descaleBigIntToNumber(preparedAction.positionBalanceChange.before, vault.decimals) *
-                  (vault.asset.priceUsd ?? 0),
+                calculateUsdValue(
+                  preparedAction.positionBalanceChange.before,
+                  vault.asset.decimals,
+                  vault.asset.priceUsd
+                ),
                 { currency: "USD" }
               )}
               finalValue={formatNumber(
-                descaleBigIntToNumber(preparedAction.positionBalanceChange.after, vault.decimals) *
-                  (vault.asset.priceUsd ?? 0),
+                calculateUsdValue(
+                  preparedAction.positionBalanceChange.after,
+                  vault.asset.decimals,
+                  vault.asset.priceUsd
+                ),
                 { currency: "USD" }
               )}
             />

@@ -2,13 +2,13 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useDebounce } from "use-debounce";
-import { Hex } from "viem";
+import { Hex, parseUnits } from "viem";
 
 import { MarketSummary } from "@/data/whisk/getMarketSummaries";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
-import { useWatchNumberField } from "@/hooks/useWatch";
+import { useWatchParseUnits } from "@/hooks/useWatch";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
-import { computeNewBorrowMax } from "@/utils/market";
+import { computeMaxBorrowableAssets } from "@/utils/market";
 
 import Apy from "../Apy";
 import AssetFormField from "../FormFields/AssetFormField";
@@ -55,21 +55,28 @@ export function ProtocolMigratorMarketDestination({
     return migrateValueUsd / (market.collateralAsset.priceUsd ?? 0);
   }, [migrateValueUsd, market]);
 
-  const form = useFormContext<ProtocolMigratorFormValues>();
+  const form = useFormContext<Extract<ProtocolMigratorFormValues, { destinationType: "market" }>>();
 
   const borrowMax = useMemo(() => {
-    return computeNewBorrowMax(market, migrateValueInCollateral, position);
+    return computeMaxBorrowableAssets(
+      market,
+      parseUnits(migrateValueInCollateral.toString(), market.collateralAsset.decimals),
+      position
+    );
   }, [market, migrateValueInCollateral, position]);
 
-  const borrowAmount = useWatchNumberField({ control: form.control, name: "borrowAmount" });
-  const [borrowAmountDebounced] = useDebounce(borrowAmount, 200);
+  const rawBorrowAmount = useWatchParseUnits({
+    control: form.control,
+    name: "borrowAmount",
+    decimals: market.loanAsset.decimals,
+  });
+  const [rawBorrowAmountDebounced] = useDebounce(rawBorrowAmount, 200);
 
   // borrowAmount validation for borrowMax
   useEffect(() => {
     const errorMessage = "Amount exceeds borrow capacity.";
-    const isInvalid = borrowAmount > borrowMax;
     const currentError = form.getFieldState("borrowAmount").error;
-
+    const isInvalid = rawBorrowAmount > borrowMax;
     if (isInvalid) {
       if (!currentError || currentError.message !== errorMessage) {
         form.setError("borrowAmount", {
@@ -81,7 +88,7 @@ export function ProtocolMigratorMarketDestination({
       // Only clear if *we* set the manual error
       form.clearErrors("borrowAmount");
     }
-  }, [borrowAmount, borrowMax, form]);
+  }, [rawBorrowAmount, borrowMax, form]);
 
   return (
     <CardContent className="flex flex-col gap-4">
@@ -106,7 +113,7 @@ export function ProtocolMigratorMarketDestination({
           name="borrowAmount"
           actionName="Borrow"
           asset={market.loanAsset}
-          descaledAvailableBalance={borrowMax}
+          rawAvailableBalance={borrowMax}
         />
       </div>
       <div className="h-[1px] w-full bg-border-primary" />
@@ -140,7 +147,11 @@ export function ProtocolMigratorMarketDestination({
         }
         finalValue={
           <NumberFlowWithLoading
-            value={currentLoanBalance == undefined ? undefined : currentLoanBalance + (borrowAmountDebounced ?? 0)}
+            value={
+              currentLoanBalance == undefined
+                ? undefined
+                : currentLoanBalance + descaleBigIntToNumber(rawBorrowAmountDebounced, market.loanAsset.decimals)
+            }
             isLoading={isLoading}
             loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
           />
@@ -171,7 +182,9 @@ export function ProtocolMigratorMarketDestination({
                 ? undefined
                 : position.collateralAssetsUsd + migrateValueUsd == 0
                   ? 0
-                  : (position.borrowAssetsUsd + borrowAmountDebounced * (market.loanAsset.priceUsd ?? 0)) /
+                  : (position.borrowAssetsUsd +
+                      descaleBigIntToNumber(rawBorrowAmountDebounced, market.loanAsset.decimals) *
+                        (market.loanAsset.priceUsd ?? 0)) /
                     (position.collateralAssetsUsd + migrateValueUsd)
             }
             isLoading={isLoading}

@@ -4,7 +4,7 @@ import { CircleMinus, CirclePlus } from "lucide-react";
 import Image from "next/image";
 import { HTMLAttributes, useMemo } from "react";
 
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+import { calculateUsdValue, descaleBigIntToNumber, formatNumber } from "@/utils/format";
 import { cn } from "@/utils/shadcn";
 
 import { useActionFlowContext } from "./ActionFlowProvider";
@@ -82,7 +82,7 @@ export function ActionFlowSummaryAssetItem({
         <span>{formatNumber(descaleBigIntToNumber(rawAmount, asset.decimals))}</span>
         {asset.priceUsd && (
           <span className="text-content-secondary label-sm">
-            {formatNumber(descaleBigIntToNumber(rawAmount, asset.decimals) * asset.priceUsd, { currency: "USD" })}
+            {formatNumber(calculateUsdValue(rawAmount, asset.decimals, asset.priceUsd), { currency: "USD" })}
           </span>
         )}
       </div>
