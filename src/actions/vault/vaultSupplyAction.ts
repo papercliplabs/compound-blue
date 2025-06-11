@@ -1,4 +1,5 @@
 import { DEFAULT_SLIPPAGE_TOLERANCE } from "@morpho-org/blue-sdk";
+import { produceImmutable } from "@morpho-org/simulation-sdk";
 import { Address, Client, maxUint256 } from "viem";
 
 import { getIsContract } from "@/actions/data/rpc/getIsContract";
@@ -7,7 +8,7 @@ import { GENERAL_ADAPTER_1_ADDRESS } from "@/utils/constants";
 
 import { inputTransferSubbundle } from "../subbundles/inputTransferSubbundle";
 import { subbundleFromInputOps } from "../subbundles/subbundleFromInputOps";
-import { SimulatedValueChange } from "../utils/positionChange";
+import { VaultPositionChange, computeVaultPositionChange } from "../utils/positionChange";
 import { subbundlesToAction } from "../utils/subbundlesToAction";
 import { Action } from "../utils/types";
 
@@ -20,9 +21,7 @@ interface VaultSupplyActionParameters {
 }
 
 export type VaultSupplyAction =
-  | (Extract<Action, { status: "success" }> & {
-      positionBalanceChange: SimulatedValueChange<bigint>;
-    })
+  | (Extract<Action, { status: "success" }> & VaultPositionChange)
   | Extract<Action, { status: "error" }>;
 
 export async function vaultSupplyBundle({
@@ -39,7 +38,7 @@ export async function vaultSupplyBundle({
     };
   }
 
-  const [simulationState, accountIsContract] = await Promise.all([
+  const [intitialSimulationState, accountIsContract] = await Promise.all([
     getSimulationState({
       actionType: "vault",
       accountAddress,
@@ -49,12 +48,13 @@ export async function vaultSupplyBundle({
     getIsContract(publicClient, accountAddress),
   ]);
 
-  const vault = simulationState.getVault(vaultAddress);
-  const positionBalanceBefore = simulationState.getHolding(accountAddress, vaultAddress).balance;
+  const vault = intitialSimulationState.getVault(vaultAddress);
 
   const isMaxSupply = supplyAmount === maxUint256;
 
   try {
+    const intermediateSimulationState = produceImmutable(intitialSimulationState, () => {});
+
     // Prepare input transfer, and modify simulation state accordingly
     const inputSubbundle = inputTransferSubbundle({
       accountAddress,
@@ -66,10 +66,10 @@ export async function vaultSupplyBundle({
         tokenIsRebasing: false,
         allowWrappingNativeAssets,
       },
-      simulationState,
+      simulationState: intermediateSimulationState,
     });
 
-    const ga1AssetBalance = simulationState.getHolding(GENERAL_ADAPTER_1_ADDRESS, vault.asset).balance;
+    const ga1AssetBalance = intermediateSimulationState.getHolding(GENERAL_ADAPTER_1_ADDRESS, vault.asset).balance;
 
     const vaultSupplySubbundle = subbundleFromInputOps({
       inputOps: [
@@ -86,19 +86,18 @@ export async function vaultSupplyBundle({
       ],
       accountAddress,
       accountSupportsSignatures: !accountIsContract,
-      simulationState,
+      simulationState: intermediateSimulationState,
       throwIfRequirements: true,
     });
 
     return {
       ...subbundlesToAction([inputSubbundle, vaultSupplySubbundle], "Confirm Supply"),
-      positionBalanceChange: {
-        before: positionBalanceBefore,
-        after: vaultSupplySubbundle.finalSimulationState.getHolding(accountAddress, vaultAddress).balance,
-        delta:
-          (vaultSupplySubbundle.finalSimulationState.getHolding(accountAddress, vaultAddress).balance ?? 0n) -
-          positionBalanceBefore,
-      },
+      ...computeVaultPositionChange(
+        vaultAddress,
+        accountAddress,
+        intitialSimulationState,
+        vaultSupplySubbundle.finalSimulationState
+      ),
     };
   } catch (e) {
     return {

@@ -233,7 +233,7 @@ export default function VaultSupply({
               name={`Position (${vault.asset.symbol})`}
               initialValue={formatNumber(
                 calculateUsdValue(
-                  preparedAction.positionBalanceChange.before,
+                  preparedAction.positionChange.before.rawAmount,
                   vault.asset.decimals,
                   vault.asset.priceUsd
                 ),
@@ -241,7 +241,7 @@ export default function VaultSupply({
               )}
               finalValue={formatNumber(
                 calculateUsdValue(
-                  preparedAction.positionBalanceChange.after,
+                  preparedAction.positionChange.after.rawAmount,
                   vault.asset.decimals,
                   vault.asset.priceUsd
                 ),
