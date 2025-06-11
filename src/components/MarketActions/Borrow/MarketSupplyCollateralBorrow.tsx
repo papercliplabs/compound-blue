@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarketId } from "@morpho-org/blue-sdk";
+import { MarketId, MathLib } from "@morpho-org/blue-sdk";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
@@ -63,7 +63,6 @@ export default function MarketSupplyCollateralBorrow({
         supplyCollateralAmount: z
           .string({ required_error: "Amount is required." }) // Means it can't be undefined, but empty string is valid
           .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
-          .refine((val) => parseUnits(val, market.collateralAsset.decimals) > 0n, "Amount must be greater than zero.") // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
           .refine((val) => {
             if (!userCollateralTokenHolding) {
               return true;
@@ -77,7 +76,6 @@ export default function MarketSupplyCollateralBorrow({
         borrowAmount: z
           .string({ required_error: "Amount is required." }) // Means it can't be undefined, but empty string is valid
           .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
-          .refine((val) => parseUnits(val, market.loanAsset.decimals) > 0n, "Amount must be greater than zero.") // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
           .or(z.literal("")),
       })
       .refine(
@@ -266,7 +264,7 @@ export default function MarketSupplyCollateralBorrow({
                 actionName="Add"
                 side="supply"
                 isIncreasing={true}
-                rawAmount={rawSupplyCollateralAmount}
+                rawAmount={MathLib.abs(preparedAction.positionCollateralChange.delta.rawAmount)}
               />
             )}
             {rawBorrowAmount > 0n && (
@@ -275,7 +273,7 @@ export default function MarketSupplyCollateralBorrow({
                 actionName="Borrow"
                 side="borrow"
                 isIncreasing={true}
-                rawAmount={rawBorrowAmount}
+                rawAmount={MathLib.abs(preparedAction.positionLoanChange.delta.rawAmount)}
               />
             )}
           </ActionFlowSummary>

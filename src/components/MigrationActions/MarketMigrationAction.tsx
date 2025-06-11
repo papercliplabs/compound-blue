@@ -459,7 +459,7 @@ export default function MarketMigrationAction({
               actionName="Migrate"
               side="borrow"
               isIncreasing={true}
-              rawAmount={rawCollateralMigrateAmount}
+              rawAmount={rawLoanMigrateAmount}
               protocolName="Compound Blue"
             />
             <ActionFlowSummaryAssetItem
@@ -467,7 +467,7 @@ export default function MarketMigrationAction({
               actionName="Borrow"
               side="supply"
               isIncreasing={true}
-              rawAmount={rawLoanMigrateAmount}
+              rawAmount={rawCollateralMigrateAmount}
               protocolName="Compound Blue"
             />
           </ActionFlowSummary>

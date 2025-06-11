@@ -1,5 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { MathLib } from "@morpho-org/blue-sdk";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -178,7 +179,7 @@ export default function VaultWithdraw({
               actionName="Withdraw"
               side="supply"
               isIncreasing={false}
-              rawAmount={rawWithdrawAmount}
+              rawAmount={MathLib.abs(preparedAction.positionChange.delta.rawAmount)}
             />
           </ActionFlowSummary>
           <ActionFlowReview>

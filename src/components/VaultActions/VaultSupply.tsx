@@ -225,7 +225,7 @@ export default function VaultSupply({
               actionName="Supply"
               side="supply"
               isIncreasing={true}
-              rawAmount={rawSupplyAmount}
+              rawAmount={preparedAction.positionChange.delta.rawAmount}
             />
           </ActionFlowSummary>
           <ActionFlowReview>

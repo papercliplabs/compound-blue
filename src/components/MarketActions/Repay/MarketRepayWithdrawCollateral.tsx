@@ -78,7 +78,6 @@ export default function MarketRepayWithdrawCollateral({
         repayAmount: z
           .string({ required_error: "Amount is required." }) // Means it can't be undefined, but empty string is valid
           .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
-          .refine((val) => parseUnits(val, market.loanAsset.decimals) > 0n, "Amount must be greater than zero.") // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
           .refine((val) => {
             if (userPosition == undefined) {
               return true;
@@ -102,7 +101,6 @@ export default function MarketRepayWithdrawCollateral({
         withdrawCollateralAmount: z
           .string({ required_error: "Amount is required." }) // Means it can't be undefined, but empty string is valid
           .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
-          .refine((val) => parseUnits(val, market.collateralAsset.decimals) > 0n, "Amount must be greater than zero.") // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
           .or(z.literal("")),
       })
       .refine(
@@ -307,7 +305,7 @@ export default function MarketRepayWithdrawCollateral({
                 actionName="Repay"
                 side="borrow"
                 isIncreasing={false}
-                rawAmount={rawRepayAmount}
+                rawAmount={MathLib.abs(preparedAction.positionLoanChange.delta.rawAmount)}
               />
             )}
             {rawWithdrawCollateralAmount > 0n && (
@@ -316,7 +314,7 @@ export default function MarketRepayWithdrawCollateral({
                 actionName="Withdraw"
                 side="supply"
                 isIncreasing={false}
-                rawAmount={rawWithdrawCollateralAmount}
+                rawAmount={MathLib.abs(preparedAction.positionCollateralChange.delta.rawAmount)}
               />
             )}
           </ActionFlowSummary>

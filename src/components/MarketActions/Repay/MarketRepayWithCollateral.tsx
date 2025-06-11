@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarketId } from "@morpho-org/blue-sdk";
+import { MarketId, MathLib } from "@morpho-org/blue-sdk";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ArrowRight, Info } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -236,14 +236,14 @@ export default function MarketRepayWithCollateral({
               actionName="Repay"
               side="borrow"
               isIncreasing={false}
-              rawAmount={rawRepayAmount}
+              rawAmount={MathLib.abs(preparedAction.positionLoanChange.delta)}
             />
             <ActionFlowSummaryAssetItem
               asset={market.collateralAsset}
               actionName="Withdraw"
               side="supply"
               isIncreasing={false}
-              rawAmount={-preparedAction.positionCollateralChange.delta}
+              rawAmount={MathLib.abs(preparedAction.positionCollateralChange.delta)}
             />
           </ActionFlowSummary>
           <ActionFlowReview className="flex flex-col gap-4">
