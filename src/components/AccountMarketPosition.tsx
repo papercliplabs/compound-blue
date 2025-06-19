@@ -7,13 +7,13 @@ import { useAccount } from "wagmi";
 
 import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
-import { useAccountMarketPosition, useAccountMarketPositionAggregate } from "@/hooks/useAccountMarketPosition";
+import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 import { computeMaxBorrowableAssets } from "@/utils/market";
 
 import Apy from "./Apy";
 import { MetricWithTooltip } from "./Metric";
-import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
+import NumberFlow from "./ui/NumberFlow";
 import { Skeleton } from "./ui/skeleton";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
 
@@ -111,39 +111,6 @@ export function AccountMarketPositionHighlight({ market }: MarketPositionProps) 
         )}
         <NumberFlow value={descaleBigIntToNumber(BigInt(marketPosition.borrowAssets), market.loanAsset.decimals)} />
       </div>
-    </div>
-  );
-}
-
-export function AccountMarketPositionAggregate() {
-  const { data: accountMarketPositonAggregate, isLoading } = useAccountMarketPositionAggregate();
-  return (
-    <div className="flex gap-10 md:text-end">
-      <MetricWithTooltip
-        label={<span className="justify-end text-accent-ternary">Your Borrowing</span>}
-        tooltip="Your total borrow balance across all markets."
-        className="title-3 md:items-end"
-      >
-        <NumberFlowWithLoading
-          value={accountMarketPositonAggregate?.totalBorrowUsd}
-          format={{ currency: "USD" }}
-          isLoading={isLoading}
-          loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
-        />
-      </MetricWithTooltip>
-
-      <MetricWithTooltip
-        label={<span className="justify-end">Avg. Borrow APY</span>}
-        tooltip="Your average borrow APY across all markets, including rewards."
-        className="title-3 md:items-end"
-      >
-        <NumberFlowWithLoading
-          value={accountMarketPositonAggregate?.avgApy}
-          format={{ style: "percent" }}
-          isLoading={isLoading}
-          loadingContent={<Skeleton className="h-[36px] w-[70px]" />}
-        />
-      </MetricWithTooltip>
     </div>
   );
 }

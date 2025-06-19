@@ -30,7 +30,7 @@ import { inputTransferSubbundle } from "./inputTransferSubbundle";
 import { Subbundle } from "./types";
 
 // Recomendation from Paraswap team
-export const PARASWAP_MIN_SWAP_AMOUNT = 1000n;
+export const PARASWAP_MIN_SWAP_AMOUNT = 1500n;
 
 // See: ../docs/aave-wind-down/technical-explination.md for more details
 //

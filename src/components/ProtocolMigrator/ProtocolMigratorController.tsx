@@ -298,7 +298,7 @@ export default function ProtocolMigratorController({
                       />
                     </DialogDrawer>
                   </Card>
-                  <ProtocolMigratorWarningBanner />
+                  <ProtocolMigratorWarningBanner portfolioPercentage={portfolioPercentDebounced} />
                   <div className="flex min-w-0 flex-col gap-2">
                     <Button
                       type="submit"

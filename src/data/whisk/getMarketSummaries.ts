@@ -1,6 +1,7 @@
 import { CHAIN_ID, WHITELISTED_MARKET_IDS } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 import { graphql } from "@/generated/gql/whisk";
+import { GetMarketSummaryQuery } from "@/generated/gql/whisk/graphql";
 
 import { whiskClient } from "./client";
 
@@ -48,7 +49,10 @@ const query = graphql(`
 `);
 
 export const getMarketSummaries = cacheAndCatch(async () => {
-  const marketSummaries = await whiskClient.request(query, { chainId: CHAIN_ID, marketIds: WHITELISTED_MARKET_IDS });
+  const marketSummaries = await whiskClient.request<GetMarketSummaryQuery>(query, {
+    chainId: CHAIN_ID,
+    marketIds: WHITELISTED_MARKET_IDS,
+  });
   return marketSummaries.morphoMarkets.filter((summary) => !summary.isIdle && !!summary.collateralAsset);
 }, "getMarketSummaries");
 

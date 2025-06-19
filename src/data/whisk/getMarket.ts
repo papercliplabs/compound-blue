@@ -3,6 +3,7 @@ import { Hex } from "viem";
 import { CHAIN_ID } from "@/config";
 import { cacheAndCatch } from "@/data/cacheAndCatch";
 import { graphql } from "@/generated/gql/whisk";
+import { GetMarketQuery } from "@/generated/gql/whisk/graphql";
 
 import { whiskClient } from "./client";
 
@@ -86,7 +87,7 @@ const query = graphql(`
 `);
 
 export const getMarket = cacheAndCatch(async (marketId: Hex) => {
-  const market = await whiskClient.request(query, { chainId: CHAIN_ID, marketId });
+  const market = await whiskClient.request<GetMarketQuery>(query, { chainId: CHAIN_ID, marketId });
   return market.morphoMarket;
 }, "getMarket");
 

@@ -14,9 +14,12 @@ import {
 } from "@/hooks/useProtocolMigratorTableData";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 
+import { NumberInputFormField } from "../FormFields/NumberInputFormField";
 import SliderFormField from "../FormFields/SliderFormField";
+import LinkExternal from "../LinkExternal";
 import { MetricChange } from "../MetricChange";
 import { CardContent, CardHeader } from "../ui/card";
+import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 import NumberFlow, { NumberFlowWithLoading } from "../ui/NumberFlow";
 import { Skeleton } from "../ui/skeleton";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
@@ -158,7 +161,7 @@ export default function ProtocolMigratorSourceCardContent({
 
         <div className="h-[1px] w-full bg-border-primary" />
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
           <MetricChange
             name={
               <TooltipPopover>
@@ -199,7 +202,56 @@ export default function ProtocolMigratorSourceCardContent({
               />
             }
           />
+          {(protocolEntry?.totalBorrowValueUsd ?? 0) > 0 && (
+            <div className="flex justify-between">
+              <TooltipPopover>
+                <TooltipPopoverTrigger className="flex items-center gap-1">
+                  Flash Loan Fee
+                  <Info size={14} className="text-content-secondary" />
+                </TooltipPopoverTrigger>
+                <TooltipPopoverContent className="flex flex-col gap-2 text-content-secondary">
+                  <div className="text-content-primary label-md">Flash Loan Fee</div>
+                  <p>
+                    A flash loan is used to repay your Aave debt, allowing your collateral to be withdrawn and migrated
+                    to the vault or market of your choice, all in a single transaction.
+                  </p>
+                  <div className="my-1 h-[1px] w-full bg-border-primary" />
+                  <PoweredByMorpho />
+                </TooltipPopoverContent>
+              </TooltipPopover>
+              <span className="text-accent-secondary">Free!</span>
+            </div>
+          )}
         </div>
+
+        <div className="h-[1px] w-full bg-border-primary" />
+
+        <NumberInputFormField
+          control={form.control}
+          name="maxSlippageTolerancePercent"
+          labelContent={
+            <TooltipPopover>
+              <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
+                Max Slippage
+                <Info size={14} />
+              </TooltipPopoverTrigger>
+              <TooltipPopoverContent className="flex flex-col gap-2">
+                <p>The maximum deviation from the quote you are willing to accept.</p>
+                <p>
+                  Higher slippages increase success rates but may result in worse prices, while lower slippages ensure
+                  better prices but may cause transactions to fail.
+                </p>
+                <LinkExternal
+                  href="https://github.com/papercliplabs/compound-blue/blob/main/src/actions/docs/aave-wind-down/technical-explination.md#slippage"
+                  className="text-accent-primary"
+                >
+                  Learn more about how this is calculated
+                </LinkExternal>
+              </TooltipPopoverContent>
+            </TooltipPopover>
+          }
+          unit="%"
+        />
 
         <ProtocolMigratorHowItWorks />
       </CardContent>

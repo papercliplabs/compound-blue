@@ -5,12 +5,11 @@ import { getAddress } from "viem";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "@/components/ui/tooltipPopover";
+import { ASSETS_EXCLUDED_FROM_SWAPS } from "@/config";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
-import { isAssetVaultShare } from "@/utils/isAssetVaultShare";
 
 import MarketRepayWithCollateral from "./MarketRepayWithCollateral";
 import MarketRepayWithdrawCollateral from "./MarketRepayWithdrawCollateral";
-
 
 export default function MarketRepay({
   market,
@@ -19,14 +18,17 @@ export default function MarketRepay({
   market: MarketNonIdle;
   onCloseAfterSuccess?: () => void;
 }) {
-  const collateralIsVault = useMemo(() => {
-    return isAssetVaultShare(getAddress(market.collateralAsset.address));
-  }, [market.collateralAsset.address]);
+  const disallowSwaps = useMemo(() => {
+    return (
+      ASSETS_EXCLUDED_FROM_SWAPS.includes(getAddress(market.collateralAsset.address)) ||
+      ASSETS_EXCLUDED_FROM_SWAPS.includes(getAddress(market.loanAsset.address))
+    );
+  }, [market.collateralAsset.address, market.loanAsset.address]);
 
   return (
     <Tabs defaultValue="wallet-balance" className="flex flex-col gap-6">
       {/* Disable repay with collateral for rehypothicated vault shares since not supported via Paraswap */}
-      {!collateralIsVault && (
+      {!disallowSwaps && (
         <div className="flex flex-col gap-2">
           <TooltipPopover>
             <TooltipPopoverTrigger className="flex w-fit items-center gap-1 text-content-secondary label-sm">

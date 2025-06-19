@@ -100,7 +100,12 @@ export async function aaveV3PortfolioMigrationToVaultAction({
       );
     });
 
-    const maxSharePriceE27 = vault.toAssets(MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE));
+    const maxSharePriceE27 = MathLib.mulDivUp(
+      windDownSubbundle.quotedOutputAssets,
+      MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE),
+      vault.toShares(windDownSubbundle.quotedOutputAssets)
+    );
+
     const bundlerCalls = [
       ...windDownSubbundle.bundlerCalls(),
       BundlerAction.erc4626Deposit(CHAIN_ID, vault.address, maxUint256, maxSharePriceE27, accountAddress),

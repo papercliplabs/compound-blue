@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Image from "next/image";
 import { Suspense } from "react";
 
-import { AccountMarketPositionAggregate } from "@/components/AccountMarketPosition";
+import { BorrowSummaryMetrics, BorrowSummaryMetricsSkeleton } from "@/components/BorrowSummaryMetrics";
 import ProtocolMigratorBanner from "@/components/ProtocolMigrator/ProtocolMigratorBanner";
 import BorrowTable from "@/components/tables/BorrowTable";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -29,9 +29,11 @@ export default function BorrowPage() {
               <p className="text-content-secondary">Provide collateral to borrow any asset.</p>
             </div>
           </div>
-
-          <AccountMarketPositionAggregate />
         </section>
+
+        <Suspense fallback={<BorrowSummaryMetricsSkeleton />}>
+          <BorrowSummaryMetricsWrapper />
+        </Suspense>
       </div>
 
       <Card>
@@ -44,6 +46,11 @@ export default function BorrowPage() {
       </Card>
     </>
   );
+}
+
+async function BorrowSummaryMetricsWrapper() {
+  const marketSummaries = await getMarketSummaries();
+  return <BorrowSummaryMetrics marketSummaries={(marketSummaries as MarketSummary[]) ?? []} />;
 }
 
 async function BorrowTableWrapper() {

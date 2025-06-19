@@ -46,6 +46,12 @@ export const WHITELISTED_MARKET_IDS: Hex[] = [
   "0x96e62bd75493006b81dae51d5db3c5af4b3ced65133dab60e70df9dc8e38bf2c", // WBTC/WPOL - 77%
 ];
 
+// Assets which lack reliability DEX liquidity and routes
+export const ASSETS_EXCLUDED_FROM_SWAPS: Address[] = [
+  getAddress("0xF5C81d25ee174d83f1FD202cA94AE6070d073cCF"), // compWETH
+  getAddress("0x9d60947D49911E3c262C108f97FE07cde209f9a7"), // sACRED
+];
+
 // Explicit callouts for a vault asset, this will be placed above the input field for the supply action
 // Indexed by underlying asset address
 export const VAULT_ASSET_CALLOUT: Record<Address, string> = {

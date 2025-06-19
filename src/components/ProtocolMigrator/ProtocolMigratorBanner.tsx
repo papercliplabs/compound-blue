@@ -7,6 +7,10 @@ import { useProtocoMigratorTableDataEntry } from "@/hooks/useProtocolMigratorTab
 import { formatNumber } from "@/utils/format";
 
 import { Button } from "../ui/button";
+
+// Hide unless they have over this amount of USD value to migrate
+const VALUE_USD_THRESHOLD = 1;
+
 interface ProtocolMigratorBannerProps {
   variant: "earn" | "borrow";
 }
@@ -14,7 +18,7 @@ interface ProtocolMigratorBannerProps {
 export default function ProtocolMigratorBanner({ variant }: ProtocolMigratorBannerProps) {
   const { data: protocolEntry } = useProtocoMigratorTableDataEntry("aave-v3");
 
-  if (!protocolEntry || protocolEntry.totalMigratableValueUsd == 0) {
+  if (!protocolEntry || protocolEntry.totalMigratableValueUsd < VALUE_USD_THRESHOLD) {
     return null;
   }
 
@@ -28,11 +32,14 @@ export default function ProtocolMigratorBanner({ variant }: ProtocolMigratorBann
       )}
     >
       <ArrowBigDownDash
-        className={clsx("size-6 shrink-0", variant == "borrow" ? "text-button-borrow" : "text-button-supply")}
+        className={clsx(
+          "size-6 shrink-0",
+          variant == "borrow" ? "text-accent-secondary-deemphasized" : "text-button-supply"
+        )}
       />
       <div className="label-lg">
         You have{" "}
-        <span className={clsx(variant == "borrow" ? "text-button-borrow" : "text-button-supply")}>
+        <span className={clsx(variant == "borrow" ? "text-accent-secondary-deemphasized" : "text-button-supply")}>
           {formatNumber(protocolEntry.totalMigratableValueUsd, { currency: "USD" })}
         </span>{" "}
         that you could be {variant == "borrow" ? "borrowing" : "earning"} more with.
