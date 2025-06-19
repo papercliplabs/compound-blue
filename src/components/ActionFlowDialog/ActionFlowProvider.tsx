@@ -237,7 +237,7 @@ export function useActionFlowContext() {
  * We have special handling for user rejection, as this is a normal user action.
  * We can reliably detect rejection if one of the following is true:
  *   - The connected wallet conforms to EIP-1193 (error code 4001) - https://eips.ethereum.org/EIPS/eip-1193
- *   - The error details include "user reject" (some non-conforming wallets like Rainbow)
+ *   - The error details include "user reject" or "user cancel" (some non-conforming wallets like Rainbow)
  *
  * The only known wallet this doesn't work for is Family via WalletConnect which returns an UnknownRpcError with no relevant details.
  */
@@ -245,8 +245,9 @@ function parseViemError(error: BaseError): string {
   // Wallets that conform to EIP-1193 (MetaMask, Coinbase, Rabby, Rainbow, Zerion, Uniswap, ...)
   const eip1193UserReject = error.walk((err) => err instanceof RpcError && err.code === 4001);
 
-  // Wallets that don't conform to EIP-1193 but have "user reject" in the details (Rainbow)
-  const detailsIncludesReject = error.details.toLowerCase().includes("user reject");
+  // Wallets that don't conform to EIP-1193 but have "user reject" or "user cancel" in the details (Rainbow)
+  const detailsIncludesReject =
+    error.details.toLowerCase().includes("user reject") || error.details.toLowerCase().includes("user cancel");
 
   const userReject = Boolean(eip1193UserReject) || detailsIncludesReject;
 
