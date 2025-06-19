@@ -14,7 +14,6 @@ import {
 } from "@/hooks/useProtocolMigratorTableData";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 
-import { NumberInputFormField } from "../FormFields/NumberInputFormField";
 import SliderFormField from "../FormFields/SliderFormField";
 import { MetricChange } from "../MetricChange";
 import { CardContent, CardHeader } from "../ui/card";
@@ -201,29 +200,6 @@ export default function ProtocolMigratorSourceCardContent({
             }
           />
         </div>
-
-        <div className="h-[1px] w-full bg-border-primary" />
-
-        <NumberInputFormField
-          control={form.control}
-          name="maxSlippageTolerancePercent"
-          labelContent={
-            <TooltipPopover>
-              <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
-                Max Slippage
-                <Info size={14} />
-              </TooltipPopoverTrigger>
-              <TooltipPopoverContent className="flex flex-col gap-2">
-                <p>The maximum deviation from the quote you are willing to accept.</p>
-                <p>
-                  Higher slippages increase success rates but may result in worse prices, while lower slippages ensure
-                  better prices but may cause transactions to fail.
-                </p>
-              </TooltipPopoverContent>
-            </TooltipPopover>
-          }
-          unit="%"
-        />
 
         <ProtocolMigratorHowItWorks />
       </CardContent>

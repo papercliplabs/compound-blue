@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useDebounce } from "use-debounce";
@@ -12,24 +12,29 @@ import { computeNewBorrowMax } from "@/utils/market";
 
 import Apy from "../Apy";
 import AssetFormField from "../FormFields/AssetFormField";
+import { NumberInputFormField } from "../FormFields/NumberInputFormField";
 import { MarketIcon } from "../MarketIdentifier";
 import { MetricChange } from "../MetricChange";
+import { SlippageTooltipContent } from "../SlippageTooltipContent";
 import { Button } from "../ui/button";
 import { CardContent } from "../ui/card";
-import { NumberFlowWithLoading } from "../ui/NumberFlow";
+import NumberFlow, { NumberFlowWithLoading } from "../ui/NumberFlow";
 import { Skeleton } from "../ui/skeleton";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
 
 import { ProtocolMigratorFormValues } from "./ProtocolMigratorController";
 
 interface ProtocolMigratorMarketDestinationProps {
   market: MarketSummary;
-  migrateValueUsd: number;
+  quotedMigrateValueUsd: number;
+  minMigrateValueUsd: number;
   openChange: () => void;
 }
 
 export function ProtocolMigratorMarketDestination({
   market,
-  migrateValueUsd,
+  quotedMigrateValueUsd,
+  minMigrateValueUsd,
   openChange,
 }: ProtocolMigratorMarketDestinationProps) {
   const { data: position, isLoading } = useAccountMarketPosition(market.marketId as Hex);
@@ -51,15 +56,20 @@ export function ProtocolMigratorMarketDestination({
     };
   }, [position, market.collateralAsset, market.loanAsset]);
 
-  const migrateValueInCollateral = useMemo(() => {
-    return migrateValueUsd / (market.collateralAsset.priceUsd ?? 0);
-  }, [migrateValueUsd, market]);
+  const { quotedMigrateValueInCollateral, minMigrateValueInCollateral } = useMemo(() => {
+    const priceUsd = market.collateralAsset.priceUsd ?? 0;
+    return {
+      quotedMigrateValueInCollateral: priceUsd > 0 ? quotedMigrateValueUsd / priceUsd : 0,
+      minMigrateValueInCollateral: priceUsd > 0 ? minMigrateValueUsd / priceUsd : 0,
+    };
+  }, [quotedMigrateValueUsd, minMigrateValueUsd, market.collateralAsset]);
 
   const form = useFormContext<ProtocolMigratorFormValues>();
 
   const borrowMax = useMemo(() => {
-    return computeNewBorrowMax(market, migrateValueInCollateral, position);
-  }, [market, migrateValueInCollateral, position]);
+    // Borrow max computed based on min collateral to ensure that in the worst case we always will respect the max LTV
+    return computeNewBorrowMax(market, minMigrateValueInCollateral, position);
+  }, [market, minMigrateValueInCollateral, position]);
 
   const borrowAmount = useWatchNumberField({ control: form.control, name: "borrowAmount" });
   const [borrowAmountDebounced] = useDebounce(borrowAmount, 200);
@@ -122,7 +132,9 @@ export function ProtocolMigratorMarketDestination({
         finalValue={
           <NumberFlowWithLoading
             value={
-              currentCollateralBalance == undefined ? undefined : currentCollateralBalance + migrateValueInCollateral
+              currentCollateralBalance == undefined
+                ? undefined
+                : currentCollateralBalance + quotedMigrateValueInCollateral
             }
             isLoading={isLoading}
             loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
@@ -169,10 +181,10 @@ export function ProtocolMigratorMarketDestination({
             value={
               !position
                 ? undefined
-                : position.collateralAssetsUsd + migrateValueUsd == 0
+                : position.collateralAssetsUsd + quotedMigrateValueUsd == 0
                   ? 0
                   : (position.borrowAssetsUsd + borrowAmountDebounced * (market.loanAsset.priceUsd ?? 0)) /
-                    (position.collateralAssetsUsd + migrateValueUsd)
+                    (position.collateralAssetsUsd + quotedMigrateValueUsd)
             }
             isLoading={isLoading}
             loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
@@ -181,6 +193,56 @@ export function ProtocolMigratorMarketDestination({
           ) / {formatNumber(market.lltv, { style: "percent" })}
         </div>
       </div>
+
+      <div className="h-[1px] w-full bg-border-primary" />
+
+      <NumberInputFormField
+        control={form.control}
+        name="maxSlippageTolerancePercent"
+        labelContent={
+          <TooltipPopover>
+            <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
+              Max Slippage
+              <Info size={14} className="stroke-content-secondary" />
+            </TooltipPopoverTrigger>
+            <TooltipPopoverContent>
+              <SlippageTooltipContent
+                isEstimate
+                items={[
+                  {
+                    name: "Minimum collateral received",
+                    value: (
+                      <div className="inline-flex items-center gap-1">
+                        <NumberFlow value={minMigrateValueInCollateral} />
+                        {market.collateralAsset?.symbol}
+                      </div>
+                    ),
+                  },
+                  {
+                    name: "Maximum LTV",
+                    value: (
+                      <NumberFlowWithLoading
+                        value={
+                          !position
+                            ? undefined
+                            : position.collateralAssetsUsd + minMigrateValueUsd == 0
+                              ? 0
+                              : (position.borrowAssetsUsd + borrowAmountDebounced * (market.loanAsset.priceUsd ?? 0)) /
+                                (position.collateralAssetsUsd + minMigrateValueUsd)
+                        }
+                        isLoading={isLoading}
+                        loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
+                        format={{ style: "percent" }}
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </TooltipPopoverContent>
+          </TooltipPopover>
+        }
+        unit="%"
+      />
     </CardContent>
   );
 }

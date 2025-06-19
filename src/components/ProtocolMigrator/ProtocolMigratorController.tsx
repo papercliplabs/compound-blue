@@ -111,9 +111,14 @@ export default function ProtocolMigratorController({
 
   const portfolioPercent = useWatchNumberField({ control: form.control, name: "portfolioPercent" });
   const [portfolioPercentDebounced] = useDebounce(portfolioPercent, 200);
-  const { supplyMigrateValueUsd, borrowMigrateValueUsd, totalMigrateValueUsd } = useMemo(() => {
+  const maxSlippageTolerancePercentPercentage = useWatchNumberField({
+    control: form.control,
+    name: "maxSlippageTolerancePercent",
+  });
+  const [maxSlippageTolerancePercentPercentageDebounced] = useDebounce(maxSlippageTolerancePercentPercentage, 200);
+  const { supplyMigrateValueUsd, borrowMigrateValueUsd, totalMigrateValueUsd, minMigrateValueUsd } = useMemo(() => {
     if (!protocolEntry) {
-      return { supplyMigrateValueUsd: 0, borrowMigrateValueUsd: 0, totalMigrateValueUsd: 0 };
+      return { supplyMigrateValueUsd: 0, borrowMigrateValueUsd: 0, totalMigrateValueUsd: 0, minMigrateValueUsd: 0 };
     } else {
       const supplyMigrateValueUsd = protocolEntry.totalSupplyValueUsd * (portfolioPercentDebounced / 100);
       const borrowMigrateValueUsd = protocolEntry.totalBorrowValueUsd * (portfolioPercentDebounced / 100);
@@ -121,9 +126,11 @@ export default function ProtocolMigratorController({
         supplyMigrateValueUsd,
         borrowMigrateValueUsd,
         totalMigrateValueUsd: supplyMigrateValueUsd - borrowMigrateValueUsd,
+        minMigrateValueUsd:
+          (supplyMigrateValueUsd - borrowMigrateValueUsd) / (1 + maxSlippageTolerancePercentPercentageDebounced / 100),
       };
     }
-  }, [protocolEntry, portfolioPercentDebounced]);
+  }, [protocolEntry, portfolioPercentDebounced, maxSlippageTolerancePercentPercentageDebounced]);
 
   const onSubmit = async (data: ProtocolMigratorFormValues) => {
     if (!address) {
@@ -264,13 +271,15 @@ export default function ProtocolMigratorController({
                       {destinationSelection?.type == "vault" ? (
                         <ProtocolMigratorVaultDestination
                           vault={destinationSelection.vault}
-                          migrateValueUsd={totalMigrateValueUsd}
+                          quotedMigrateValueUsd={totalMigrateValueUsd}
+                          minMigrateValueUsd={minMigrateValueUsd}
                           openChange={() => setDestinationSelectOpen(true)}
                         />
                       ) : destinationSelection?.type == "market" ? (
                         <ProtocolMigratorMarketDestination
                           market={destinationSelection.market}
-                          migrateValueUsd={totalMigrateValueUsd}
+                          quotedMigrateValueUsd={totalMigrateValueUsd}
+                          minMigrateValueUsd={minMigrateValueUsd}
                           openChange={() => setDestinationSelectOpen(true)}
                         />
                       ) : (
