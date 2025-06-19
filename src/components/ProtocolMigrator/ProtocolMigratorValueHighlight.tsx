@@ -17,7 +17,7 @@ export default function ProtocolMigratorValueHighlight({ protocolKey }: Protocol
 
   return (
     <MetricWithTooltip
-      label="Total Migrabable"
+      label="Total Migratable"
       tooltip="The total value of your migratable assets (supply - borrow)."
       className="title-3 md:items-end"
     >

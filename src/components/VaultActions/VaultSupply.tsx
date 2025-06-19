@@ -11,20 +11,25 @@ import { z } from "zod";
 import { VaultSupplyAction, vaultSupplyBundle } from "@/actions/vault/vaultSupplyAction";
 import { ActionFlowButton, ActionFlowDialog, ActionFlowReview } from "@/components/ActionFlowDialog";
 import { Form } from "@/components/ui/form";
-import { VAULT_ASSET_CALLOUT } from "@/config";
+import { MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING, VAULT_ASSET_CALLOUT } from "@/config";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
 import { useWatchParseUnits } from "@/hooks/useWatch";
+import { bigIntMax } from "@/utils/bigint";
 import { WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
 import { calculateUsdValue, formatNumber } from "@/utils/format";
 
 import { ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog/ActionFlowSummary";
 import AssetFormField from "../FormFields/AssetFormField";
 import SwitchFormField from "../FormFields/SwitchFormField";
+import { LowNetworkTokenBalanceWarning } from "../LowNetworkTokenBalanceWarning";
 import { MetricChange } from "../MetricChange";
 import { Button } from "../ui/button";
 import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 
 import { VaultActionsProps } from ".";
+
+// Small tolerance on when to show gas buffer warning to avoid floating point issues
+const GAS_BUFFER_WARNING_TOLERANCE = parseUnits("0.0001", 18);
 
 export default function VaultSupply({
   vault,
@@ -52,7 +57,10 @@ export default function VaultSupply({
         return undefined;
       }
 
-      const additionalBalance: bigint = isWrappedNative && allowWrappingNativeAssets ? userNativeBalance.value : 0n;
+      const additionalBalance: bigint =
+        isWrappedNative && allowWrappingNativeAssets
+          ? bigIntMax(userNativeBalance.value - MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING, 0n)
+          : 0n;
       return BigInt(userTokenHolding.balance) + additionalBalance;
     },
     [userTokenHolding, userNativeBalance, isWrappedNative]
@@ -69,22 +77,19 @@ export default function VaultSupply({
         isMaxSupply: z.boolean(),
         allowWrappingNativeAssets: z.boolean(),
       })
-      .refine(
-        (data) => {
-          const rawAvailableBalance = computeRawAvailableBalance(data.allowWrappingNativeAssets);
-          if (rawAvailableBalance == undefined) {
-            return true;
-          }
+      .superRefine((data, ctx) => {
+        const rawAvailableBalance = computeRawAvailableBalance(data.allowWrappingNativeAssets);
+        const rawSupplyAmount = parseUnits(data.supplyAmount, vault.asset.decimals);
 
-          const rawSupplyAmount = parseUnits(data.supplyAmount, vault.asset.decimals);
-          return rawAvailableBalance >= rawSupplyAmount;
-        },
-        {
-          message: `Amount exceeds wallet balance.`,
-          path: ["supplyAmount"],
+        if (rawAvailableBalance != undefined && rawSupplyAmount > rawAvailableBalance) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Amount exceeds ${rawAvailableBalance > BigInt(userTokenHolding?.balance ?? "0") ? "usable " : ""}wallet balance.`,
+            path: ["supplyAmount"],
+          });
         }
-      );
-  }, [computeRawAvailableBalance, vault.asset.decimals]);
+      });
+  }, [computeRawAvailableBalance, vault.asset.decimals, userTokenHolding]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
@@ -154,6 +159,19 @@ export default function VaultSupply({
     }
   }, [allowWrappingNativeAssets, form]);
 
+  const shouldShowLowNetworkTokenBalanceWarning = useMemo(() => {
+    const rawAvailableBalance = computeRawAvailableBalance(allowWrappingNativeAssets);
+    if (rawAvailableBalance == undefined || rawSupplyAmount == 0n) {
+      return false;
+    }
+
+    return (
+      isWrappedNative &&
+      allowWrappingNativeAssets &&
+      rawSupplyAmount >= rawAvailableBalance - GAS_BUFFER_WARNING_TOLERANCE // Show warning when above or within tolerance of the threshold
+    );
+  }, [isWrappedNative, allowWrappingNativeAssets, rawSupplyAmount, computeRawAvailableBalance]);
+
   return (
     <>
       <Form {...form}>
@@ -183,6 +201,7 @@ export default function VaultSupply({
                   <SwitchFormField labelContent="Allow Wrapping:" switchLabel="POL" name="allowWrappingNativeAssets" />
                 </div>
               )}
+              {shouldShowLowNetworkTokenBalanceWarning && <LowNetworkTokenBalanceWarning />}
 
               <div className="flex min-w-0 flex-col gap-2">
                 <Button
@@ -248,6 +267,7 @@ export default function VaultSupply({
                 { currency: "USD" }
               )}
             />
+            {shouldShowLowNetworkTokenBalanceWarning && <LowNetworkTokenBalanceWarning />}
           </ActionFlowReview>
           <ActionFlowButton>Supply</ActionFlowButton>
         </ActionFlowDialog>

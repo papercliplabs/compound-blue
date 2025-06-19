@@ -9,14 +9,13 @@ import { MAX_BORROW_LTV_MARGIN } from "@/config";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import { useAccountMarketPosition, useAccountMarketPositionAggregate } from "@/hooks/useAccountMarketPosition";
 import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+import { computeMaxBorrowableAssets } from "@/utils/market";
 
 import Apy from "./Apy";
 import { MetricWithTooltip } from "./Metric";
 import NumberFlow, { NumberFlowWithLoading } from "./ui/NumberFlow";
 import { Skeleton } from "./ui/skeleton";
 import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "./ui/tooltipPopover";
-
-
 
 interface MarketPositionProps {
   market: MarketNonIdle;
@@ -30,7 +29,7 @@ export function AccountMarketPosition({ market }: MarketPositionProps) {
     market.collateralAsset.decimals
   );
   const borrowAssets = descaleBigIntToNumber(marketPosition?.borrowAssets ?? 0n, market.loanAsset.decimals);
-  const maxBorrowAssets = descaleBigIntToNumber(marketPosition?.maxBorrowAssets ?? 0n, market.loanAsset.decimals);
+  const rawAvailableToBorrow = computeMaxBorrowableAssets(market, 0n, marketPosition);
 
   const items: { label: string; description: string; value: ReactNode }[] = [
     {
@@ -46,7 +45,7 @@ export function AccountMarketPosition({ market }: MarketPositionProps) {
     {
       label: "Available to Borrow",
       description: `The additional amount your position is able to borrow from the market. This will provide a LTV with a ${formatNumber(MAX_BORROW_LTV_MARGIN, { style: "percent" })} margin below the market's LLTV.`,
-      value: <NumberFlow value={Math.max(maxBorrowAssets - borrowAssets, 0)} />,
+      value: <NumberFlow value={descaleBigIntToNumber(rawAvailableToBorrow, market.loanAsset.decimals)} />,
     },
     {
       label: "Loan to value",
