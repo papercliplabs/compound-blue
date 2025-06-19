@@ -4,7 +4,7 @@ import { Address, Client, maxUint256 } from "viem";
 import { getIsContract } from "@/actions/data/rpc/getIsContract";
 import { getSimulationState } from "@/actions/data/rpc/getSimulationState";
 
-import { SimulatedValueChange } from "../utils/positionChange";
+import { VaultPositionChange, computeVaultPositionChange } from "../utils/positionChange";
 import { MorphoAction, prepareBundle } from "../utils/prepareBundle";
 
 interface VaultWithdrawActionParameters {
@@ -15,9 +15,8 @@ interface VaultWithdrawActionParameters {
 }
 
 export type VaultWithdrawAction =
-  | (Omit<Extract<MorphoAction, { status: "success" }>, "initialSimulationState" | "finalSimulationState"> & {
-      positionBalanceChange: SimulatedValueChange<bigint>;
-    })
+  | (Omit<Extract<MorphoAction, { status: "success" }>, "initialSimulationState" | "finalSimulationState"> &
+      VaultPositionChange)
   | Extract<MorphoAction, { status: "error" }>;
 
 export async function vaultWithdrawAction({
@@ -33,7 +32,7 @@ export async function vaultWithdrawAction({
     };
   }
 
-  const [simulationState, isContract] = await Promise.all([
+  const [initialSimulationState, isContract] = await Promise.all([
     getSimulationState({
       actionType: "vault",
       accountAddress,
@@ -43,7 +42,7 @@ export async function vaultWithdrawAction({
     getIsContract(publicClient, accountAddress),
   ]);
 
-  const userShareBalance = simulationState.getHolding(accountAddress, vaultAddress).balance;
+  const userShareBalance = initialSimulationState.getHolding(accountAddress, vaultAddress).balance;
   const isMaxWithdraw = withdrawAmount == maxUint256;
 
   const preparedAction = prepareBundle(
@@ -63,20 +62,19 @@ export async function vaultWithdrawAction({
     ],
     accountAddress,
     isContract,
-    simulationState,
+    initialSimulationState,
     "Confirm Withdraw"
   );
 
   if (preparedAction.status == "success") {
     return {
       ...preparedAction,
-      positionBalanceChange: {
-        before: preparedAction.initialSimulationState.getHolding(accountAddress, vaultAddress).balance,
-        after: preparedAction.finalSimulationState.getHolding(accountAddress, vaultAddress).balance,
-        delta:
-          (preparedAction.finalSimulationState.getHolding(accountAddress, vaultAddress).balance ?? 0n) -
-          preparedAction.initialSimulationState.getHolding(accountAddress, vaultAddress).balance,
-      },
+      ...computeVaultPositionChange(
+        vaultAddress,
+        accountAddress,
+        initialSimulationState,
+        preparedAction.finalSimulationState
+      ),
     };
   } else {
     return preparedAction;

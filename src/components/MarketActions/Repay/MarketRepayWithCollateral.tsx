@@ -1,13 +1,12 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarketId } from "@morpho-org/blue-sdk";
+import { MarketId, MathLib } from "@morpho-org/blue-sdk";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ArrowRight, Info } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { maxUint256, parseUnits } from "viem";
-import { usePublicClient } from "wagmi";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { z } from "zod";
 
 import {
@@ -18,7 +17,8 @@ import AssetFormField from "@/components/FormFields/AssetFormField";
 import { MetricChange } from "@/components/MetricChange";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
-import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
+import { useWatchParseUnits } from "@/hooks/useWatch";
+import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
 
 import { ActionFlowDialog, ActionFlowReview, ActionFlowSummary } from "../../ActionFlowDialog";
 import { ActionFlowButton, ActionFlowSummaryAssetItem } from "../../ActionFlowDialog";
@@ -47,38 +47,35 @@ export default function MarketRepayWithCollateral({
   const [success, setSuccess] = useState(false);
   const { data: userPosition } = useAccountMarketPosition(market.marketId as MarketId);
 
-  const positionLoanAmount = useMemo(() => {
-    return userPosition ? descaleBigIntToNumber(userPosition.borrowAssets, market.loanAsset.decimals) : undefined;
-  }, [userPosition, market.loanAsset.decimals]);
-
   const formSchema = useMemo(() => {
     return z.object({
-      repayAmount: z.coerce
-        .string()
-        .refine((val) => Number(val) <= (positionLoanAmount ?? Number.MAX_VALUE), "Amount exceeds position balance.")
-        .transform((val) => Number(val)),
+      repayAmount: z
+        .string({ required_error: "Amount is required" })
+        .nonempty("Amount is required.")
+        .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
+        .refine((val) => parseUnits(val, market.loanAsset.decimals) > 0n, "Amount must be greater than zero.") // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
+        .refine((val) => {
+          if (!userPosition) {
+            return true;
+          }
+
+          const rawVal = parseUnits(val, market.loanAsset.decimals);
+          return rawVal <= BigInt(userPosition.borrowAssets);
+        }, "Amount exceeds position balance."),
       isMaxRepay: z.boolean(),
-      maxSlippageTolerance: z.coerce.number().min(0.2).max(MAX_SLIPPAGE_TOLERANCE_PCT),
+      maxSlippageTolerance: z.coerce.number().min(0.2).max(MAX_SLIPPAGE_TOLERANCE_PCT), // Safe to coerce to number
     });
-  }, [positionLoanAmount]);
+  }, [market.loanAsset.decimals, userPosition]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
     defaultValues: {
-      repayAmount: undefined,
+      repayAmount: "",
       isMaxRepay: false,
       maxSlippageTolerance: 0.5,
     },
   });
-
-  const repayAmount = form.watch("repayAmount") ?? 0;
-
-  // Clear the form on flow completion
-  const onFlowCompletion = useCallback(() => {
-    form.reset();
-    setSuccess(true);
-  }, [form, setSuccess]);
 
   const onSubmit = useCallback(
     async ({ repayAmount, isMaxRepay, maxSlippageTolerance }: z.infer<typeof formSchema>) => {
@@ -89,14 +86,12 @@ export default function MarketRepayWithCollateral({
 
       if (!publicClient) {
         // Should never get here...
-        throw new Error("Missing pulic client");
+        throw new Error("Missing public client");
       }
 
       setSimulatingBundle(true);
 
-      const rawRepayAmount = isMaxRepay
-        ? maxUint256
-        : parseUnits(numberToString(repayAmount), market.loanAsset.decimals);
+      const rawRepayAmount = isMaxRepay ? maxUint256 : parseUnits(repayAmount, market.loanAsset.decimals);
 
       const action = await marketRepayWithCollateralAction({
         publicClient,
@@ -117,6 +112,18 @@ export default function MarketRepayWithCollateral({
     [publicClient, address, market, openConnectModal]
   );
 
+  const rawRepayAmount = useWatchParseUnits({
+    control: form.control,
+    name: "repayAmount",
+    decimals: market.loanAsset.decimals,
+  });
+
+  // Clear the form on flow completion
+  const onFlowCompletion = useCallback(() => {
+    form.reset();
+    setSuccess(true);
+  }, [form, setSuccess]);
+
   return (
     <>
       <Form {...form}>
@@ -129,7 +136,7 @@ export default function MarketRepayWithCollateral({
                   name="repayAmount"
                   actionName="Repay"
                   asset={market.loanAsset}
-                  descaledAvailableBalance={positionLoanAmount}
+                  rawAvailableBalance={userPosition ? BigInt(userPosition.borrowAssets) : undefined}
                   setIsMax={(isMax) => {
                     form.setValue("isMaxRepay", isMax);
                   }}
@@ -192,11 +199,11 @@ export default function MarketRepayWithCollateral({
                   type="submit"
                   className="w-full"
                   variant="borrow"
-                  disabled={simulatingBundle || repayAmount == 0 || !form.formState.isValid}
+                  disabled={simulatingBundle || rawRepayAmount == 0n || !form.formState.isValid}
                   isLoading={simulatingBundle}
                   loadingMessage="Simulating"
                 >
-                  {repayAmount == 0 ? "Enter Amount" : "Review"}
+                  {rawRepayAmount == 0n ? "Enter Amount" : "Review"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
@@ -229,32 +236,14 @@ export default function MarketRepayWithCollateral({
               actionName="Repay"
               side="borrow"
               isIncreasing={false}
-              descaledAmount={descaleBigIntToNumber(
-                preparedAction.positionLoanChange.before - preparedAction.positionLoanChange.after,
-                market.loanAsset.decimals
-              )}
-              amountUsd={
-                descaleBigIntToNumber(
-                  preparedAction.positionLoanChange.before - preparedAction.positionLoanChange.after,
-                  market.loanAsset.decimals
-                ) * (market.loanAsset.priceUsd ?? 0)
-              }
+              rawAmount={MathLib.abs(preparedAction.positionLoanChange.delta)}
             />
             <ActionFlowSummaryAssetItem
               asset={market.collateralAsset}
               actionName="Withdraw"
               side="supply"
               isIncreasing={false}
-              descaledAmount={descaleBigIntToNumber(
-                preparedAction.positionCollateralChange.before - preparedAction.positionCollateralChange.after,
-                market.collateralAsset.decimals
-              )}
-              amountUsd={
-                descaleBigIntToNumber(
-                  preparedAction.positionCollateralChange.before - preparedAction.positionCollateralChange.after,
-                  market.collateralAsset.decimals
-                ) * (market.collateralAsset.priceUsd ?? 0)
-              }
+              rawAmount={MathLib.abs(preparedAction.positionCollateralChange.delta)}
             />
           </ActionFlowSummary>
           <ActionFlowReview className="flex flex-col gap-4">

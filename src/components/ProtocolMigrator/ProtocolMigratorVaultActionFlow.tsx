@@ -1,4 +1,5 @@
 "use client";
+import { MathLib } from "@morpho-org/blue-sdk";
 import { Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -70,8 +71,7 @@ export function ProtocolMigratorVaultActionFlow({
           actionName={action.quotedChange.positionChange.delta.amount > 0 ? "Supply" : "Withdraw"}
           side="supply"
           isIncreasing={action.quotedChange.positionChange.delta.amount > 0}
-          descaledAmount={Math.abs(action.quotedChange.positionChange.delta.amount)}
-          amountUsd={Math.abs(action.quotedChange.positionChange.delta.amount) * (vault.asset.priceUsd ?? 0)}
+          rawAmount={MathLib.abs(action.quotedChange.positionChange.delta.rawAmount)}
         />
       </ActionFlowSummary>
       <ActionFlowReview>

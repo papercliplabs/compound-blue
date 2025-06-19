@@ -73,16 +73,14 @@ export function ProtocolMigratorMarketActionFlow({
           actionName="Add"
           side="supply"
           isIncreasing={true}
-          descaledAmount={action.quotedChange.positionCollateralChange.delta.amount}
-          amountUsd={action.quotedChange.positionCollateralChange.delta.amount * (market.collateralAsset.priceUsd ?? 0)}
+          rawAmount={action.quotedChange.positionCollateralChange.delta.rawAmount}
         />
         <ActionFlowSummaryAssetItem
           asset={market.loanAsset}
           actionName="Borrow"
           side="borrow"
           isIncreasing={true}
-          descaledAmount={action.quotedChange.positionLoanChange.delta.amount}
-          amountUsd={action.quotedChange.positionLoanChange.delta.amount * (market.loanAsset.priceUsd ?? 0)}
+          rawAmount={action.quotedChange.positionLoanChange.delta.rawAmount}
         />
       </ActionFlowSummary>
       <ActionFlowReview>

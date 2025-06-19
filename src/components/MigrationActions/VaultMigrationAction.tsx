@@ -5,7 +5,7 @@ import { ArrowDown } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { getAddress, maxUint256, parseUnits } from "viem";
+import { formatUnits, getAddress, maxUint256, parseUnits } from "viem";
 import { useAccount } from "wagmi";
 import { usePublicClient } from "wagmi";
 import { z } from "zod";
@@ -15,7 +15,8 @@ import { Action } from "@/actions/utils/types";
 import AssetFormField, { AssetFormFieldViewOnly } from "@/components/FormFields/AssetFormField";
 import { Form } from "@/components/ui/form";
 import { VaultMigrationTableEntry } from "@/hooks/useVaultMigrationTableData";
-import { descaleBigIntToNumber, numberToString } from "@/utils/format";
+import { useWatchParseUnits } from "@/hooks/useWatch";
+import { descaleBigIntToNumber } from "@/utils/format";
 
 import { ActionFlowButton, ActionFlowReview, ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog";
 import { ActionFlowDialog } from "../ActionFlowDialog";
@@ -54,21 +55,27 @@ export default function VaultMigrationAction({
 
   const formSchema = useMemo(() => {
     return z.object({
-      migrateAmount: z.coerce
-        .string()
-        .nonempty("Amount is required")
-        .refine((val) => Number(val) <= descaledATokenBalance, "Amount exceeds wallet balance.")
-        .refine((val) => Number(val) > 0, "Amount must be greater than 0.")
-        .transform((val) => Number(val)),
+      migrateAmount: z
+        .string({ required_error: "Amount is required" })
+        .nonempty("Amount is required.")
+        .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
+        .refine(
+          (val) => parseUnits(val, sourcePosition.reserve.aToken.decimals) > 0n,
+          "Amount must be greater than zero."
+        ) // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
+        .refine((val) => {
+          const rawVal = parseUnits(val, sourcePosition.reserve.aToken.decimals);
+          return rawVal <= BigInt(sourcePosition.aTokenAssets);
+        }, "Amount exceeds wallet balance."), // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
       isMaxMigrate: z.boolean(),
     });
-  }, [descaledATokenBalance]);
+  }, [sourcePosition.aTokenAssets, sourcePosition.reserve.aToken.decimals]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
     defaultValues: {
-      migrateAmount: descaledATokenBalance,
+      migrateAmount: formatUnits(BigInt(sourcePosition.aTokenAssets), sourcePosition.reserve.aToken.decimals),
       isMaxMigrate: true,
     },
   });
@@ -92,7 +99,7 @@ export default function VaultMigrationAction({
 
       const migrateAmountBigInt = isMaxMigrate
         ? maxUint256
-        : parseUnits(numberToString(migrateAmount), sourcePosition.reserve.aToken.decimals);
+        : parseUnits(migrateAmount, sourcePosition.reserve.aToken.decimals);
 
       const preparedAction = await aaveV3VaultMigrationAction({
         publicClient,
@@ -116,13 +123,24 @@ export default function VaultMigrationAction({
   // Reset form on new vaultReservePositionPairing
   useEffect(() => {
     form.reset({
-      migrateAmount: descaledATokenBalance,
+      migrateAmount: formatUnits(BigInt(sourcePosition.aTokenAssets), sourcePosition.reserve.aToken.decimals),
       isMaxMigrate: true,
     });
   }, [destinationPosition, sourcePosition, descaledATokenBalance, form]);
 
-  const migrateAmount = Number(form.watch("migrateAmount") ?? 0);
-  const migrateAmountUsd = migrateAmount * (sourcePosition.reserve.underlyingAsset.priceUsd ?? 0);
+  const rawMigrateAmount = useWatchParseUnits({
+    control: form.control,
+    name: "migrateAmount",
+    decimals: sourcePosition.reserve.aToken.decimals,
+  });
+  const migrateAmountUsd = useMemo(() => {
+    return (
+      descaleBigIntToNumber(rawMigrateAmount, sourcePosition.reserve.aToken.decimals) *
+      (sourcePosition.reserve.underlyingAsset.priceUsd ?? 0)
+    );
+  }, [rawMigrateAmount, sourcePosition]);
+
+  const isMaxMigrate = form.watch("isMaxMigrate");
 
   const simContent = useMemo(() => {
     return (
@@ -132,7 +150,7 @@ export default function VaultMigrationAction({
           initialValue={<NumberFlow value={aTokenBalanceUsd} format={{ currency: "USD" }} />}
           finalValue={
             <NumberFlow
-              value={Math.max(migrateAmount == descaledATokenBalance ? 0 : aTokenBalanceUsd - migrateAmountUsd, 0)}
+              value={Math.max(isMaxMigrate ? 0 : aTokenBalanceUsd - migrateAmountUsd, 0)}
               format={{ currency: "USD" }}
             />
           }
@@ -150,13 +168,13 @@ export default function VaultMigrationAction({
       </>
     );
   }, [
+    destinationVaultSummary.asset.symbol,
+    destinationVaultSummary.supplyApy,
     aTokenBalanceUsd,
-    migrateAmount,
+    isMaxMigrate,
     migrateAmountUsd,
     vaultPositionBalanceUsd,
-    sourcePosition,
-    descaledATokenBalance,
-    destinationVaultSummary,
+    sourcePosition.reserve.supplyApy.total,
   ]);
 
   return (
@@ -184,7 +202,7 @@ export default function VaultMigrationAction({
                           name="migrateAmount"
                           actionName="Remove"
                           asset={sourcePosition.reserve.underlyingAsset}
-                          descaledAvailableBalance={descaledATokenBalance}
+                          rawAvailableBalance={BigInt(sourcePosition.aTokenAssets)}
                           setIsMax={(isMax) => {
                             form.setValue("isMaxMigrate", isMax);
                           }}
@@ -204,8 +222,7 @@ export default function VaultMigrationAction({
                         <AssetFormFieldViewOnly
                           actionName="Supply"
                           asset={sourcePosition.reserve.underlyingAsset}
-                          amount={migrateAmount}
-                          amountUsd={migrateAmountUsd}
+                          rawAmount={rawMigrateAmount}
                         />
                       </div>
                     </div>
@@ -223,7 +240,7 @@ export default function VaultMigrationAction({
                       isLoading={simulatingBundle}
                       loadingMessage="Simulating"
                     >
-                      {migrateAmount == 0 ? "Enter Amount" : "Review Migration"}
+                      {rawMigrateAmount == 0n ? "Enter Amount" : "Review Migration"}
                     </Button>
                     {preparedAction?.status == "error" && (
                       <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
@@ -256,8 +273,7 @@ export default function VaultMigrationAction({
               actionName="Remove"
               side="supply"
               isIncreasing={false}
-              descaledAmount={migrateAmount}
-              amountUsd={migrateAmountUsd}
+              rawAmount={rawMigrateAmount}
               protocolName="Aave v3"
             />
             <ActionFlowSummaryAssetItem
@@ -265,8 +281,7 @@ export default function VaultMigrationAction({
               actionName="Supply"
               side="supply"
               isIncreasing={true}
-              descaledAmount={migrateAmount}
-              amountUsd={migrateAmountUsd}
+              rawAmount={rawMigrateAmount}
               protocolName="Compound Blue"
             />
           </ActionFlowSummary>

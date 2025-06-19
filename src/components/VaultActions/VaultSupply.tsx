@@ -13,9 +13,10 @@ import { ActionFlowButton, ActionFlowDialog, ActionFlowReview } from "@/componen
 import { Form } from "@/components/ui/form";
 import { MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING, VAULT_ASSET_CALLOUT } from "@/config";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
+import { useWatchParseUnits } from "@/hooks/useWatch";
 import { bigIntMax } from "@/utils/bigint";
 import { WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
-import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
+import { calculateUsdValue, formatNumber } from "@/utils/format";
 
 import { ActionFlowSummary, ActionFlowSummaryAssetItem } from "../ActionFlowDialog/ActionFlowSummary";
 import AssetFormField from "../FormFields/AssetFormField";
@@ -28,7 +29,7 @@ import PoweredByMorpho from "../ui/icons/PoweredByMorpho";
 import { VaultActionsProps } from ".";
 
 // Small tolerance on when to show gas buffer warning to avoid floating point issues
-const GAS_BUFFER_WARNING_TOLERANCE = 0.0001;
+const GAS_BUFFER_WARNING_TOLERANCE = parseUnits("0.0001", 18);
 
 export default function VaultSupply({
   vault,
@@ -50,17 +51,20 @@ export default function VaultSupply({
     [vault.asset.address]
   );
 
-  // Must be left with MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING for gas
-  const maxUsableNativeBalance = useMemo(() => {
-    if (!userNativeBalance) {
-      return undefined;
-    }
+  const computeRawAvailableBalance = useCallback(
+    (allowWrappingNativeAssets: boolean) => {
+      if (userTokenHolding == undefined || userNativeBalance == undefined) {
+        return undefined;
+      }
 
-    return descaleBigIntToNumber(
-      bigIntMax(userNativeBalance.value - MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING, 0n),
-      userNativeBalance.decimals
-    );
-  }, [userNativeBalance]);
+      const additionalBalance: bigint =
+        isWrappedNative && allowWrappingNativeAssets
+          ? bigIntMax(userNativeBalance.value - MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING, 0n)
+          : 0n;
+      return BigInt(userTokenHolding.balance) + additionalBalance;
+    },
+    [userTokenHolding, userNativeBalance, isWrappedNative]
+  );
 
   const formSchema = useMemo(() => {
     return z
@@ -68,34 +72,30 @@ export default function VaultSupply({
         supplyAmount: z
           .string({ required_error: "Amount is required" })
           .nonempty("Amount is required.")
-          .pipe(z.coerce.number().positive("Amount must be greater than zero.")),
+          .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
+          .refine((val) => parseUnits(val, vault.asset.decimals) > 0n, "Amount must be greater than zero."), // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
         isMaxSupply: z.boolean(),
         allowWrappingNativeAssets: z.boolean(),
       })
       .superRefine((data, ctx) => {
-        let additionalBalance: number = 0;
-        if (isWrappedNative && data.allowWrappingNativeAssets && maxUsableNativeBalance) {
-          additionalBalance = maxUsableNativeBalance;
-        }
+        const rawAvailableBalance = computeRawAvailableBalance(data.allowWrappingNativeAssets);
+        const rawSupplyAmount = parseUnits(data.supplyAmount, vault.asset.decimals);
 
-        const maxAmount = userTokenHolding
-          ? descaleBigIntToNumber(userTokenHolding.balance, vault.asset.decimals) + additionalBalance
-          : undefined;
-
-        if (maxAmount && data.supplyAmount > maxAmount) {
+        if (rawAvailableBalance != undefined && rawSupplyAmount > rawAvailableBalance) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Amount exceeds ${additionalBalance > 0 ? "usable " : ""}wallet balance.`,
+            message: `Amount exceeds ${rawAvailableBalance > BigInt(userTokenHolding?.balance ?? "0") ? "usable " : ""}wallet balance.`,
             path: ["supplyAmount"],
           });
         }
       });
-  }, [userTokenHolding, isWrappedNative, vault.asset.decimals, maxUsableNativeBalance]);
+  }, [computeRawAvailableBalance, vault.asset.decimals, userTokenHolding]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
     defaultValues: {
+      supplyAmount: "",
       isMaxSupply: false,
       allowWrappingNativeAssets: isWrappedNative,
     },
@@ -110,22 +110,20 @@ export default function VaultSupply({
 
       if (!publicClient) {
         // Should never get here...
-        throw new Error("Missing pulic client");
+        throw new Error("Missing public client");
       }
 
       setSimulatingBundle(true);
 
       // Uint256 max if the user wants to supply their entire balance
       const { supplyAmount, isMaxSupply, allowWrappingNativeAssets } = values;
-      const supplyAmountBigInt = isMaxSupply
-        ? maxUint256
-        : parseUnits(numberToString(supplyAmount), vault.asset.decimals);
+      const rawSupplyAmount = isMaxSupply ? maxUint256 : parseUnits(supplyAmount, vault.asset.decimals);
 
       const preparedAction = await vaultSupplyBundle({
         publicClient,
         accountAddress: address,
         vaultAddress: getAddress(vault.vaultAddress),
-        supplyAmount: supplyAmountBigInt,
+        supplyAmount: rawSupplyAmount,
         allowWrappingNativeAssets,
       });
 
@@ -146,7 +144,11 @@ export default function VaultSupply({
     setSuccess(true);
   }, [form, setSuccess]);
 
-  const supplyAmount = Number(form.watch("supplyAmount") ?? 0);
+  const rawSupplyAmount = useWatchParseUnits({
+    control: form.control,
+    name: "supplyAmount",
+    decimals: vault.asset.decimals,
+  });
   const allowWrappingNativeAssets = Boolean(form.watch("allowWrappingNativeAssets") ?? false);
 
   // Anytime the allowWrappingNativeAssets changes, trigger the supplyAmount validation since it depends on it
@@ -157,26 +159,18 @@ export default function VaultSupply({
     }
   }, [allowWrappingNativeAssets, form]);
 
-  // Includes native if native asset and toggled
-  const descaledUsableWalletBalance = useMemo(() => {
-    const additionalAmount =
-      isWrappedNative && allowWrappingNativeAssets && maxUsableNativeBalance != undefined ? maxUsableNativeBalance : 0;
-    return userTokenHolding
-      ? descaleBigIntToNumber(userTokenHolding.balance, vault.asset.decimals) + additionalAmount
-      : undefined;
-  }, [userTokenHolding, vault.asset.decimals, maxUsableNativeBalance, allowWrappingNativeAssets, isWrappedNative]);
-
   const shouldShowLowNetworkTokenBalanceWarning = useMemo(() => {
-    if (!descaledUsableWalletBalance) {
+    const rawAvailableBalance = computeRawAvailableBalance(allowWrappingNativeAssets);
+    if (rawAvailableBalance == undefined || rawSupplyAmount == 0n) {
       return false;
     }
 
     return (
       isWrappedNative &&
       allowWrappingNativeAssets &&
-      supplyAmount >= descaledUsableWalletBalance - GAS_BUFFER_WARNING_TOLERANCE // Show warning when above or within tolerance of the threshold
+      rawSupplyAmount >= rawAvailableBalance - GAS_BUFFER_WARNING_TOLERANCE // Show warning when above or within tolerance of the threshold
     );
-  }, [isWrappedNative, allowWrappingNativeAssets, supplyAmount, descaledUsableWalletBalance]);
+  }, [isWrappedNative, allowWrappingNativeAssets, rawSupplyAmount, computeRawAvailableBalance]);
 
   return (
     <>
@@ -197,7 +191,7 @@ export default function VaultSupply({
                 name="supplyAmount"
                 actionName="Supply"
                 asset={vault.asset}
-                descaledAvailableBalance={descaledUsableWalletBalance}
+                rawAvailableBalance={computeRawAvailableBalance(allowWrappingNativeAssets)}
                 setIsMax={(isMax) => {
                   form.setValue("isMaxSupply", isMax);
                 }}
@@ -217,7 +211,7 @@ export default function VaultSupply({
                   isLoading={simulatingBundle}
                   loadingMessage="Simulating"
                 >
-                  {supplyAmount == 0 ? "Enter Amount" : "Review Supply"}
+                  {rawSupplyAmount == 0n ? "Enter Amount" : "Review Supply"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
@@ -250,21 +244,26 @@ export default function VaultSupply({
               actionName="Supply"
               side="supply"
               isIncreasing={true}
-              descaledAmount={supplyAmount}
-              amountUsd={supplyAmount * (vault.asset.priceUsd ?? 0)}
+              rawAmount={preparedAction.positionChange.delta.rawAmount}
             />
           </ActionFlowSummary>
           <ActionFlowReview>
             <MetricChange
               name={`Position (${vault.asset.symbol})`}
               initialValue={formatNumber(
-                descaleBigIntToNumber(preparedAction.positionBalanceChange.before, vault.decimals) *
-                  (vault.asset.priceUsd ?? 0),
+                calculateUsdValue(
+                  preparedAction.positionChange.before.rawAmount,
+                  vault.asset.decimals,
+                  vault.asset.priceUsd
+                ),
                 { currency: "USD" }
               )}
               finalValue={formatNumber(
-                descaleBigIntToNumber(preparedAction.positionBalanceChange.after, vault.decimals) *
-                  (vault.asset.priceUsd ?? 0),
+                calculateUsdValue(
+                  preparedAction.positionChange.after.rawAmount,
+                  vault.asset.decimals,
+                  vault.asset.priceUsd
+                ),
                 { currency: "USD" }
               )}
             />
