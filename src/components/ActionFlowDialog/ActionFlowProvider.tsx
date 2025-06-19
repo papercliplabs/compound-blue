@@ -79,7 +79,7 @@ export function ActionFlowProvider({
         // Try to automatically switch chain
         const { id } = await switchChainAsync({ chainId: CHAIN_ID });
         if (id != CHAIN_ID) {
-          throw new Error("Unable to automaitcally switch chains.");
+          throw new Error("Unable to automatically switch chains.");
         }
       } catch {
         // Open modal and let the user do it manually

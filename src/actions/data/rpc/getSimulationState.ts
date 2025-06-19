@@ -133,7 +133,7 @@ export async function getSimulationState({
     ),
   ]);
 
-  // Accrue interest on all markets and markets
+  // Accrue interest on all vaults and markets
   const accruedMarkets = markets.map((market) => market.accrueInterest(block.timestamp));
   const accruedVaults = vaults.map((vault) => vault.accrueInterest(block.timestamp));
 

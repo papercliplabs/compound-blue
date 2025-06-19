@@ -57,7 +57,7 @@ export function inputTransferSubbundle({
   const requiredApprovalAmount =
     isMaxTransfer && tokenIsRebasing && !isWrappedNative ? computeAmountWithRebasingMargin(erc20Amount) : erc20Amount;
 
-  // Mofify the simulation state accordingly
+  // Modify the simulation state accordingly
   accountErc20Holding.balance -= erc20Amount;
   accountNativeHolding.balance -= nativeAmountToWrap;
 
