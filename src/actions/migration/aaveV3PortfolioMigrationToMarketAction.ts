@@ -1,6 +1,6 @@
 import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId } from "@morpho-org/blue-sdk";
 import { BundlerAction } from "@morpho-org/bundler-sdk-viem";
-import { SimulationState, handleOperation, handleOperations, produceImmutable } from "@morpho-org/simulation-sdk";
+import { SimulationState, handleOperation, produceImmutable } from "@morpho-org/simulation-sdk";
 import { Address, Client, maxUint256 } from "viem";
 
 import { CHAIN_ID, USDC_ADDRESS } from "@/config";
@@ -30,10 +30,7 @@ interface AaveV3PortfolioMigrationToMarketActionParameters {
 }
 
 export type AaveV3PortfolioMigrationToMarketAction =
-  | (Extract<Action, { status: "success" }> & {
-      quotedChange: MarketPositionChange;
-      worstCaseChange: MarketPositionChange;
-    })
+  | (Extract<Action, { status: "success" }> & { summary: MarketPositionChange })
   | Extract<Action, { status: "error" }>;
 
 export async function aaveV3PortfolioMigrationToMarketAction({
@@ -72,7 +69,7 @@ export async function aaveV3PortfolioMigrationToMarketAction({
     });
 
     const intermediateSimulationState = produceImmutable(initialSimulationState, (draft) => {
-      // Update simulation state to reflect the quoted output asset balance in GA1 from wind down
+      // Update simulation state to reflect the min output asset balance in GA1 from wind down
       draft.getHolding(GENERAL_ADAPTER_1_ADDRESS, market.params.collateralToken).balance +=
         windDownSubbundle.quotedOutputAssets;
 
@@ -112,39 +109,6 @@ export async function aaveV3PortfolioMigrationToMarketAction({
       simulationState: intermediateSimulationState as SimulationState,
     });
 
-    // Simulate to ensure the worst case will be successful, and to compute worst case position change
-    const worstCaseSimulationState = produceImmutable(initialSimulationState, (draft) => {
-      draft.getHolding(GENERAL_ADAPTER_1_ADDRESS, market.params.collateralToken).balance +=
-        windDownSubbundle.minOutputAssets;
-
-      handleOperations(
-        [
-          {
-            type: "Blue_SupplyCollateral",
-            sender: GENERAL_ADAPTER_1_ADDRESS,
-            args: {
-              id: marketId,
-              onBehalf: accountAddress,
-              assets: maxUint256,
-            },
-          },
-          {
-            type: "Blue_Borrow",
-            sender: accountAddress,
-            address: MORPHO_BLUE_ADDRESS,
-            args: {
-              id: marketId,
-              onBehalf: accountAddress,
-              receiver: accountAddress,
-              assets: borrowAmount,
-              slippage: DEFAULT_SLIPPAGE_TOLERANCE,
-            },
-          },
-        ],
-        draft
-      );
-    });
-
     function getBundleTx() {
       const bundlerCalls = [
         ...windDownSubbundle.bundlerCalls(),
@@ -166,17 +130,11 @@ export async function aaveV3PortfolioMigrationToMarketAction({
           tx: getBundleTx,
         },
       ],
-      quotedChange: computeMarketPositionChange(
+      summary: computeMarketPositionChange(
         marketId,
         accountAddress,
         initialSimulationState,
         borrowSubBundle.finalSimulationState
-      ),
-      worstCaseChange: computeMarketPositionChange(
-        marketId,
-        accountAddress,
-        initialSimulationState,
-        worstCaseSimulationState
       ),
     };
   } catch (e) {

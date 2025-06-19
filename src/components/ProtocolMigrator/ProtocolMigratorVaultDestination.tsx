@@ -1,36 +1,27 @@
-import { Info } from "lucide-react";
 import Image from "next/image";
 import { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
 import { getAddress } from "viem";
 
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
 import { useAccountVaultPosition } from "@/hooks/useAccountVaultPosition";
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+import { descaleBigIntToNumber } from "@/utils/format";
 
 import Apy from "../Apy";
-import { NumberInputFormField } from "../FormFields/NumberInputFormField";
 import { MetricChange } from "../MetricChange";
-import { SlippageTooltipContent } from "../SlippageTooltipContent";
 import { Button } from "../ui/button";
 import { CardContent } from "../ui/card";
 import { NumberFlowWithLoading } from "../ui/NumberFlow";
 import { Skeleton } from "../ui/skeleton";
-import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
-
-import { ProtocolMigratorFormValues } from "./ProtocolMigratorController";
 
 interface ProtocolMigratorVaultDestinationProps {
   vault: VaultSummary;
-  quotedMigrateValueUsd: number;
-  minMigrateValueUsd: number;
+  migrateValueUsd: number;
   openChange: () => void;
 }
 
 export function ProtocolMigratorVaultDestination({
   vault,
-  quotedMigrateValueUsd,
-  minMigrateValueUsd,
+  migrateValueUsd,
   openChange,
 }: ProtocolMigratorVaultDestinationProps) {
   const { data: position, isLoading } = useAccountVaultPosition(getAddress(vault.vaultAddress));
@@ -41,15 +32,9 @@ export function ProtocolMigratorVaultDestination({
       : undefined;
   }, [position?.supplyAssets, vault.asset.decimals]);
 
-  const { quotedMigrateValueInUnderlying, minMigrateValueInUnderlying } = useMemo(() => {
-    const priceUsd = vault.asset.priceUsd ?? 0;
-    return {
-      quotedMigrateValueInUnderlying: priceUsd > 0 ? quotedMigrateValueUsd / priceUsd : 0,
-      minMigrateValueInUnderlying: priceUsd > 0 ? minMigrateValueUsd / priceUsd : 0,
-    };
-  }, [quotedMigrateValueUsd, minMigrateValueUsd, vault.asset]);
-
-  const form = useFormContext<ProtocolMigratorFormValues>();
+  const migrateValueInUnderlying = useMemo(() => {
+    return migrateValueUsd / (vault.asset.priceUsd ?? 0);
+  }, [migrateValueUsd, vault.asset.priceUsd]);
 
   return (
     <CardContent className="flex flex-col gap-4">
@@ -79,38 +64,11 @@ export function ProtocolMigratorVaultDestination({
         }
         finalValue={
           <NumberFlowWithLoading
-            value={currentBalance == undefined ? undefined : currentBalance + quotedMigrateValueInUnderlying}
+            value={currentBalance == undefined ? undefined : currentBalance + migrateValueInUnderlying}
             isLoading={isLoading}
             loadingContent={<Skeleton className="h-[18px] w-[50px]" />}
           />
         }
-      />
-
-      <div className="h-[1px] w-full bg-border-primary" />
-
-      <NumberInputFormField
-        control={form.control}
-        name="maxSlippageTolerancePercent"
-        labelContent={
-          <TooltipPopover>
-            <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
-              Max Slippage
-              <Info size={14} className="stroke-content-secondary" />
-            </TooltipPopoverTrigger>
-            <TooltipPopoverContent>
-              <SlippageTooltipContent
-                isEstimate
-                items={[
-                  {
-                    name: "Minimum received",
-                    value: `${formatNumber(minMigrateValueInUnderlying)} ${vault.asset.symbol}`,
-                  },
-                ]}
-              />
-            </TooltipPopoverContent>
-          </TooltipPopover>
-        }
-        unit="%"
       />
     </CardContent>
   );

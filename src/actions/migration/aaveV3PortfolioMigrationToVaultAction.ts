@@ -26,10 +26,7 @@ interface AaveV3PortfolioMigrationToVaultActionParameters {
 }
 
 export type AaveV3PortfolioMigrationToVaultAction =
-  | (Extract<Action, { status: "success" }> & {
-      quotedChange: VaultPositionChange;
-      worstCaseChange: VaultPositionChange;
-    })
+  | (Extract<Action, { status: "success" }> & { summary: VaultPositionChange })
   | Extract<Action, { status: "error" }>;
 
 export async function aaveV3PortfolioMigrationToVaultAction({
@@ -61,29 +58,9 @@ export async function aaveV3PortfolioMigrationToVaultAction({
       outputAssetAddress: vault.asset,
     });
 
-    const quotedSimulationState = produceImmutable(initialSimulationState, (draft) => {
+    const finalSimulationState = produceImmutable(initialSimulationState, (draft) => {
       // Update simulation state to reflect the min output asset balance in GA1 from wind down
       draft.getHolding(GENERAL_ADAPTER_1_ADDRESS, vault.asset).balance += windDownSubbundle.quotedOutputAssets;
-
-      // Simulate the deposit
-      handleOperation(
-        {
-          type: "MetaMorpho_Deposit",
-          sender: GENERAL_ADAPTER_1_ADDRESS,
-          address: vaultAddress,
-          args: {
-            assets: maxUint256, // Handles maxUint256
-            owner: accountAddress,
-          },
-        },
-        draft
-      );
-    });
-
-    // Simulate to ensure the worst case will be successful also
-    const worstCaseSimulationState = produceImmutable(initialSimulationState, (draft) => {
-      // Update simulation state to reflect the min output asset balance in GA1 from wind down
-      draft.getHolding(GENERAL_ADAPTER_1_ADDRESS, vault.asset).balance += windDownSubbundle.minOutputAssets;
 
       // Simulate the deposit
       handleOperation(
@@ -116,18 +93,7 @@ export async function aaveV3PortfolioMigrationToVaultAction({
           tx: () => createBundle(bundlerCalls),
         },
       ],
-      quotedChange: computeVaultPositionChange(
-        vaultAddress,
-        accountAddress,
-        initialSimulationState,
-        quotedSimulationState
-      ),
-      worstCaseChange: computeVaultPositionChange(
-        vaultAddress,
-        accountAddress,
-        initialSimulationState,
-        worstCaseSimulationState
-      ),
+      summary: computeVaultPositionChange(vaultAddress, accountAddress, initialSimulationState, finalSimulationState),
     };
   } catch (e) {
     return {
