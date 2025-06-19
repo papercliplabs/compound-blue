@@ -2,7 +2,7 @@
 import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
 import { useQueryClient } from "@tanstack/react-query";
 import { ReactNode, createContext, useCallback, useContext, useState } from "react";
-import { Hex } from "viem";
+import { BaseError, Hex, RpcError } from "viem";
 import { estimateGas, sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { useAccount, useConnectorClient, usePublicClient, useSwitchChain } from "wagmi";
 
@@ -18,6 +18,7 @@ export type ActionState = "pending-wallet" | "pending-transaction";
 // Gives buffer on gas estimate to help prevent out of gas error
 // For wallets that decide to respect this...
 const GAS_BUFFER = 0.3;
+const USER_REJECT_MSG = "Transaction cancelled.";
 
 // Upper bound for all actions, used when a gas estimate fails to still allow tx to proceed (still <$0.02)
 const FALLBACK_GAS_ESTIMATE = BigInt(1_200_000);
@@ -79,7 +80,7 @@ export function ActionFlowProvider({
         // Try to automatically switch chain
         const { id } = await switchChainAsync({ chainId: CHAIN_ID });
         if (id != CHAIN_ID) {
-          throw new Error("Unable to automaitcally switch chains.");
+          throw new Error("Unable to automatically switch chains.");
         }
       } catch {
         // Open modal and let the user do it manually
@@ -164,15 +165,20 @@ export function ActionFlowProvider({
           }
         }
       } catch (error) {
-        // TODO: Parse this error
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof BaseError ? parseViemError(error) : (error as Error).message || String(error);
+
         setError(errorMessage);
         setFlowState("review");
-        void trackEvent("transaction-flow-error", {
-          accountAddress: client.account.address,
-          connector: connectorName,
-          error: errorMessage,
-        });
+
+        if (errorMessage != USER_REJECT_MSG) {
+          // Only track if not a user reject
+          void trackEvent("transaction-flow-error", {
+            accountAddress: client.account.address,
+            connector: connectorName,
+            error: errorMessage,
+          });
+        }
         return;
       }
 
@@ -223,4 +229,28 @@ export function useActionFlowContext() {
     throw new Error("useActionFlow must be used within an ActionFlow provider");
   }
   return context;
+}
+
+/**
+ * Try to get a nice error message to display to the user for viem errors.
+ *
+ * We have special handling for user rejection, as this is a normal user action.
+ * We can reliably detect rejection if one of the following is true:
+ *   - The connected wallet conforms to EIP-1193 (error code 4001) - https://eips.ethereum.org/EIPS/eip-1193
+ *   - The error details include "user reject" or "user cancel" (some non-conforming wallets like Rainbow)
+ *
+ * The only known wallet this doesn't work for is Family via WalletConnect which returns an UnknownRpcError with no relevant details.
+ */
+function parseViemError(error: BaseError): string {
+  // Wallets that conform to EIP-1193 (MetaMask, Coinbase, Rabby, Rainbow, Zerion, Uniswap, ...)
+  const eip1193UserReject = error.walk((err) => err instanceof RpcError && err.code === 4001);
+
+  // Wallets that don't conform to EIP-1193 but have "user reject" or "user cancel" in the details (Rainbow)
+  const detailsIncludesReject =
+    error.details.toLowerCase().includes("user reject") || error.details.toLowerCase().includes("user cancel");
+
+  const userReject = Boolean(eip1193UserReject) || detailsIncludesReject;
+
+  // Nice reject message, or shortest provided error message
+  return userReject ? USER_REJECT_MSG : error.shortMessage || error.message || error.details;
 }

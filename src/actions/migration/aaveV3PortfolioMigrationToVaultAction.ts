@@ -26,7 +26,10 @@ interface AaveV3PortfolioMigrationToVaultActionParameters {
 }
 
 export type AaveV3PortfolioMigrationToVaultAction =
-  | (Extract<Action, { status: "success" }> & { summary: VaultPositionChange })
+  | (Extract<Action, { status: "success" }> & {
+      quotedChange: VaultPositionChange;
+      worstCaseChange: VaultPositionChange;
+    })
   | Extract<Action, { status: "error" }>;
 
 export async function aaveV3PortfolioMigrationToVaultAction({
@@ -58,9 +61,29 @@ export async function aaveV3PortfolioMigrationToVaultAction({
       outputAssetAddress: vault.asset,
     });
 
-    const finalSimulationState = produceImmutable(initialSimulationState, (draft) => {
+    const quotedSimulationState = produceImmutable(initialSimulationState, (draft) => {
       // Update simulation state to reflect the min output asset balance in GA1 from wind down
       draft.getHolding(GENERAL_ADAPTER_1_ADDRESS, vault.asset).balance += windDownSubbundle.quotedOutputAssets;
+
+      // Simulate the deposit
+      handleOperation(
+        {
+          type: "MetaMorpho_Deposit",
+          sender: GENERAL_ADAPTER_1_ADDRESS,
+          address: vaultAddress,
+          args: {
+            assets: maxUint256, // Handles maxUint256
+            owner: accountAddress,
+          },
+        },
+        draft
+      );
+    });
+
+    // Simulate to ensure the worst case will be successful also
+    const worstCaseSimulationState = produceImmutable(initialSimulationState, (draft) => {
+      // Update simulation state to reflect the min output asset balance in GA1 from wind down
+      draft.getHolding(GENERAL_ADAPTER_1_ADDRESS, vault.asset).balance += windDownSubbundle.minOutputAssets;
 
       // Simulate the deposit
       handleOperation(
@@ -82,6 +105,7 @@ export async function aaveV3PortfolioMigrationToVaultAction({
       MathLib.wToRay(MathLib.WAD + DEFAULT_SLIPPAGE_TOLERANCE),
       vault.toShares(windDownSubbundle.quotedOutputAssets)
     );
+
     const bundlerCalls = [
       ...windDownSubbundle.bundlerCalls(),
       BundlerAction.erc4626Deposit(CHAIN_ID, vault.address, maxUint256, maxSharePriceE27, accountAddress),
@@ -97,7 +121,18 @@ export async function aaveV3PortfolioMigrationToVaultAction({
           tx: () => createBundle(bundlerCalls),
         },
       ],
-      summary: computeVaultPositionChange(vaultAddress, accountAddress, initialSimulationState, finalSimulationState),
+      quotedChange: computeVaultPositionChange(
+        vaultAddress,
+        accountAddress,
+        initialSimulationState,
+        quotedSimulationState
+      ),
+      worstCaseChange: computeVaultPositionChange(
+        vaultAddress,
+        accountAddress,
+        initialSimulationState,
+        worstCaseSimulationState
+      ),
     };
   } catch (e) {
     return {

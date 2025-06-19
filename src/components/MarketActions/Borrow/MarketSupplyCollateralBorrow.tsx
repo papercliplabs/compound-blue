@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarketId } from "@morpho-org/blue-sdk";
+import { MarketId, MathLib } from "@morpho-org/blue-sdk";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
@@ -26,9 +26,10 @@ import { Form } from "@/components/ui/form";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import { useAccountMarketPosition } from "@/hooks/useAccountMarketPosition";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
-import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
+import { useWatchParseUnits } from "@/hooks/useWatch";
+import { formatNumber } from "@/utils/format";
 import { isAssetVaultShare } from "@/utils/isAssetVaultShare";
-import { computeNewBorrowMax } from "@/utils/market";
+import { computeMaxBorrowableAssets } from "@/utils/market";
 
 import { MetricChange } from "../../MetricChange";
 import { Button } from "../../ui/button";
@@ -56,70 +57,59 @@ export default function MarketSupplyCollateralBorrow({
     return isAssetVaultShare(getAddress(market.collateralAsset.address));
   }, [market.collateralAsset.address]);
 
-  const descaledCollateralTokenBalance = useMemo(
-    () =>
-      userCollateralTokenHolding
-        ? descaleBigIntToNumber(userCollateralTokenHolding.balance, market.collateralAsset.decimals)
-        : undefined,
-    [userCollateralTokenHolding, market.collateralAsset.decimals]
-  );
-
   const formSchema = useMemo(() => {
     return z
       .object({
         supplyCollateralAmount: z
-          .string()
-          .optional()
-          .pipe(
-            z.coerce
-              .number()
-              .nonnegative()
-              .max(descaledCollateralTokenBalance ?? Number.MAX_VALUE, { message: "Amount exceeds wallet balance." })
-              .optional()
-          ),
+          .string({ required_error: "Amount is required." }) // Means it can't be undefined, but empty string is valid
+          .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
+          .refine((val) => {
+            if (!userCollateralTokenHolding) {
+              return true;
+            }
+
+            const rawVal = parseUnits(val, market.collateralAsset.decimals);
+            return rawVal <= BigInt(userCollateralTokenHolding.balance);
+          }, "Amount exceeds wallet balance.")
+          .or(z.literal("")),
         isMaxSupply: z.boolean(),
-        borrowAmount: z.string().optional().pipe(z.coerce.number().nonnegative().optional()),
+        borrowAmount: z
+          .string({ required_error: "Amount is required." }) // Means it can't be undefined, but empty string is valid
+          .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
+          .or(z.literal("")),
       })
       .refine(
         (data) => {
           if (!userPosition) {
             return true;
           }
-          const newBorrowMax = computeNewBorrowMax(market, data.supplyCollateralAmount ?? 0, userPosition);
-          return (data.borrowAmount ?? 0) <= newBorrowMax;
+
+          const rawSupplyCollateralAmount =
+            data.supplyCollateralAmount == ""
+              ? 0n
+              : parseUnits(data.supplyCollateralAmount, market.collateralAsset.decimals);
+          const rawBorrowAmount =
+            data.borrowAmount == "" ? 0n : parseUnits(data.borrowAmount, market.loanAsset.decimals);
+          const rawMaxBorrowable = computeMaxBorrowableAssets(market, rawSupplyCollateralAmount, userPosition);
+
+          return rawBorrowAmount <= rawMaxBorrowable;
         },
         {
           message: "Amount exceeds borrow capacity.",
           path: ["borrowAmount"],
         }
       );
-  }, [descaledCollateralTokenBalance, userPosition, market]);
+  }, [market, userCollateralTokenHolding, userPosition]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
     defaultValues: {
+      supplyCollateralAmount: "",
+      borrowAmount: "",
       isMaxSupply: false,
     },
   });
-
-  // Clear the form on flow completion
-  const onFlowCompletion = useCallback(() => {
-    form.reset();
-    setSuccess(true);
-  }, [form, setSuccess]);
-
-  const supplyCollateralAmount = Number(form.watch("supplyCollateralAmount") ?? 0);
-  const borrowAmount = Number(form.watch("borrowAmount") ?? 0);
-
-  // Anytime the supplyCollateralAmount changes, trigger the borrowAmount validation since it depends on it
-  useEffect(() => {
-    void form.trigger("borrowAmount");
-  }, [supplyCollateralAmount, form]);
-
-  const descaledBorrowMax = useMemo(() => {
-    return computeNewBorrowMax(market, supplyCollateralAmount, userPosition);
-  }, [userPosition, supplyCollateralAmount, market]);
 
   const onSubmit = useCallback(
     async (values: z.infer<typeof formSchema>) => {
@@ -133,17 +123,18 @@ export default function MarketSupplyCollateralBorrow({
         throw new Error("Missing pulic client");
       }
 
-      const { supplyCollateralAmount = 0, borrowAmount = 0, isMaxSupply } = values;
+      const { supplyCollateralAmount, borrowAmount, isMaxSupply } = values;
 
       setSimulatingBundle(true);
 
-      // uint256 max for entire collateral balance
-      const supplyCollateralAmountBigInt =
-        supplyCollateralAmount > 0 && isMaxSupply
-          ? maxUint256
-          : parseUnits(numberToString(supplyCollateralAmount), market.collateralAsset.decimals);
+      let rawSupplyCollateralAmount =
+        supplyCollateralAmount == "" ? 0n : parseUnits(supplyCollateralAmount, market.collateralAsset.decimals);
+      const rawBorrowAmount = borrowAmount == "" ? 0n : parseUnits(borrowAmount, market.loanAsset.decimals);
 
-      const borrowAmountBigInt = parseUnits(numberToString(borrowAmount), market.loanAsset.decimals);
+      if (rawSupplyCollateralAmount > 0n && isMaxSupply) {
+        // uint256 max for entire collateral balance
+        rawSupplyCollateralAmount = maxUint256;
+      }
 
       const preparedAction = await marketSupplyCollateralAndBorrowAction({
         publicClient,
@@ -152,8 +143,8 @@ export default function MarketSupplyCollateralBorrow({
         allocatingVaultAddresses: market.vaultAllocations.map((allocation) =>
           getAddress(allocation.vault.vaultAddress)
         ),
-        collateralAmount: supplyCollateralAmountBigInt,
-        borrowAmount: borrowAmountBigInt,
+        collateralAmount: rawSupplyCollateralAmount,
+        borrowAmount: rawBorrowAmount,
       });
 
       setPreparedAction(preparedAction);
@@ -167,6 +158,28 @@ export default function MarketSupplyCollateralBorrow({
     [publicClient, address, market, openConnectModal]
   );
 
+  // Clear the form on flow completion
+  const onFlowCompletion = useCallback(() => {
+    form.reset();
+    setSuccess(true);
+  }, [form, setSuccess]);
+
+  const rawSupplyCollateralAmount = useWatchParseUnits({
+    control: form.control,
+    name: "supplyCollateralAmount",
+    decimals: market.collateralAsset.decimals,
+  });
+  const rawBorrowAmount = useWatchParseUnits({
+    control: form.control,
+    name: "borrowAmount",
+    decimals: market.loanAsset.decimals,
+  });
+
+  // Anytime the supplyCollateralAmount changes, trigger the borrowAmount validation since it depends on it
+  useEffect(() => {
+    void form.trigger("borrowAmount");
+  }, [rawSupplyCollateralAmount, form]);
+
   return (
     <>
       <Form {...form}>
@@ -178,7 +191,9 @@ export default function MarketSupplyCollateralBorrow({
                 name="supplyCollateralAmount"
                 actionName="Add"
                 asset={market.collateralAsset}
-                descaledAvailableBalance={descaledCollateralTokenBalance}
+                rawAvailableBalance={
+                  userCollateralTokenHolding ? BigInt(userCollateralTokenHolding.balance) : undefined
+                }
                 setIsMax={(isMax) => {
                   form.setValue("isMaxSupply", isMax);
                 }}
@@ -199,7 +214,7 @@ export default function MarketSupplyCollateralBorrow({
                   name="borrowAmount"
                   actionName="Borrow"
                   asset={market.loanAsset}
-                  descaledAvailableBalance={descaledBorrowMax}
+                  rawAvailableBalance={computeMaxBorrowableAssets(market, rawSupplyCollateralAmount, userPosition)}
                 />
               </div>
               <div className="flex min-w-0 flex-col gap-2">
@@ -208,12 +223,14 @@ export default function MarketSupplyCollateralBorrow({
                   className="w-full"
                   variant="borrow"
                   disabled={
-                    simulatingBundle || (borrowAmount == 0 && supplyCollateralAmount == 0) || !form.formState.isValid
+                    simulatingBundle ||
+                    (rawBorrowAmount == 0n && rawSupplyCollateralAmount == 0n) ||
+                    !form.formState.isValid
                   }
                   isLoading={simulatingBundle}
                   loadingMessage="Simulating"
                 >
-                  {borrowAmount == 0 && supplyCollateralAmount == 0 ? "Enter Amount" : "Review"}
+                  {rawBorrowAmount == 0n && rawSupplyCollateralAmount == 0n ? "Enter Amount" : "Review"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
@@ -241,29 +258,27 @@ export default function MarketSupplyCollateralBorrow({
           flowCompletionCb={onFlowCompletion}
         >
           <ActionFlowSummary>
-            {supplyCollateralAmount > 0 && (
+            {rawSupplyCollateralAmount > 0n && (
               <ActionFlowSummaryAssetItem
                 asset={market.collateralAsset}
                 actionName="Add"
                 side="supply"
                 isIncreasing={true}
-                descaledAmount={supplyCollateralAmount}
-                amountUsd={supplyCollateralAmount * (market.collateralAsset.priceUsd ?? 0)}
+                rawAmount={MathLib.abs(preparedAction.positionCollateralChange.delta.rawAmount)}
               />
             )}
-            {borrowAmount > 0 && (
+            {rawBorrowAmount > 0n && (
               <ActionFlowSummaryAssetItem
                 asset={market.loanAsset}
                 actionName="Borrow"
                 side="borrow"
                 isIncreasing={true}
-                descaledAmount={borrowAmount}
-                amountUsd={borrowAmount * (market.loanAsset.priceUsd ?? 0)}
+                rawAmount={MathLib.abs(preparedAction.positionLoanChange.delta.rawAmount)}
               />
             )}
           </ActionFlowSummary>
           <ActionFlowReview className="flex flex-col gap-4">
-            {supplyCollateralAmount > 0 && (
+            {rawSupplyCollateralAmount > 0n && (
               <MetricChange
                 name={`Collateral (${market.collateralAsset.symbol})`}
                 initialValue={formatNumber(
@@ -276,7 +291,7 @@ export default function MarketSupplyCollateralBorrow({
                 )}
               />
             )}
-            {borrowAmount > 0 && (
+            {rawBorrowAmount > 0n && (
               <MetricChange
                 name={`Loan (${market.loanAsset.symbol})`}
                 initialValue={formatNumber(
@@ -307,9 +322,9 @@ export default function MarketSupplyCollateralBorrow({
             </div>
           </ActionFlowReview>
           <ActionFlowButton variant="borrow">
-            {supplyCollateralAmount > 0 && "Supply Collateral"}
-            {supplyCollateralAmount > 0 && borrowAmount > 0 && " & "}
-            {borrowAmount > 0 && "Borrow"}
+            {rawSupplyCollateralAmount > 0n && "Supply Collateral"}
+            {rawSupplyCollateralAmount > 0n && rawBorrowAmount > 0n && " & "}
+            {rawBorrowAmount > 0n && "Borrow"}
           </ActionFlowButton>
         </ActionFlowDialog>
       )}

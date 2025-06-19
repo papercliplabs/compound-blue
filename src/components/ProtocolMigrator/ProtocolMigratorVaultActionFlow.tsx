@@ -1,6 +1,8 @@
 "use client";
+import { MathLib } from "@morpho-org/blue-sdk";
+import { Info } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AaveV3PortfolioMigrationToVaultAction } from "@/actions/migration/aaveV3PortfolioMigrationToVaultAction";
 import { VaultSummary } from "@/data/whisk/getVaultSummaries";
@@ -15,6 +17,8 @@ import {
 } from "../ActionFlowDialog";
 import Apy from "../Apy";
 import { MetricChange } from "../MetricChange";
+import { SlippageTooltipContent } from "../SlippageTooltipContent";
+import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "../ui/tooltipPopover";
 
 // TODO: could generalize this to be used for all vault actions...
 
@@ -36,6 +40,14 @@ export function ProtocolMigratorVaultActionFlow({
   const [completed, setCompleted] = useState(false);
   const router = useRouter();
 
+  const maxSlippageDerived = useMemo(() => {
+    if (action?.status != "success" || action.worstCaseChange.positionChange.delta.amount == 0) {
+      return 0;
+    }
+
+    return action.quotedChange.positionChange.delta.amount / action.worstCaseChange.positionChange.delta.amount - 1;
+  }, [action]);
+
   if (!vault || !action || action.status != "success") {
     return null;
   }
@@ -56,24 +68,45 @@ export function ProtocolMigratorVaultActionFlow({
       <ActionFlowSummary>
         <ActionFlowSummaryAssetItem
           asset={vault.asset}
-          actionName={action.summary.positionChange.delta.amount > 0 ? "Supply" : "Withdraw"}
+          actionName={action.quotedChange.positionChange.delta.amount > 0 ? "Supply" : "Withdraw"}
           side="supply"
-          isIncreasing={action.summary.positionChange.delta.amount > 0}
-          descaledAmount={Math.abs(action.summary.positionChange.delta.amount)}
-          amountUsd={Math.abs(action.summary.positionChange.delta.amount) * (vault.asset.priceUsd ?? 0)}
+          isIncreasing={action.quotedChange.positionChange.delta.amount > 0}
+          rawAmount={MathLib.abs(action.quotedChange.positionChange.delta.rawAmount)}
         />
       </ActionFlowSummary>
       <ActionFlowReview>
         <MetricChange
-          name={`Position (${vault.asset.symbol})`}
-          initialValue={formatNumber(action.summary.positionChange.before.amount * (vault.asset.priceUsd ?? 0), {
+          name={`Balance (${vault.asset.symbol})`}
+          initialValue={formatNumber(action.quotedChange.positionChange.before.amount * (vault.asset.priceUsd ?? 0), {
             currency: "USD",
           })}
-          finalValue={formatNumber(action.summary.positionChange.after.amount * (vault.asset.priceUsd ?? 0), {
+          finalValue={formatNumber(action.quotedChange.positionChange.after.amount * (vault.asset.priceUsd ?? 0), {
             currency: "USD",
           })}
         />
         <MetricChange name="APY" initialValue={<Apy apy={vault.supplyApy} type="supply" />} />
+        <div className="h-[1px] w-full bg-border-primary" />
+        <MetricChange
+          name={
+            <TooltipPopover>
+              <TooltipPopoverTrigger className="flex items-center gap-1 paragraph-md">
+                Max Slippage
+                <Info size={14} className="stroke-content-secondary" />
+              </TooltipPopoverTrigger>
+              <TooltipPopoverContent>
+                <SlippageTooltipContent
+                  items={[
+                    {
+                      name: "Minimum received",
+                      value: `${formatNumber(action.worstCaseChange.positionChange.delta.amount)} ${vault.asset.symbol}`,
+                    },
+                  ]}
+                />
+              </TooltipPopoverContent>
+            </TooltipPopover>
+          }
+          initialValue={formatNumber(maxSlippageDerived, { style: "percent" })}
+        />
       </ActionFlowReview>
       <ActionFlowButton>Migrate</ActionFlowButton>
     </ActionFlowDialog>

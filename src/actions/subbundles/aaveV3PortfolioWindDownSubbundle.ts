@@ -1,3 +1,4 @@
+import { MathLib } from "@morpho-org/blue-sdk";
 import { BundlerAction, BundlerCall } from "@morpho-org/bundler-sdk-viem";
 import Decimal from "decimal.js";
 import { Address, Client, erc20Abi, getAddress, isAddressEqual, maxUint256 } from "viem";
@@ -267,7 +268,9 @@ export async function aaveV3PortfolioWindDownSubbundle({
     });
 
     quotedOutputAssets = outputAssetSwapTx.quoteDestTokenAmount;
-    minOutputAssets = outputAssetSwapTx.minDestTokenAmount;
+
+    // Apply linear scaling to the output quote to account for worst case slippage from the first 2 swap layers
+    minOutputAssets = MathLib.mulDivDown(outputAssetSwapTx.minDestTokenAmount, minF_R, F_R);
   } else {
     quotedOutputAssets = F_R;
     minOutputAssets = minF_R;
@@ -461,7 +464,7 @@ export async function aaveV3PortfolioWindDownSubbundle({
  * @param decimals - Decimals of the flash loan asset
  * @param performingOutputSwap - Whether an output swap is being performed
  */
-function computePerSwapMaxSlippageToleranceV2(
+export function computePerSwapMaxSlippageToleranceV2(
   S_T: number,
   rawC_D: bigint,
   rawL_D: bigint,

@@ -80,7 +80,7 @@ export async function marketRepayWithCollateralAction({
 
   const closingPosition = loanRepayAmount == maxUint256;
 
-  // Include a margin to account for accured interest between now and execution if closing
+  // Include a margin to account for accrued interest between now and execution if closing
   const loanSwapAmount = closingPosition ? computeAmountWithRebasingMargin(positionLoanBefore) : loanRepayAmount;
 
   // Worst case required collateral amount

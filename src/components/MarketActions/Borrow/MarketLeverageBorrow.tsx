@@ -15,7 +15,8 @@ import { computeMaxLeverageFactor } from "@/actions/market/marketLeverageBorrowA
 import AssetFormField from "@/components/FormFields/AssetFormField";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 import { useAccountTokenHolding } from "@/hooks/useAccountTokenHolding";
-import { descaleBigIntToNumber, formatNumber, numberToString } from "@/utils/format";
+import { useWatchParseUnits } from "@/hooks/useWatch";
+import { calculateUsdValue, descaleBigIntToNumber, formatNumber } from "@/utils/format";
 
 import {
   ActionFlowButton,
@@ -62,22 +63,22 @@ export default function MarketLeverageBorrow({
 
   const { data: rawCollateralTokenBalance } = useAccountTokenHolding(getAddress(market.collateralAsset.address));
 
-  const collateralTokenBalance = useMemo(() => {
-    return rawCollateralTokenBalance
-      ? descaleBigIntToNumber(rawCollateralTokenBalance.balance, market.collateralAsset.decimals)
-      : undefined;
-  }, [rawCollateralTokenBalance, market.collateralAsset.decimals]);
-
   const formSchema = useMemo(() => {
     return z
       .object({
-        initialCollateralAmount: z.coerce
-          .string()
-          .refine(
-            (val) => Number(val) <= (collateralTokenBalance ?? Number.MAX_VALUE),
-            "Amount exceeds wallet balance."
-          )
-          .transform((val) => Number(val)),
+        initialCollateralAmount: z
+          .string({ required_error: "Amount is required" })
+          .nonempty("Amount is required.")
+          .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
+          .refine((val) => parseUnits(val, market.collateralAsset.decimals) > 0n, "Amount must be greater than zero.") // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
+          .refine((val) => {
+            if (!rawCollateralTokenBalance) {
+              return true;
+            }
+
+            const rawVal = parseUnits(val, market.collateralAsset.decimals);
+            return rawVal <= BigInt(rawCollateralTokenBalance.balance);
+          }, "Amount exceeds wallet balance."),
         isMaxCollateral: z.boolean(),
         multiplier: z.coerce.number().min(MIN_MULTIPLIER),
         maxSlippageTolerance: z.coerce.number().min(0.2).max(MAX_SLIPPAGE_TOLERANCE_PCT),
@@ -95,39 +96,18 @@ export default function MarketLeverageBorrow({
           path: ["multiplier"],
         }
       );
-  }, [collateralTokenBalance, market.lltv]);
+  }, [market.collateralAsset.decimals, market.lltv, rawCollateralTokenBalance]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
     defaultValues: {
-      initialCollateralAmount: undefined,
+      initialCollateralAmount: "",
       isMaxCollateral: false,
       multiplier: 2,
       maxSlippageTolerance: 0.5,
     },
   });
-
-  const initialCollateralAmount = form.watch("initialCollateralAmount") ?? 0;
-  const maxSlippageTolerance = form.watch("maxSlippageTolerance") ?? 0.3;
-  const multiplier = form.watch("multiplier") ?? MIN_MULTIPLIER;
-  const maxMultiplier = useMemo(
-    () => computeMaxMultiplier(market.lltv, Math.min(maxSlippageTolerance, MAX_SLIPPAGE_TOLERANCE_PCT) / 100),
-    [market.lltv, maxSlippageTolerance]
-  );
-
-  const effectiveApyEstimate = useMemo(() => market.borrowApy.total * multiplier, [market.borrowApy.total, multiplier]);
-
-  // Anytime the maxSlippageTolerance changes, trigger the multiplier validation since it depends on it
-  useEffect(() => {
-    void form.trigger("multiplier");
-  }, [maxSlippageTolerance, form]);
-
-  // Clear the form on flow completion
-  const onFlowCompletion = useCallback(() => {
-    form.reset();
-    setSuccess(true);
-  }, [form, setSuccess]);
 
   const onSubmit = useCallback(
     async ({
@@ -150,7 +130,7 @@ export default function MarketLeverageBorrow({
 
       const rawInitialCollateralAmount = isMaxCollateral
         ? maxUint256
-        : parseUnits(numberToString(initialCollateralAmount), market.collateralAsset.decimals);
+        : parseUnits(initialCollateralAmount, market.collateralAsset.decimals);
 
       const leverageFactor = multiplier / (1 + maxSlippageTolerance / 100) + 1;
 
@@ -177,6 +157,31 @@ export default function MarketLeverageBorrow({
     [publicClient, address, market, openConnectModal]
   );
 
+  const rawInitialCollateralAmount = useWatchParseUnits({
+    control: form.control,
+    name: "initialCollateralAmount",
+    decimals: market.collateralAsset.decimals,
+  });
+  const maxSlippageTolerance = form.watch("maxSlippageTolerance") ?? 0.3;
+  const multiplier = form.watch("multiplier") ?? MIN_MULTIPLIER;
+  const maxMultiplier = useMemo(
+    () => computeMaxMultiplier(market.lltv, Math.min(maxSlippageTolerance, MAX_SLIPPAGE_TOLERANCE_PCT) / 100),
+    [market.lltv, maxSlippageTolerance]
+  );
+
+  const effectiveApyEstimate = useMemo(() => market.borrowApy.total * multiplier, [market.borrowApy.total, multiplier]);
+
+  // Anytime the maxSlippageTolerance changes, trigger the multiplier validation since it depends on it
+  useEffect(() => {
+    void form.trigger("multiplier");
+  }, [maxSlippageTolerance, form]);
+
+  // Clear the form on flow completion
+  const onFlowCompletion = useCallback(() => {
+    form.reset();
+    setSuccess(true);
+  }, [form, setSuccess]);
+
   return (
     <>
       <Form {...form}>
@@ -188,7 +193,7 @@ export default function MarketLeverageBorrow({
                 name="initialCollateralAmount"
                 actionName="Add"
                 asset={market.collateralAsset}
-                descaledAvailableBalance={collateralTokenBalance}
+                rawAvailableBalance={rawCollateralTokenBalance ? BigInt(rawCollateralTokenBalance.balance) : undefined}
                 setIsMax={(isMax) => {
                   form.setValue("isMaxCollateral", isMax);
                 }}
@@ -281,11 +286,11 @@ export default function MarketLeverageBorrow({
                   type="submit"
                   className="w-full"
                   variant="borrow"
-                  disabled={simulatingBundle || initialCollateralAmount == 0 || !form.formState.isValid}
+                  disabled={simulatingBundle || rawInitialCollateralAmount == 0n || !form.formState.isValid}
                   isLoading={simulatingBundle}
                   loadingMessage="Simulating"
                 >
-                  {initialCollateralAmount == 0 ? "Enter Amount" : "Review"}
+                  {rawInitialCollateralAmount == 0n ? "Enter Amount" : "Review"}
                 </Button>
                 {preparedAction?.status == "error" && (
                   <p className="max-h-[50px] overflow-y-auto text-semantic-negative paragraph-sm">
@@ -318,47 +323,35 @@ export default function MarketLeverageBorrow({
               actionName="Add"
               side="supply"
               isIncreasing={true}
-              descaledAmount={descaleBigIntToNumber(
-                preparedAction.positionCollateralChange.after - preparedAction.positionCollateralChange.before,
-                market.collateralAsset.decimals
-              )}
-              amountUsd={
-                descaleBigIntToNumber(
-                  preparedAction.positionCollateralChange.after - preparedAction.positionCollateralChange.before,
-                  market.collateralAsset.decimals
-                ) * (market.collateralAsset.priceUsd ?? 0)
-              }
+              rawAmount={preparedAction.positionCollateralChange.delta}
             />
             <ActionFlowSummaryAssetItem
               asset={market.loanAsset}
               actionName="Borrow"
               side="borrow"
               isIncreasing={true}
-              descaledAmount={descaleBigIntToNumber(
-                preparedAction.positionLoanChange.after - preparedAction.positionLoanChange.before,
-                market.loanAsset.decimals
-              )}
-              amountUsd={
-                descaleBigIntToNumber(
-                  preparedAction.positionLoanChange.after - preparedAction.positionLoanChange.before,
-                  market.loanAsset.decimals
-                ) * (market.loanAsset.priceUsd ?? 0)
-              }
+              rawAmount={preparedAction.positionLoanChange.delta}
             />
           </ActionFlowSummary>
           <ActionFlowReview className="flex flex-col gap-4">
             <MetricChange
               name={`Collateral (${market.collateralAsset.symbol})`}
               initialValue={formatNumber(
-                descaleBigIntToNumber(preparedAction.positionCollateralChange.before, market.collateralAsset.decimals) *
-                  (market.collateralAsset.priceUsd ?? 0),
+                calculateUsdValue(
+                  preparedAction.positionCollateralChange.before,
+                  market.collateralAsset.decimals,
+                  market.collateralAsset.priceUsd
+                ),
                 {
                   currency: "USD",
                 }
               )}
               finalValue={formatNumber(
-                descaleBigIntToNumber(preparedAction.positionCollateralChange.after, market.collateralAsset.decimals) *
-                  (market.collateralAsset.priceUsd ?? 0),
+                calculateUsdValue(
+                  preparedAction.positionCollateralChange.after,
+                  market.collateralAsset.decimals,
+                  market.collateralAsset.priceUsd
+                ),
                 {
                   currency: "USD",
                 }
@@ -367,15 +360,21 @@ export default function MarketLeverageBorrow({
             <MetricChange
               name={`Loan (${market.loanAsset.symbol})`}
               initialValue={formatNumber(
-                descaleBigIntToNumber(preparedAction.positionLoanChange.before, market.loanAsset.decimals) *
-                  (market.loanAsset.priceUsd ?? 0),
+                calculateUsdValue(
+                  preparedAction.positionLoanChange.before,
+                  market.loanAsset.decimals,
+                  market.loanAsset.priceUsd
+                ),
                 {
                   currency: "USD",
                 }
               )}
               finalValue={formatNumber(
-                descaleBigIntToNumber(preparedAction.positionLoanChange.after, market.loanAsset.decimals) *
-                  (market.loanAsset.priceUsd ?? 0),
+                calculateUsdValue(
+                  preparedAction.positionLoanChange.after,
+                  market.loanAsset.decimals,
+                  market.loanAsset.priceUsd
+                ),
                 {
                   currency: "USD",
                 }

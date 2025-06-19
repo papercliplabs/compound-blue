@@ -43,6 +43,7 @@ const query = graphql(`
         }
       }
       collateralPriceInLoanAsset
+      rawCollateralPriceInLoanAsset
     }
   }
 `);

@@ -7,7 +7,7 @@ import { useAccount } from "wagmi";
 import { merklClaimAction } from "@/actions/rewards/merklClaimAction";
 import { useAccountRewards } from "@/hooks/useAccountRewards";
 import { useTheme } from "@/hooks/useTheme";
-import { descaleBigIntToNumber, formatNumber } from "@/utils/format";
+import { formatNumber } from "@/utils/format";
 
 import { ActionFlowButton } from "./ActionFlowDialog";
 import { ActionFlowDialog } from "./ActionFlowDialog";
@@ -107,8 +107,7 @@ export default function ClaimRewards() {
                   actionName="Claim"
                   side="supply"
                   isIncreasing={true}
-                  descaledAmount={descaleBigIntToNumber(reward.unclaimedAmount, reward.token.decimals)}
-                  amountUsd={reward.unclaimedAmountUsd ?? 0}
+                  rawAmount={BigInt(reward.unclaimedAmount)}
                 />
               );
             })}

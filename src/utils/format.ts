@@ -68,6 +68,15 @@ export function numberToString(value: number) {
   }).format(value);
 }
 
+export function calculateUsdValue(rawAmount: bigint, decimals: number, priceUsd: number | null | undefined): number {
+  if (priceUsd == null || priceUsd == undefined) {
+    console.warn("Missing USD price");
+    return 0;
+  }
+  const tokenAmount = descaleBigIntToNumber(rawAmount, decimals);
+  return tokenAmount * priceUsd;
+}
+
 export function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
