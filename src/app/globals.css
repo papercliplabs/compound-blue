@@ -40,7 +40,7 @@
     --button-neutral: 216 223 229;
     --button-disabled: 240 242 245;
 
-    --header-height: 106px;
+    --header-height: 76px;
   }
 
   .dark {
@@ -78,7 +78,7 @@
 
   @media (max-width: 768px) {
     :root {
-      --header-height: 184px;
+      --header-height: 104px;
     }
   }
 }
