@@ -1,5 +1,5 @@
 import { ContractMethod, OptimalRate, SwapSide } from "@paraswap/sdk";
-import { Address, Client, Hex, erc20Abi, getAddress } from "viem";
+import { Address, Client, Hex, erc20Abi, getAddress, isAddressEqual } from "viem";
 import { readContract } from "viem/actions";
 
 import { computeAmountWithSlippageSurplus } from "@/actions/utils/math";
@@ -9,6 +9,7 @@ import {
   OFFSET_LOOKUP_TABLE,
   PARASWAP_EXCLUDE_DEXS,
   PARASWAP_MAX_PRICE_IMPACT_PCT,
+  PARASWAP_SUPPORTED_AGUSTUS_ADDRESS,
   SUPPORTED_CONTRACT_METHODS,
   paraswapSdk,
 } from "./config";
@@ -145,6 +146,11 @@ export async function getParaswapExactBuyTxPayload({
       ignoreChecks: true,
     }
   );
+
+  if(!isAddressEqual(getAddress(txParams.to), PARASWAP_SUPPORTED_AGUSTUS_ADDRESS)) {
+    // Require agustus matching the supported one to ensure abi offset compatibility
+    throw new Error(`Unsupported augustus address: ${txParams.to}`);
+  }
 
   return {
     augustus: getAddress(txParams.to),
