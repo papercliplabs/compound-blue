@@ -1,9 +1,9 @@
 import { ContractMethodV6, constructSimpleSDK } from "@paraswap/sdk";
+import { getAddress } from "viem";
 
 import { CHAIN_ID } from "@/config";
 
-import { SupportedContractMethod } from "./types";
-import { ParaswapOffsets } from "./types";
+import type { ParaswapOffsets, SupportedContractMethod } from "./types";
 
 export const paraswapSdk = constructSimpleSDK({
   chainId: CHAIN_ID,
@@ -30,25 +30,12 @@ export const OFFSET_LOOKUP_TABLE: Record<SupportedContractMethod, ParaswapOffset
     limitAmount: BigInt(4 + 4 * 32),
     quotedAmount: BigInt(4 + 5 * 32),
   },
-
-  // Other offsets which are not used (leaving for future if needed)
-
-  // [ContractMethodV6.swapExactAmountOutOnUniswapV2]: {
-  //   exactAmount: BigInt(4 + 3 * 32),
-  //   limitAmount: BigInt(4 + 2 * 32),
-  //   quotedAmount: BigInt(4 + 4 * 32),
-  // },
-  // [ContractMethodV6.swapExactAmountOutOnUniswapV3]: {
-  //   exactAmount: BigInt(4 + 3 * 32),
-  //   limitAmount: BigInt(4 + 2 * 32),
-  //   quotedAmount: BigInt(4 + 4 * 32),
-  // },
-  // [ContractMethodV6.swapExactAmountOutOnBalancerV2]: {
-  //   exactAmount: BigInt(4 + 0 * 32),
-  //   limitAmount: BigInt(4 + 1 * 32),
-  //   quotedAmount: BigInt(4 + 2 * 32),
-  // },
 };
 
 // Paraswap has a routing bug using Uniswap V4, they are working on a fix but we need to exclude it for now
 export const PARASWAP_EXCLUDE_DEXS = ["UniswapV4"];
+
+// Contract address which has known offsets, this prevents potential abi incompatibility issues of future versions 
+export const PARASWAP_SUPPORTED_AGUSTUS_ADDRESS = getAddress(
+  "0x6A000F20005980200259B80c5102003040001068"
+);
