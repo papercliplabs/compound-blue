@@ -1,11 +1,5 @@
 "use client";
-import { Info } from "lucide-react";
-import { useMemo } from "react";
-import { getAddress } from "viem";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TooltipPopover, TooltipPopoverContent, TooltipPopoverTrigger } from "@/components/ui/tooltipPopover";
-import { ASSETS_EXCLUDED_FROM_SWAPS } from "@/config";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { MarketNonIdle } from "@/data/whisk/getMarket";
 
 import MarketRepayWithCollateral from "./MarketRepayWithCollateral";
@@ -18,17 +12,17 @@ export default function MarketRepay({
   market: MarketNonIdle;
   onCloseAfterSuccess?: () => void;
 }) {
-  const disallowSwaps = useMemo(() => {
-    return (
-      ASSETS_EXCLUDED_FROM_SWAPS.includes(getAddress(market.collateralAsset.address)) ||
-      ASSETS_EXCLUDED_FROM_SWAPS.includes(getAddress(market.loanAsset.address))
-    );
-  }, [market.collateralAsset.address, market.loanAsset.address]);
+  // const disallowSwaps = useMemo(() => {
+  //   return (
+  //     ASSETS_EXCLUDED_FROM_SWAPS.includes(getAddress(market.collateralAsset.address)) ||
+  //     ASSETS_EXCLUDED_FROM_SWAPS.includes(getAddress(market.loanAsset.address))
+  //   );
+  // }, [market.collateralAsset.address, market.loanAsset.address]);
 
   return (
     <Tabs defaultValue="wallet-balance" className="flex flex-col gap-6">
       {/* Disable repay with collateral for rehypothicated vault shares since not supported via Paraswap */}
-      {!disallowSwaps && (
+      {/* {!disallowSwaps && (
         <div className="flex flex-col gap-2">
           <TooltipPopover>
             <TooltipPopoverTrigger className="flex w-fit items-center gap-1 text-content-secondary label-sm">
@@ -45,7 +39,7 @@ export default function MarketRepay({
             <TabsTrigger value="collateral">Collateral</TabsTrigger>
           </TabsList>
         </div>
-      )}
+      )} */}
       <TabsContent value="wallet-balance" asChild>
         <MarketRepayWithdrawCollateral market={market} onCloseAfterSuccess={onCloseAfterSuccess} />
       </TabsContent>
