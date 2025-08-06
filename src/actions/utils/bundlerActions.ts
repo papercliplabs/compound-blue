@@ -34,6 +34,8 @@ export function morphoFlashLoan(
   ];
 }
 
+// Note: not a true exact output swap, can have a surplus of destToken assets sent to the receiver.
+// Should ensure to properly skim the receiver to avoid loss of surplus.
 export function paraswapBuy(
   augustus: Address,
   calldata: Hex,

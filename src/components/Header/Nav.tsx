@@ -11,7 +11,7 @@ import CirclePlus from "../ui/icons/CirclePlus";
 const NAV_ITEMS: { href: string; name: string; icon?: ReactNode; isNew?: boolean }[] = [
   { href: "/", name: "Earn", icon: <BarChart className="fill-content-secondary" /> },
   { href: "/borrow", name: "Borrow", icon: <CirclePlus className="fill-content-secondary" /> },
-  { href: "/migrate", name: "Migrate", icon: <ArrowFatLineDown className="fill-content-secondary" />, isNew: true },
+  { href: "/migrate", name: "Migrate", icon: <ArrowFatLineDown className="fill-content-secondary" /> },
 ];
 
 export default function Nav() {

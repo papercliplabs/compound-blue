@@ -159,7 +159,7 @@ export async function marketRepayWithCollateralAction({
           [
             // Withdraw max required collateral to Paraswap adapter
             ...encodedWithdrawCollateralBundlerCalls,
-            // Swap collateral to the exact amount of loan assets, sending to GA1
+            // Swap collateral to the "exact" (can have surplus) amount of loan assets, sending to GA1
             // Note that we can't use paraswapBuyDebt here since we don't have any remaining debt (already called morphoRepay)
             paraswapBuy(
               paraswapQuote.augustus,
@@ -180,6 +180,9 @@ export async function marketRepayWithCollateralAction({
         ),
         // Loan assets will be withdrawn from GA1 here to complete the repay
 
+        // Sweep any leftover loan assets from GA1 to user. Leftover occurs when there is dust from the rebasing margin from closing position, and from swap surplus
+        BundlerAction.erc20Transfer(loanTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
+
         ...(closingPosition
           ? [
               // Sweep any leftover collateral assets from GA1 to user
@@ -189,14 +192,11 @@ export async function marketRepayWithCollateralAction({
                 maxUint256,
                 GENERAL_ADAPTER_1_ADDRESS
               ),
-              // Sweep any leftover loan assets from GA1 to user, expect some dust from the rebasing margin
-              BundlerAction.erc20Transfer(loanTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
             ]
           : [
               // Add back to position if it's not being closed
               // Allow this to revert since it will do so if there are no collateral assets to sweep which occurs if the swap consumes full slippage tolerance
               BundlerAction.morphoSupplyCollateral(CHAIN_ID, market.params, maxUint256, accountAddress, [], true),
-              // There won't be any loan assets leftover since we swapped for exact amount needed for partial position (no margin)
             ]),
       ].flat();
 
