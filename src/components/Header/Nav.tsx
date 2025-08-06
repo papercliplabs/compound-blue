@@ -4,13 +4,14 @@ import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
 import { Button } from "../ui/button";
+import ArrowFatLineDown from "../ui/icons/ArrowFatLineDown";
 import BarChart from "../ui/icons/BarChart";
 import CirclePlus from "../ui/icons/CirclePlus";
 
 const NAV_ITEMS: { href: string; name: string; icon?: ReactNode; isNew?: boolean }[] = [
   { href: "/", name: "Earn", icon: <BarChart className="fill-content-secondary" /> },
   { href: "/borrow", name: "Borrow", icon: <CirclePlus className="fill-content-secondary" /> },
-  // { href: "/migrate", name: "Migrate", icon: <ArrowFatLineDown className="fill-content-secondary" />, isNew: true },
+  { href: "/migrate", name: "Migrate", icon: <ArrowFatLineDown className="fill-content-secondary" />, isNew: true },
 ];
 
 export default function Nav() {
