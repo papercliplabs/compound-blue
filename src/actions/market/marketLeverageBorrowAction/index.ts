@@ -172,7 +172,7 @@ export async function marketLeveragedBorrowAction({
           [
             // Take borrow against collateral sending to paraswap adapter.
             ...encodedBorrowBundlerCalls,
-            // Use Paraswap adapter to Buy exact amount of collateral needed using loan tokens, sending output to GA1
+            // Use Paraswap adapter to Buy "exact" (can have surplus) amount of collateral needed using loan tokens, sending output to GA1
             paraswapBuy(
               paraswapQuote.augustus,
               paraswapQuote.calldata,
@@ -192,7 +192,7 @@ export async function marketLeveragedBorrowAction({
         ),
         // Collateral will be withdrawn from GA1 here to complete the supply collateral
 
-        // Sweep any remaining collateral from GA1 to user
+        // Sweep any remaining collateral from GA1 to user, including any swap surplus.
         BundlerAction.erc20Transfer(collateralTokenAddress, accountAddress, maxUint256, GENERAL_ADAPTER_1_ADDRESS),
 
         // Use any leftover loan tokens in GA1 to repay the loan to lower LTV

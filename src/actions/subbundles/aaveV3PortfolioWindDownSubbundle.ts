@@ -42,11 +42,11 @@ export const PARASWAP_MIN_SWAP_AMOUNT = 1500n;
 
 // Process:
 // 1. Flash loan: Take flash loan of F_L in flashLoanAmount from Morpho to PA
-// 2. Loan asset swaps: Execute exact output swaps from F_LS to L_i swaps with AA as recipient
+// 2. Loan asset swaps: Execute "exact" (can have surplus) output swaps from F_LS to L_i swaps with AA as recipient
 // 3. Sweep: Sweep remaining FLA to AA (not consumed by swaps and L_D)
 // 4. Repay: Repay AAVE loans with AA
 // 5. Sweep: Sweep remaining FLA to GA1 (not consumed by swaps)
-// 6. Sweep: If full wind down, sweep any remaining loan assets back to user - this is annoying, but no way around it
+// 6. Sweep: Sweep any remaining loan assets back to user, including excess due to rebasing margin, and swap surplus - this is annoying, but no way around it
 // 7. aToken Input Transfer: For each collateral asset, send aTokens into AA (must have been approved to do so)
 // 8. Withdraw collateral: For each collateral asset redeem aTokens to withdraw collateral to GA1 if FLA or PA otherwise
 // 9. Collateral asset swaps: Execute exact input swaps from C_i to F_CS with GA1 as recipient (full amount)
@@ -419,17 +419,15 @@ export async function aaveV3PortfolioWindDownSubbundle({
                   maxUint256,
                   AAVE_V3_MIGRATION_ADAPTER_ADDRESS
                 ),
-                // 6. Sweep any dust non FLA loan assets to user for full wind down (doesn't occur for partial wind down)
-                ...(isFullWindDown
-                  ? loanPositionsNotInFlashLoanAsset.map((p) =>
-                      BundlerAction.erc20Transfer(
-                        p.underlyingAssetAddress,
-                        accountAddress,
-                        maxUint256,
-                        AAVE_V3_MIGRATION_ADAPTER_ADDRESS
-                      )
-                    )
-                  : []),
+                // 6. Sweep any dust non FLA loan assets to user. Dust can occur from rebasing margin for full wind down, and from swap surplus.
+                ...loanPositionsNotInFlashLoanAsset.map((p) =>
+                  BundlerAction.erc20Transfer(
+                    p.underlyingAssetAddress,
+                    accountAddress,
+                    maxUint256,
+                    AAVE_V3_MIGRATION_ADAPTER_ADDRESS
+                  )
+                ),
                 // steps 7 - 9
                 ...collateralWindDownCalls,
               ].flat()
