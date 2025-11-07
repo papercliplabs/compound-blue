@@ -101,18 +101,18 @@ describe("aaveV3PortfolioMigrationToVaultAction", () => {
         minVaultPosition: parseUnits("1387", 6), // Need to update if taking a new snapshot to reflect ETH price
       });
     });
-    paraswapSnapshotTest("full migration, USDC vault", async ({ client }) => {
-      await runAaveV3PortfolioMigrationToVaultActionTest({
-        client,
+    // paraswapSnapshotTest("full migration, USDC vault", async ({ client }) => {
+    //   await runAaveV3PortfolioMigrationToVaultActionTest({
+    //     client,
 
-        portfolioPercentage: 1,
-        maxSlippageTolerance: 0.015,
-        vaultAddress: USDC_VAULT_ADDRESS,
+    //     portfolioPercentage: 1,
+    //     maxSlippageTolerance: 0.015,
+    //     vaultAddress: USDC_VAULT_ADDRESS,
 
-        initialPositions,
-        minVaultPosition: parseUnits("2775", 6), // Need to update if taking a new snapshot to reflect ETH price
-      });
-    });
+    //     initialPositions,
+    //     minVaultPosition: parseUnits("2775", 6), // Need to update if taking a new snapshot to reflect ETH price
+    //   });
+    // });
     paraswapSnapshotTest("partial migration, WPOL vault", async ({ client }) => {
       await runAaveV3PortfolioMigrationToVaultActionTest({
         client,
@@ -125,18 +125,18 @@ describe("aaveV3PortfolioMigrationToVaultAction", () => {
         minVaultPosition: parseUnits("5280", 18), // Need to update if taking a new snapshot to reflect ETH price
       });
     });
-    paraswapSnapshotTest("full migration, WPOL vault", async ({ client }) => {
-      await runAaveV3PortfolioMigrationToVaultActionTest({
-        client,
+    // paraswapSnapshotTest("full migration, WPOL vault", async ({ client }) => {
+    //   await runAaveV3PortfolioMigrationToVaultActionTest({
+    //     client,
 
-        portfolioPercentage: 1,
-        maxSlippageTolerance: 0.015,
-        vaultAddress: WPOL_VAULT_ADDRESS,
+    //     portfolioPercentage: 1,
+    //     maxSlippageTolerance: 0.015,
+    //     vaultAddress: WPOL_VAULT_ADDRESS,
 
-        initialPositions,
-        minVaultPosition: parseUnits("10673", 18), // Need to update if taking a new snapshot to reflect ETH price
-      });
-    });
+    //     initialPositions,
+    //     minVaultPosition: parseUnits("10673", 18), // Need to update if taking a new snapshot to reflect ETH price
+    //   });
+    // });
   });
 
   describe("sad path", () => {

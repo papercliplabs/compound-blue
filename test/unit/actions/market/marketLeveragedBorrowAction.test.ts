@@ -111,11 +111,11 @@ const successTestCases: ({ name: string } & Omit<MarketLeveragedBorrowTestParame
     collateralDealAmount: parseEther("2"),
   },
   {
-    name: "leverage with full wallet balance collateral",
+    name: "leverage with exact wallet balance collateral",
     marketId: WETH_USDC_MARKET_ID,
     allocatingVaultAddresses: WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS,
 
-    initialCollateralAmount: maxUint256,
+    initialCollateralAmount: parseEther("2"),
     leverageFactor: 4.1,
     maxSlippageTolerance: 0.05,
 
@@ -188,6 +188,23 @@ describe("marketLeveragedBorrowAction", () => {
         maxSlippageTolerance: 0.05,
       });
       expect(action.status).toEqual("error");
+    });
+    test("prepare error when initial collateral amount is maxUint256", async ({ client }) => {
+      const action = await marketLeveragedBorrowAction({
+        publicClient: client,
+        marketId: WETH_USDC_MARKET_ID,
+        allocatingVaultAddresses: WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS,
+
+        accountAddress: client.account.address,
+
+        initialCollateralAmount: maxUint256,
+        leverageFactor: 20,
+        maxSlippageTolerance: 0.05,
+      });
+      expect(action.status).toEqual("error");
+      if (action.status === "error") {
+        expect(action.message).toBe("Initial collateral amount cannot be greater than or equal to max uint256");
+      }
     });
   });
 });

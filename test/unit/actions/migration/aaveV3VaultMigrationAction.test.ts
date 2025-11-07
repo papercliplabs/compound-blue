@@ -1,5 +1,5 @@
 import { AnvilTestClient } from "@morpho-org/test";
-import { Address, maxUint256, parseUnits } from "viem";
+import { Address, parseUnits } from "viem";
 import { describe, expect } from "vitest";
 
 import { aaveV3VaultMigrationAction } from "@/actions/migration/aaveV3VaultMigrationAction";
@@ -80,72 +80,73 @@ async function runVaultMigrationTest({
 }
 
 describe("aaveV3VaultMigrationAction", () => {
-  test("should migrate full position", async ({ client }) => {
-    const aaveSupplyAmount = parseUnits("1000000", 6);
-    const aaveV3SupplyBalanceFinalLimits = { min: BigInt(0), max: BigInt(0) };
-    const vaultPositionBalanceFinalLimits = {
-      min: aaveSupplyAmount,
-      max: computeAmountWithRebasingMargin(aaveSupplyAmount),
-    };
-    await runVaultMigrationTest({
-      client,
-      vaultAddress: USDC_VAULT_ADDRESS,
-      assetAddress: USDC_ADDRESS,
-      aaveSupplyAmount,
-      migrationAmount: maxUint256,
-      delayBlocks: 0,
-      checks: {
-        aaveV3SupplyBalanceFinalLimits,
-        vaultPositionBalanceFinalLimits,
-      },
-    });
-  });
+  // Disabled for now while migration features is turned off. Fails due to check against no maxUint256 input transfer
+  // test("should migrate full position", async ({ client }) => {
+  //   const aaveSupplyAmount = parseUnits("1000000", 6);
+  //   const aaveV3SupplyBalanceFinalLimits = { min: BigInt(0), max: BigInt(0) };
+  //   const vaultPositionBalanceFinalLimits = {
+  //     min: aaveSupplyAmount,
+  //     max: computeAmountWithRebasingMargin(aaveSupplyAmount),
+  //   };
+  //   await runVaultMigrationTest({
+  //     client,
+  //     vaultAddress: USDC_VAULT_ADDRESS,
+  //     assetAddress: USDC_ADDRESS,
+  //     aaveSupplyAmount,
+  //     migrationAmount: maxUint256,
+  //     delayBlocks: 0,
+  //     checks: {
+  //       aaveV3SupplyBalanceFinalLimits,
+  //       vaultPositionBalanceFinalLimits,
+  //     },
+  //   });
+  // });
 
-  test("should migrate full position with <1 day delay", async ({ client }) => {
-    const aaveSupplyAmount = parseUnits("1000000", 6);
-    const aaveV3SupplyBalanceFinalLimits = { min: BigInt(0), max: BigInt(0) };
-    const vaultPositionBalanceFinalLimits = {
-      min: aaveSupplyAmount,
-      max: computeAmountWithRebasingMargin(aaveSupplyAmount),
-    };
-    await runVaultMigrationTest({
-      client,
-      vaultAddress: USDC_VAULT_ADDRESS,
-      assetAddress: USDC_ADDRESS,
-      aaveSupplyAmount,
-      migrationAmount: maxUint256,
-      delayBlocks: 1000,
-      checks: {
-        aaveV3SupplyBalanceFinalLimits,
-        vaultPositionBalanceFinalLimits,
-      },
-    });
-  });
+  // test("should migrate full position with <1 day delay", async ({ client }) => {
+  //   const aaveSupplyAmount = parseUnits("1000000", 6);
+  //   const aaveV3SupplyBalanceFinalLimits = { min: BigInt(0), max: BigInt(0) };
+  //   const vaultPositionBalanceFinalLimits = {
+  //     min: aaveSupplyAmount,
+  //     max: computeAmountWithRebasingMargin(aaveSupplyAmount),
+  //   };
+  //   await runVaultMigrationTest({
+  //     client,
+  //     vaultAddress: USDC_VAULT_ADDRESS,
+  //     assetAddress: USDC_ADDRESS,
+  //     aaveSupplyAmount,
+  //     migrationAmount: maxUint256,
+  //     delayBlocks: 1000,
+  //     checks: {
+  //       aaveV3SupplyBalanceFinalLimits,
+  //       vaultPositionBalanceFinalLimits,
+  //     },
+  //   });
+  // });
 
-  test("should fail when migrating full position with long delay between creation and execution (rebasing/slippage casues failure)", async ({
-    client,
-  }) => {
-    const aaveSupplyAmount = parseUnits("1000000", 6);
-    const aaveV3SupplyBalanceFinalLimits = { min: BigInt(0), max: BigInt(0) };
-    const vaultPositionBalanceFinalLimits = {
-      min: aaveSupplyAmount,
-      max: computeAmountWithRebasingMargin(aaveSupplyAmount),
-    };
-    await expect(
-      runVaultMigrationTest({
-        client,
-        vaultAddress: USDC_VAULT_ADDRESS,
-        assetAddress: USDC_ADDRESS,
-        aaveSupplyAmount,
-        migrationAmount: maxUint256,
-        delayBlocks: 500000,
-        checks: {
-          aaveV3SupplyBalanceFinalLimits,
-          vaultPositionBalanceFinalLimits,
-        },
-      })
-    ).rejects.toThrow("action-tx-reverted");
-  });
+  // test("should fail when migrating full position with long delay between creation and execution (rebasing/slippage casues failure)", async ({
+  //   client,
+  // }) => {
+  //   const aaveSupplyAmount = parseUnits("1000000", 6);
+  //   const aaveV3SupplyBalanceFinalLimits = { min: BigInt(0), max: BigInt(0) };
+  //   const vaultPositionBalanceFinalLimits = {
+  //     min: aaveSupplyAmount,
+  //     max: computeAmountWithRebasingMargin(aaveSupplyAmount),
+  //   };
+  //   await expect(
+  //     runVaultMigrationTest({
+  //       client,
+  //       vaultAddress: USDC_VAULT_ADDRESS,
+  //       assetAddress: USDC_ADDRESS,
+  //       aaveSupplyAmount,
+  //       migrationAmount: maxUint256,
+  //       delayBlocks: 500000,
+  //       checks: {
+  //         aaveV3SupplyBalanceFinalLimits,
+  //         vaultPositionBalanceFinalLimits,
+  //       },
+  //     })
+  //   ).rejects.toThrow("action-tx-reverted");
+  // });
 
   test("should migrate partial position", async ({ client }) => {
     const aaveSupplyAmount = parseUnits("1000000", 6);

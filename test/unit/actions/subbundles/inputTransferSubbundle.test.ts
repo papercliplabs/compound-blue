@@ -6,9 +6,7 @@ import { describe, expect } from "vitest";
 import { getSimulationState } from "@/actions/data/rpc/getSimulationState";
 import { inputTransferSubbundle } from "@/actions/subbundles/inputTransferSubbundle";
 import { createBundle } from "@/actions/utils/bundlerActions";
-import { computeAmountWithRebasingMargin } from "@/actions/utils/math";
 import { Action } from "@/actions/utils/types";
-import { MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING } from "@/config";
 import { bigIntMax, bigIntMin } from "@/utils/bigint";
 import { WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
 
@@ -91,44 +89,19 @@ async function runInputTransferSubbundleTest({
   const walletFinalBalance = await getErc20BalanceOf(client, tokenAddress, client.account.address);
   const walletFinalNativeBalance = await getBalance(client, { address: client.account.address });
 
-  if (amount == maxUint256) {
-    if (isWrappedNative && config.allowWrappingNativeAssets) {
-      // Full transfer, wrapping native if needed (native is always non-rebasing)
-      expect(walletFinalNativeBalance).toEqual(MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING);
-      expect(walletFinalBalance).toEqual(0n);
-      expect(recipientFinalBalance).toEqual(
-        recipientInitialBalance +
-          initialWalletBalance +
-          initialNativeBalance -
-          MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING
-      );
-    } else {
-      expect(walletFinalBalance).toEqual(0n);
-      // Full balance transfer
-      const minChange = initialWalletBalance;
+  // Assert based on exact amount transferred (no maxUint256 support)
+  if (isWrappedNative && config.allowWrappingNativeAssets) {
+    const erc20AmountUsed = bigIntMin(amount, initialWalletBalance);
+    const wrappedNativeAmountUsed = bigIntMax(amount - erc20AmountUsed, 0n);
 
-      // Account to rebasing margin
-      const maxChange = config.tokenIsRebasing
-        ? computeAmountWithRebasingMargin(initialWalletBalance)
-        : initialWalletBalance;
-
-      expect(recipientFinalBalance).toBeWithinRange(
-        recipientInitialBalance + minChange,
-        recipientInitialBalance + maxChange
-      );
-    }
+    expect(recipientFinalBalance).toBe(recipientInitialBalance + amount);
+    expect(walletFinalBalance).toBe(initialWalletBalance - erc20AmountUsed);
+    expect(walletFinalNativeBalance).toBe(initialNativeBalance - wrappedNativeAmountUsed);
   } else {
-    if (isWrappedNative && config.allowWrappingNativeAssets) {
-      const erc20AmountUsed = bigIntMin(amount, initialWalletBalance);
-      const wrappedNativeAmountUsed = bigIntMax(amount - erc20AmountUsed, 0n);
-
-      expect(recipientFinalBalance).toBe(recipientInitialBalance + amount);
-      expect(walletFinalBalance).toBe(initialWalletBalance - erc20AmountUsed);
-      expect(walletFinalNativeBalance).toBe(initialNativeBalance - wrappedNativeAmountUsed);
-    } else {
-      expect(recipientFinalBalance).toBe(recipientInitialBalance + amount);
-      expect(walletFinalBalance).toBe(initialWalletBalance - amount);
-    }
+    expect(recipientFinalBalance).toBe(recipientInitialBalance + amount);
+    // walletFinalBalance could be > (initialWalletBalance - amount) if rebasing added tokens
+    // but we only transfer the exact amount requested
+    expect(walletFinalBalance).toBeGreaterThanOrEqual(initialWalletBalance - amount);
   }
 }
 
@@ -188,7 +161,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer non wrapped native - no signatures, no rebasing, no wrapping",
     tokenAddress: USDC_ADDRESS,
-    amount: maxUint256,
+    amount: parseUnits("1000", 6),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: false,
@@ -200,7 +173,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer non wrapped native - no signatures, rebasing (none added), no wrapping",
     tokenAddress: USDC_ADDRESS,
-    amount: maxUint256,
+    amount: parseUnits("1000", 6),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: false,
@@ -212,7 +185,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer non wrapped native - no signatures, rebasing (added), no wrapping",
     tokenAddress: USDC_ADDRESS,
-    amount: maxUint256,
+    amount: parseUnits("1000", 6),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: false,
@@ -228,7 +201,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer non wrapped native - no signatures, rebasing (added), wrapping (should do nothing different)",
     tokenAddress: USDC_ADDRESS,
-    amount: maxUint256,
+    amount: parseUnits("1000", 6),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: false,
@@ -244,7 +217,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer non wrapped native - signatures, no rebasing, no wrapping",
     tokenAddress: USDC_ADDRESS,
-    amount: maxUint256,
+    amount: parseUnits("1000", 6),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: true,
@@ -256,7 +229,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer non wrapped native - signatures, rebasing (none added), no wrapping",
     tokenAddress: USDC_ADDRESS,
-    amount: maxUint256,
+    amount: parseUnits("1000", 6),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: true,
@@ -268,7 +241,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer non wrapped native - signatures, rebasing (added), no wrapping",
     tokenAddress: USDC_ADDRESS,
-    amount: maxUint256,
+    amount: parseUnits("1000", 6),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: true,
@@ -284,7 +257,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer non wrapped native - signatures, rebasing (added), wrapping (should do nothing different)",
     tokenAddress: USDC_ADDRESS,
-    amount: maxUint256,
+    amount: parseUnits("1000", 6),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: true,
@@ -408,7 +381,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer wrapped native - no signatures, no rebasing, no wrapping",
     tokenAddress: WRAPPED_NATIVE_ADDRESS,
-    amount: maxUint256,
+    amount: parseEther("1"),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: false,
@@ -421,7 +394,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer wrapped native - no signatures, no rebasing, wrapping (no native consumption)",
     tokenAddress: WRAPPED_NATIVE_ADDRESS,
-    amount: maxUint256,
+    amount: parseEther("1"),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: false,
@@ -434,7 +407,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer wrapped native - no signatures, no rebasing, wrapping (native consumption)",
     tokenAddress: WRAPPED_NATIVE_ADDRESS,
-    amount: maxUint256,
+    amount: parseEther("2.9"), // 1 (wrapped) + 1.9 (from native, leaving 0.1 buffer)
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: false,
@@ -447,7 +420,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer wrapped native - no signatures, rebasing (should do nothing different), wrapping (native consumption)",
     tokenAddress: WRAPPED_NATIVE_ADDRESS,
-    amount: maxUint256,
+    amount: parseEther("2.9"), // 1 (wrapped) + 1.9 (from native, leaving 0.1 buffer)
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: false,
@@ -460,7 +433,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer wrapped native - signatures, no rebasing, no wrapping",
     tokenAddress: WRAPPED_NATIVE_ADDRESS,
-    amount: maxUint256,
+    amount: parseEther("1"), // Gas buffer
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: true,
@@ -473,7 +446,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer wrapped native - signatures, no rebasing, wrapping (no native consumption)",
     tokenAddress: WRAPPED_NATIVE_ADDRESS,
-    amount: maxUint256,
+    amount: parseEther("1"),
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: true,
@@ -486,7 +459,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer wrapped native - signatures, no rebasing, wrapping (native consumption)",
     tokenAddress: WRAPPED_NATIVE_ADDRESS,
-    amount: maxUint256,
+    amount: parseEther("2.9"), // 1 (wrapped) + 1.9 (from native, leaving 0.1 buffer)
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: true,
@@ -499,7 +472,7 @@ const successTestCases: ({ name: string } & Omit<RunInputTransferSubbundleTestPa
   {
     name: "full transfer wrapped native - signatures, rebasing (should do nothing different), wrapping (native consumption)",
     tokenAddress: WRAPPED_NATIVE_ADDRESS,
-    amount: maxUint256,
+    amount: parseEther("2.9"), // 1 (wrapped) + 1.9 (from native, leaving 0.1 buffer)
     recipientAddress: RANDOM_ADDRESS,
     config: {
       accountSupportsSignatures: true,
@@ -572,7 +545,7 @@ describe("inputTransferSubbundle", () => {
       ).rejects.toThrow("Insufficient wallet balance.");
     });
 
-    test("full transfer rebasing margin exceeded", async ({ client }) => {
+    test("fails when amount is max uint256", async ({ client }) => {
       await expect(
         runInputTransferSubbundleTest({
           client,
@@ -581,15 +554,12 @@ describe("inputTransferSubbundle", () => {
           recipientAddress: RANDOM_ADDRESS,
           config: {
             accountSupportsSignatures: false,
-            tokenIsRebasing: true,
+            tokenIsRebasing: false,
             allowWrappingNativeAssets: false,
           },
-          initialWalletBalance: parseEther("1000"),
-          beforeExecutionCb: async (client) => {
-            await client.deal({ erc20: USDC_ADDRESS, amount: parseEther("1000.4") });
-          },
+          initialWalletBalance: parseUnits("1000", 6),
         })
-      ).rejects.toThrow("action-tx-reverted");
+      ).rejects.toThrow("Max uint256 transfer is not supported");
     });
   });
 });

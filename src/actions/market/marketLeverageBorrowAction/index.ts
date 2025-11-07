@@ -2,8 +2,7 @@ import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib } from "@morpho-org/blue-
 import { fetchMarket } from "@morpho-org/blue-sdk-viem";
 import { BundlerAction, BundlerCall, encodeBundle } from "@morpho-org/bundler-sdk-viem";
 import { populateSubBundle } from "@morpho-org/bundler-sdk-viem";
-import { Address, Client, erc20Abi, maxUint256 } from "viem";
-import { readContract } from "viem/actions";
+import { Address, Client, maxUint256 } from "viem";
 
 import { getParaswapExactBuyTxPayload } from "@/actions/data/paraswap/getParaswapExactBuy";
 import { getIsContract } from "@/actions/data/rpc/getIsContract";
@@ -62,13 +61,6 @@ export async function marketLeveragedBorrowAction({
 
   let market = await fetchMarket(marketId, publicClient);
   const { collateralToken: collateralTokenAddress, loanToken: loanTokenAddress } = market.params;
-
-  const accountCollateralBalance = await readContract(publicClient, {
-    address: collateralTokenAddress,
-    abi: erc20Abi,
-    functionName: "balanceOf",
-    args: [accountAddress],
-  });
 
   let collateralAmount: bigint;
   let loanAmount: bigint;
