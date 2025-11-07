@@ -44,7 +44,7 @@ async function runVaultWithdrawTest({
     await client.setCode({ address: client.account.address, bytecode: "0x60006000fd" });
   }
 
-  const positionBalanceBeforeBuild = await getMorphoVaultPosition(client, vaultAddress);
+  const positionBeforeBuild = await getMorphoVaultPosition(client, vaultAddress);
 
   // Act
   const action = await vaultWithdrawAction({
@@ -57,7 +57,7 @@ async function runVaultWithdrawTest({
   await beforeExecutionCb?.(client);
 
   const erc20BalanceBeforeExecution = await getErc20BalanceOf(client, assetAddress, client.account.address);
-  const positionBalanceBeforeExecution = await getMorphoVaultPosition(client, vaultAddress);
+  const positionBeforeExecution = await getMorphoVaultPosition(client, vaultAddress);
 
   const logs = await executeAction(client, action);
 
@@ -65,7 +65,7 @@ async function runVaultWithdrawTest({
   await expectOnlyAllowedApprovals(client, logs, client.account.address); // Make sure doesn't approve or permit anything unexpected
   await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS], assetAddress); // Make sure no funds left in bundler or used adapters
 
-  const positionBalanceAfterExecution = await getMorphoVaultPosition(client, vaultAddress);
+  const positionAfterExecution = await getMorphoVaultPosition(client, vaultAddress);
   const walletBalanceAfterExecution = await getErc20BalanceOf(client, USDC_ADDRESS, client.account.address);
 
   // When we requested a max withdraw, the withdraw amount is expected to be for the asset value of the shares the user had upon building action
@@ -75,12 +75,12 @@ async function runVaultWithdrawTest({
           client,
           vaultAddress,
           client.account.address,
-          positionBalanceBeforeBuild.userShareBalance
+          positionBeforeBuild.userShareBalance
         )
       : withdrawAmount;
 
-  const expectedPositionBalance = positionBalanceBeforeExecution.userAssetBalance - expectedWithdrawAmount;
-  expect(positionBalanceAfterExecution.userAssetBalance).toBeGreaterThanOrEqual(expectedPositionBalance - 1n);
+  const expectedPositionBalance = positionBeforeExecution.userAssetBalance - expectedWithdrawAmount;
+  expect(positionAfterExecution.userAssetBalance).toBeGreaterThanOrEqual(expectedPositionBalance - 1n);
 
   const expectedWalletBalance = erc20BalanceBeforeExecution + expectedWithdrawAmount;
   expect(walletBalanceAfterExecution).toBeGreaterThanOrEqual(expectedWalletBalance - 1n);
