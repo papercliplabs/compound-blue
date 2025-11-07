@@ -22,7 +22,6 @@ const currentBlock = await polygonClient.getBlock();
 export const test = createViemTest(polygon, {
   forkUrl: process.env.NEXT_PUBLIC_RPC_URL_1!,
   forkBlockNumber: currentBlock.number,
-  hardfork: "Latest",
 });
 
 interface ParaswapAdapterExactBuyTest {

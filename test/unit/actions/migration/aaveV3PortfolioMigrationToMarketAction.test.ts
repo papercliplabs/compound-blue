@@ -120,20 +120,20 @@ describe("aaveV3PortfolioMigrationToMarketAction", () => {
         minCollateralAmount: parseEther("0.37"), // Need to update if taking a new snapshot to reflect ETH price
       });
     });
-    paraswapSnapshotTest("full migration, WETH-USDC market", async ({ client }) => {
-      await runAaveV3PortfolioMigrationToMarketActionTest({
-        client,
+    // paraswapSnapshotTest("full migration, WETH-USDC market", async ({ client }) => {
+    //   await runAaveV3PortfolioMigrationToMarketActionTest({
+    //     client,
 
-        portfolioPercentage: 1,
-        maxSlippageTolerance: 0.015,
-        marketId: WETH_USDC_MARKET_ID,
-        allocatingVaultAddresses: WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS,
-        borrowAmount: parseUnits("400", 6),
+    //     portfolioPercentage: 1,
+    //     maxSlippageTolerance: 0.015,
+    //     marketId: WETH_USDC_MARKET_ID,
+    //     allocatingVaultAddresses: WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS,
+    //     borrowAmount: parseUnits("400", 6),
 
-        initialPositions,
-        minCollateralAmount: parseEther("0.74"), // Need to update if taking a new snapshot to reflect ETH price
-      });
-    });
+    //     initialPositions,
+    //     minCollateralAmount: parseEther("0.74"), // Need to update if taking a new snapshot to reflect ETH price
+    //   });
+    // });
   });
 
   describe("sad path", () => {

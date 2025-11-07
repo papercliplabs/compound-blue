@@ -2,8 +2,7 @@ import { DEFAULT_SLIPPAGE_TOLERANCE, MarketId, MathLib } from "@morpho-org/blue-
 import { fetchMarket } from "@morpho-org/blue-sdk-viem";
 import { BundlerAction, BundlerCall, encodeBundle } from "@morpho-org/bundler-sdk-viem";
 import { populateSubBundle } from "@morpho-org/bundler-sdk-viem";
-import { Address, Client, erc20Abi, maxUint256 } from "viem";
-import { readContract } from "viem/actions";
+import { Address, Client, maxUint256 } from "viem";
 
 import { getParaswapExactBuyTxPayload } from "@/actions/data/paraswap/getParaswapExactBuy";
 import { getIsContract } from "@/actions/data/rpc/getIsContract";
@@ -26,7 +25,7 @@ interface MarketLeveragedBorrowActionParameters {
 
   accountAddress: Address;
 
-  initialCollateralAmount: bigint; // a.k.a margin, maxUint256 for entire wallet balance
+  initialCollateralAmount: bigint; // a.k.a margin
   leverageFactor: number; // (1, (1 + S) / (1 + S - LLTV_WITH_MARGIN))]
   maxSlippageTolerance: number; // (0,1)
 }
@@ -50,25 +49,23 @@ export async function marketLeveragedBorrowAction({
   leverageFactor,
   maxSlippageTolerance,
 }: MarketLeveragedBorrowActionParameters): Promise<MarketLeveragedBorrowAction> {
-  // Input validation performed within computeLeverageValues
+  // Disallow maxUint256, we require exact collateral amount
+  if (initialCollateralAmount >= maxUint256) {
+    return {
+      status: "error",
+      message: "Initial collateral amount cannot be greater than or equal to max uint256",
+    };
+  }
+
+  // Other input validation performed within computeLeverageValues
 
   let market = await fetchMarket(marketId, publicClient);
   const { collateralToken: collateralTokenAddress, loanToken: loanTokenAddress } = market.params;
 
-  const accountCollateralBalance = await readContract(publicClient, {
-    address: collateralTokenAddress,
-    abi: erc20Abi,
-    functionName: "balanceOf",
-    args: [accountAddress],
-  });
-
-  const initialCollateralAmountInternal =
-    initialCollateralAmount == maxUint256 ? accountCollateralBalance : initialCollateralAmount;
-
   let collateralAmount: bigint;
   let loanAmount: bigint;
   try {
-    const values = computeLeverageValues(initialCollateralAmountInternal, leverageFactor, maxSlippageTolerance, market);
+    const values = computeLeverageValues(initialCollateralAmount, leverageFactor, maxSlippageTolerance, market);
     collateralAmount = values.collateralAmount;
     loanAmount = values.loanAmount;
   } catch (e) {
@@ -96,13 +93,13 @@ export async function marketLeveragedBorrowAction({
   const positionLoanBefore = market.toBorrowAssets(accountPosition.borrowShares);
   const positionLtvBefore = market.getLtv(accountPosition) ?? 0n;
 
-  const requiredSwapCollateralAmount = collateralAmount - initialCollateralAmountInternal;
+  const requiredSwapCollateralAmount = collateralAmount - initialCollateralAmount;
 
   try {
     const inputSubbundle = inputTransferSubbundle({
       accountAddress,
       tokenAddress: collateralTokenAddress,
-      amount: initialCollateralAmount, // Handles maxUint256
+      amount: initialCollateralAmount,
       recipientAddress: GENERAL_ADAPTER_1_ADDRESS,
       config: {
         accountSupportsSignatures: !isContract,

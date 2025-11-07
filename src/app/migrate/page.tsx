@@ -1,12 +1,6 @@
 import { Metadata } from "next";
 import Image from "next/image";
 
-import PositionMigrator from "@/components/PositionMigrator";
-import ProtocolMigratorTableWrapper from "@/components/ProtocolMigrator/ProtocolMigratorTableWrapper";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MarketSummary, getMarketSummaries } from "@/data/whisk/getMarketSummaries";
-import { getVaultSummaries } from "@/data/whisk/getVaultSummaries";
-
 export const metadata: Metadata = {
   title: "Compound Blue | Migrate",
 };
@@ -24,7 +18,9 @@ export default function MigratePage() {
         </div>
       </section>
 
-      <Tabs defaultValue="protocol" className="flex flex-col gap-8">
+      <div>Migration is currently unavailable.</div>
+
+      {/* <Tabs defaultValue="protocol" className="flex flex-col gap-8">
         <TabsList className="w-[254px]">
           <TabsTrigger value="protocol">Protocol</TabsTrigger>
           <TabsTrigger value="position">Position</TabsTrigger>
@@ -39,19 +35,19 @@ export default function MigratePage() {
             <PositionMigratorWrapper />
           </div>
         </TabsContent>
-      </Tabs>
+      </Tabs> */}
     </>
   );
 }
 
-async function PositionMigratorWrapper() {
-  const [vaultSummaries, marketSummaries] = await Promise.all([getVaultSummaries(), getMarketSummaries()]);
+// async function PositionMigratorWrapper() {
+//   const [vaultSummaries, marketSummaries] = await Promise.all([getVaultSummaries(), getMarketSummaries()]);
 
-  if (!vaultSummaries || !marketSummaries) {
-    return null;
-  }
-  return <PositionMigrator vaultSummaries={vaultSummaries} marketSummaries={marketSummaries as MarketSummary[]} />;
-}
+//   if (!vaultSummaries || !marketSummaries) {
+//     return null;
+//   }
+//   return <PositionMigrator vaultSummaries={vaultSummaries} marketSummaries={marketSummaries as MarketSummary[]} />;
+// }
 
 export const dynamic = "force-static";
 export const revalidate = 300; // 5 min

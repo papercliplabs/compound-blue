@@ -34,6 +34,13 @@ export function inputTransferSubbundle({
   simulationState,
 }: InputTransferSubbundleParameters): Subbundle & { erc20Amount: bigint; nativeAmount: bigint } {
   const isMaxTransfer = amount == maxUint256;
+
+  // Sanity check for now to disable maxUint256 input transfer.
+  // No actions should use anyways. Migration does but is disabled
+  if(isMaxTransfer) {
+    throw new Error("Max uint256 transfer is not supported");
+  }
+
   const isWrappedNative = isAddressEqual(tokenAddress, WRAPPED_NATIVE_ADDRESS);
 
   const accountErc20Holding = simulationState.getHolding(accountAddress, tokenAddress);

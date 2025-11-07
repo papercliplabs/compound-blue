@@ -1,5 +1,5 @@
 import { AnvilTestClient } from "@morpho-org/test";
-import { Address, isAddressEqual, parseEther, parseUnits } from "viem";
+import { Address, isAddressEqual, parseUnits } from "viem";
 import { readContract } from "viem/actions";
 import { describe, expect } from "vitest";
 
@@ -11,7 +11,7 @@ import {
 import { createBundle } from "@/actions/utils/bundlerActions";
 import { computeScaledAmount } from "@/actions/utils/math";
 import { Action } from "@/actions/utils/types";
-import { AAVE_V3_POOL_ADDRESS_PROVIDER, AAVE_V3_UI_POOL_DATA_PROVIDER_ADDRESS, WBTC_ADDRESS } from "@/config";
+import { AAVE_V3_POOL_ADDRESS_PROVIDER, AAVE_V3_UI_POOL_DATA_PROVIDER_ADDRESS } from "@/config";
 import {
   AAVE_V3_MIGRATION_ADAPTER_ADDRESS,
   BUNDLER3_ADDRESS,
@@ -26,7 +26,7 @@ import {
   getAaveV3LoanBalance,
   getAaveV3SupplyBalance,
 } from "../../../helpers/aaveV3";
-import { DAI_ADDRESS, USDC_ADDRESS, USDT_ADDRESS, WETH_ADDRESS } from "../../../helpers/constants";
+import { DAI_ADDRESS, USDC_ADDRESS, USDT_ADDRESS } from "../../../helpers/constants";
 import { expectZeroErc20Balances, getErc20BalanceOf } from "../../../helpers/erc20";
 import { executeAction } from "../../../helpers/executeAction";
 import { expectOnlyAllowedApprovals } from "../../../helpers/logs";
@@ -193,46 +193,46 @@ describe("aaveV3PortfolioWindDownSubbundle", () => {
           minOutputAssets: parseUnits("497", 6),
         });
       });
-      paraswapSnapshotTest("full wind down - supply in FLA only, output = FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      // paraswapSnapshotTest("full wind down - supply in FLA only, output = FLA", async ({ client }) => {
+      //   await runAaveV3PortfolioWindDownSubbundleTest({
+      //     client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: USDC_ADDRESS,
+      //     portfolioPercentage: 1,
+      //     maxSlippageTolerance: 0.015,
+      //     flashLoanAssetAddress: USDC_ADDRESS,
+      //     outputAssetAddress: USDC_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: 0n,
-            },
-          ],
+      //     initialPositions: [
+      //       {
+      //         assetAddress: USDC_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: 0n,
+      //       },
+      //     ],
 
-          minOutputAssets: parseUnits("1000", 6),
-        });
-      });
-      paraswapSnapshotTest("full wind down - supply in FLA only, output != FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      //     minOutputAssets: parseUnits("1000", 6),
+      //   });
+      // });
+      // paraswapSnapshotTest("full wind down - supply in FLA only, output != FLA", async ({ client }) => {
+      //   await runAaveV3PortfolioWindDownSubbundleTest({
+      //     client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: USDT_ADDRESS,
+      //     portfolioPercentage: 1,
+      //     maxSlippageTolerance: 0.015,
+      //     flashLoanAssetAddress: USDC_ADDRESS,
+      //     outputAssetAddress: USDT_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: 0n,
-            },
-          ],
+      //     initialPositions: [
+      //       {
+      //         assetAddress: USDC_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: 0n,
+      //       },
+      //     ],
 
-          minOutputAssets: parseUnits("998", 6),
-        });
-      });
+      //     minOutputAssets: parseUnits("998", 6),
+      //   });
+      // });
 
       paraswapSnapshotTest("partial wind down - output = FLA", async ({ client }) => {
         await runAaveV3PortfolioWindDownSubbundleTest({
@@ -284,56 +284,56 @@ describe("aaveV3PortfolioWindDownSubbundle", () => {
           minOutputAssets: parseUnits("992", 18),
         });
       });
-      paraswapSnapshotTest("full wind down - output = FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      // paraswapSnapshotTest("full wind down - output = FLA", async ({ client }) => {
+      //   await runAaveV3PortfolioWindDownSubbundleTest({
+      //     client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: USDC_ADDRESS,
+      //     portfolioPercentage: 1,
+      //     maxSlippageTolerance: 0.015,
+      //     flashLoanAssetAddress: USDC_ADDRESS,
+      //     outputAssetAddress: USDC_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDT_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: 0n,
-            },
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: 0n,
-            },
-          ],
+      //     initialPositions: [
+      //       {
+      //         assetAddress: USDT_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: 0n,
+      //       },
+      //       {
+      //         assetAddress: USDC_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: 0n,
+      //       },
+      //     ],
 
-          minOutputAssets: parseUnits("1986", 6),
-        });
-      });
-      paraswapSnapshotTest("full wind down - output != FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      //     minOutputAssets: parseUnits("1986", 6),
+      //   });
+      // });
+      // paraswapSnapshotTest("full wind down - output != FLA", async ({ client }) => {
+      //   await runAaveV3PortfolioWindDownSubbundleTest({
+      //     client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: DAI_ADDRESS,
+      //     portfolioPercentage: 1,
+      //     maxSlippageTolerance: 0.015,
+      //     flashLoanAssetAddress: USDC_ADDRESS,
+      //     outputAssetAddress: DAI_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDT_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: 0n,
-            },
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: 0n,
-            },
-          ],
+      //     initialPositions: [
+      //       {
+      //         assetAddress: USDT_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: 0n,
+      //       },
+      //       {
+      //         assetAddress: USDC_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: 0n,
+      //       },
+      //     ],
 
-          minOutputAssets: parseUnits("1986", 18),
-        });
-      });
+      //     minOutputAssets: parseUnits("1986", 18),
+      //   });
+      // });
 
       paraswapSnapshotTest("partial wind down - with dust (should ignore it)", async ({ client }) => {
         await runAaveV3PortfolioWindDownSubbundleTest({
@@ -361,31 +361,31 @@ describe("aaveV3PortfolioWindDownSubbundle", () => {
         });
       });
 
-      paraswapSnapshotTest("full wind down - with dust (should swap extra for it)", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      //   paraswapSnapshotTest("full wind down - with dust (should swap extra for it)", async ({ client }) => {
+      //     await runAaveV3PortfolioWindDownSubbundleTest({
+      //       client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: DAI_ADDRESS,
+      //       portfolioPercentage: 1,
+      //       maxSlippageTolerance: 0.015,
+      //       flashLoanAssetAddress: USDC_ADDRESS,
+      //       outputAssetAddress: DAI_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDT_ADDRESS,
-              supplyAmount: 1n,
-              borrowAmount: 0n,
-            },
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: 0n,
-            },
-          ],
+      //       initialPositions: [
+      //         {
+      //           assetAddress: USDT_ADDRESS,
+      //           supplyAmount: 1n,
+      //           borrowAmount: 0n,
+      //         },
+      //         {
+      //           assetAddress: USDC_ADDRESS,
+      //           supplyAmount: parseUnits("1000", 6),
+      //           borrowAmount: 0n,
+      //         },
+      //       ],
 
-          minOutputAssets: parseUnits("990", 18),
-        });
-      });
+      //       minOutputAssets: parseUnits("990", 18),
+      //     });
+      //   });
     });
 
     describe("supply and borrow", () => {
@@ -439,56 +439,56 @@ describe("aaveV3PortfolioWindDownSubbundle", () => {
           minOutputAssets: parseUnits("245", 18),
         });
       });
-      paraswapSnapshotTest("full wind down - borrow in FLA only, output = FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      // paraswapSnapshotTest("full wind down - borrow in FLA only, output = FLA", async ({ client }) => {
+      //   await runAaveV3PortfolioWindDownSubbundleTest({
+      //     client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: USDC_ADDRESS,
+      //     portfolioPercentage: 1,
+      //     maxSlippageTolerance: 0.015,
+      //     flashLoanAssetAddress: USDC_ADDRESS,
+      //     outputAssetAddress: USDC_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDT_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: 0n,
-            },
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: 0n,
-              borrowAmount: parseUnits("500", 6),
-            },
-          ],
+      //     initialPositions: [
+      //       {
+      //         assetAddress: USDT_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: 0n,
+      //       },
+      //       {
+      //         assetAddress: USDC_ADDRESS,
+      //         supplyAmount: 0n,
+      //         borrowAmount: parseUnits("500", 6),
+      //       },
+      //     ],
 
-          minOutputAssets: parseUnits("490", 6),
-        });
-      });
-      paraswapSnapshotTest("full wind down - borrow in FLA only, output != FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      //     minOutputAssets: parseUnits("490", 6),
+      //   });
+      // });
+      // paraswapSnapshotTest("full wind down - borrow in FLA only, output != FLA", async ({ client }) => {
+      //   await runAaveV3PortfolioWindDownSubbundleTest({
+      //     client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: DAI_ADDRESS,
+      //     portfolioPercentage: 1,
+      //     maxSlippageTolerance: 0.015,
+      //     flashLoanAssetAddress: USDC_ADDRESS,
+      //     outputAssetAddress: DAI_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDT_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: 0n,
-            },
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: 0n,
-              borrowAmount: parseUnits("500", 6),
-            },
-          ],
+      //     initialPositions: [
+      //       {
+      //         assetAddress: USDT_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: 0n,
+      //       },
+      //       {
+      //         assetAddress: USDC_ADDRESS,
+      //         supplyAmount: 0n,
+      //         borrowAmount: parseUnits("500", 6),
+      //       },
+      //     ],
 
-          minOutputAssets: parseUnits("490", 18),
-        });
-      });
+      //     minOutputAssets: parseUnits("490", 18),
+      //   });
+      // });
 
       paraswapSnapshotTest("partial wind down - borrow and supply in FLA only, output = FLA", async ({ client }) => {
         await runAaveV3PortfolioWindDownSubbundleTest({
@@ -530,260 +530,260 @@ describe("aaveV3PortfolioWindDownSubbundle", () => {
           minOutputAssets: parseUnits("245", 18),
         });
       });
-      paraswapSnapshotTest("full wind down - borrow and supply in FLA only, output = FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      // paraswapSnapshotTest("full wind down - borrow and supply in FLA only, output = FLA", async ({ client }) => {
+      //   await runAaveV3PortfolioWindDownSubbundleTest({
+      //     client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: USDC_ADDRESS,
+      //     portfolioPercentage: 1,
+      //     maxSlippageTolerance: 0.015,
+      //     flashLoanAssetAddress: USDC_ADDRESS,
+      //     outputAssetAddress: USDC_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: parseUnits("500", 6),
-            },
-          ],
+      //     initialPositions: [
+      //       {
+      //         assetAddress: USDC_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: parseUnits("500", 6),
+      //       },
+      //     ],
 
-          minOutputAssets: parseUnits("500", 6),
-        });
-      });
-      paraswapSnapshotTest("full wind down - borrow and supply in FLA only, output != FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      //     minOutputAssets: parseUnits("500", 6),
+      //   });
+      // });
+      // paraswapSnapshotTest("full wind down - borrow and supply in FLA only, output != FLA", async ({ client }) => {
+      //   await runAaveV3PortfolioWindDownSubbundleTest({
+      //     client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: DAI_ADDRESS,
+      //     portfolioPercentage: 1,
+      //     maxSlippageTolerance: 0.015,
+      //     flashLoanAssetAddress: USDC_ADDRESS,
+      //     outputAssetAddress: DAI_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: parseUnits("500", 6),
-            },
-          ],
+      //     initialPositions: [
+      //       {
+      //         assetAddress: USDC_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: parseUnits("500", 6),
+      //       },
+      //     ],
 
-          minOutputAssets: parseUnits("495", 18),
-        });
-      });
+      //     minOutputAssets: parseUnits("495", 18),
+      //   });
+      // });
 
-      paraswapSnapshotTest("partial wind down - output = FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      //   paraswapSnapshotTest("partial wind down - output = FLA", async ({ client }) => {
+      //     await runAaveV3PortfolioWindDownSubbundleTest({
+      //       client,
 
-          portfolioPercentage: 0.5,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: USDC_ADDRESS,
+      //       portfolioPercentage: 0.5,
+      //       maxSlippageTolerance: 0.015,
+      //       flashLoanAssetAddress: USDC_ADDRESS,
+      //       outputAssetAddress: USDC_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDT_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: parseUnits("500", 6),
-            },
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: parseUnits("500", 6),
-            },
-            {
-              assetAddress: WETH_ADDRESS,
-              supplyAmount: parseEther("1"),
-              borrowAmount: 0n,
-            },
-            {
-              assetAddress: DAI_ADDRESS,
-              supplyAmount: 0n,
-              borrowAmount: parseUnits("100", 18),
-            },
-          ],
-          minOutputAssets: parseUnits("1590", 6), // Need to update if taking a new snapshot to reflect ETH price
-        });
-      });
-      paraswapSnapshotTest("partial wind down - output != FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      //       initialPositions: [
+      //         {
+      //           assetAddress: USDT_ADDRESS,
+      //           supplyAmount: parseUnits("1000", 6),
+      //           borrowAmount: parseUnits("500", 6),
+      //         },
+      //         {
+      //           assetAddress: USDC_ADDRESS,
+      //           supplyAmount: parseUnits("1000", 6),
+      //           borrowAmount: parseUnits("500", 6),
+      //         },
+      //         {
+      //           assetAddress: WETH_ADDRESS,
+      //           supplyAmount: parseEther("1"),
+      //           borrowAmount: 0n,
+      //         },
+      //         {
+      //           assetAddress: DAI_ADDRESS,
+      //           supplyAmount: 0n,
+      //           borrowAmount: parseUnits("100", 18),
+      //         },
+      //       ],
+      //       minOutputAssets: parseUnits("1590", 6), // Need to update if taking a new snapshot to reflect ETH price
+      //     });
+      //   });
+      //   paraswapSnapshotTest("partial wind down - output != FLA", async ({ client }) => {
+      //     await runAaveV3PortfolioWindDownSubbundleTest({
+      //       client,
 
-          portfolioPercentage: 0.5,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: DAI_ADDRESS,
+      //       portfolioPercentage: 0.5,
+      //       maxSlippageTolerance: 0.015,
+      //       flashLoanAssetAddress: USDC_ADDRESS,
+      //       outputAssetAddress: DAI_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDT_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: parseUnits("500", 6),
-            },
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: parseUnits("500", 6),
-            },
-            {
-              assetAddress: WETH_ADDRESS,
-              supplyAmount: parseEther("1"),
-              borrowAmount: 0n,
-            },
-            {
-              assetAddress: DAI_ADDRESS,
-              supplyAmount: 0n,
-              borrowAmount: parseUnits("100", 18),
-            },
-          ],
-          minOutputAssets: parseUnits("1590", 18), // Need to update if taking a new snapshot to reflect ETH price
-        });
-      });
+      //       initialPositions: [
+      //         {
+      //           assetAddress: USDT_ADDRESS,
+      //           supplyAmount: parseUnits("1000", 6),
+      //           borrowAmount: parseUnits("500", 6),
+      //         },
+      //         {
+      //           assetAddress: USDC_ADDRESS,
+      //           supplyAmount: parseUnits("1000", 6),
+      //           borrowAmount: parseUnits("500", 6),
+      //         },
+      //         {
+      //           assetAddress: WETH_ADDRESS,
+      //           supplyAmount: parseEther("1"),
+      //           borrowAmount: 0n,
+      //         },
+      //         {
+      //           assetAddress: DAI_ADDRESS,
+      //           supplyAmount: 0n,
+      //           borrowAmount: parseUnits("100", 18),
+      //         },
+      //       ],
+      //       minOutputAssets: parseUnits("1590", 18), // Need to update if taking a new snapshot to reflect ETH price
+      //     });
+      //   });
 
-      paraswapSnapshotTest("full wind down, output = FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      //   paraswapSnapshotTest("full wind down, output = FLA", async ({ client }) => {
+      //     await runAaveV3PortfolioWindDownSubbundleTest({
+      //       client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: USDC_ADDRESS,
+      //       portfolioPercentage: 1,
+      //       maxSlippageTolerance: 0.015,
+      //       flashLoanAssetAddress: USDC_ADDRESS,
+      //       outputAssetAddress: USDC_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDT_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: parseUnits("500", 6),
-            },
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: parseUnits("500", 6),
-            },
-            {
-              assetAddress: WETH_ADDRESS,
-              supplyAmount: parseEther("1"),
-              borrowAmount: 0n,
-            },
-            {
-              assetAddress: DAI_ADDRESS,
-              supplyAmount: 0n,
-              borrowAmount: parseUnits("100", 18),
-            },
-          ],
-          minOutputAssets: parseUnits("3180", 6), // Need to update if taking a new snapshot to reflect ETH price
-        });
-      });
+      //       initialPositions: [
+      //         {
+      //           assetAddress: USDT_ADDRESS,
+      //           supplyAmount: parseUnits("1000", 6),
+      //           borrowAmount: parseUnits("500", 6),
+      //         },
+      //         {
+      //           assetAddress: USDC_ADDRESS,
+      //           supplyAmount: parseUnits("1000", 6),
+      //           borrowAmount: parseUnits("500", 6),
+      //         },
+      //         {
+      //           assetAddress: WETH_ADDRESS,
+      //           supplyAmount: parseEther("1"),
+      //           borrowAmount: 0n,
+      //         },
+      //         {
+      //           assetAddress: DAI_ADDRESS,
+      //           supplyAmount: 0n,
+      //           borrowAmount: parseUnits("100", 18),
+      //         },
+      //       ],
+      //       minOutputAssets: parseUnits("3180", 6), // Need to update if taking a new snapshot to reflect ETH price
+      //     });
+      //   });
 
-      paraswapSnapshotTest("full wind down - output != FLA", async ({ client }) => {
-        await runAaveV3PortfolioWindDownSubbundleTest({
-          client,
+      //   paraswapSnapshotTest("full wind down - output != FLA", async ({ client }) => {
+      //     await runAaveV3PortfolioWindDownSubbundleTest({
+      //       client,
 
-          portfolioPercentage: 1,
-          maxSlippageTolerance: 0.015,
-          flashLoanAssetAddress: USDC_ADDRESS,
-          outputAssetAddress: DAI_ADDRESS,
+      //       portfolioPercentage: 1,
+      //       maxSlippageTolerance: 0.015,
+      //       flashLoanAssetAddress: USDC_ADDRESS,
+      //       outputAssetAddress: DAI_ADDRESS,
 
-          initialPositions: [
-            {
-              assetAddress: USDT_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: parseUnits("500", 6),
-            },
-            {
-              assetAddress: USDC_ADDRESS,
-              supplyAmount: parseUnits("1000", 6),
-              borrowAmount: parseUnits("500", 6),
-            },
-            {
-              assetAddress: WETH_ADDRESS,
-              supplyAmount: parseEther("1"),
-              borrowAmount: 0n,
-            },
-            {
-              assetAddress: DAI_ADDRESS,
-              supplyAmount: 0n,
-              borrowAmount: parseUnits("100", 18),
-            },
-          ],
-          minOutputAssets: parseUnits("3180", 18), // Need to update if taking a new snapshot to reflect ETH price
-        });
-      });
-    });
+      //       initialPositions: [
+      //         {
+      //           assetAddress: USDT_ADDRESS,
+      //           supplyAmount: parseUnits("1000", 6),
+      //           borrowAmount: parseUnits("500", 6),
+      //         },
+      //         {
+      //           assetAddress: USDC_ADDRESS,
+      //           supplyAmount: parseUnits("1000", 6),
+      //           borrowAmount: parseUnits("500", 6),
+      //         },
+      //         {
+      //           assetAddress: WETH_ADDRESS,
+      //           supplyAmount: parseEther("1"),
+      //           borrowAmount: 0n,
+      //         },
+      //         {
+      //           assetAddress: DAI_ADDRESS,
+      //           supplyAmount: 0n,
+      //           borrowAmount: parseUnits("100", 18),
+      //         },
+      //       ],
+      //       minOutputAssets: parseUnits("3180", 18), // Need to update if taking a new snapshot to reflect ETH price
+      //     });
+      //   });
+      // });
 
-    paraswapSnapshotTest("full wind down - output != FLA, WBTC FLA", async ({ client }) => {
-      await runAaveV3PortfolioWindDownSubbundleTest({
-        client,
+      // paraswapSnapshotTest("full wind down - output != FLA, WBTC FLA", async ({ client }) => {
+      //   await runAaveV3PortfolioWindDownSubbundleTest({
+      //     client,
 
-        portfolioPercentage: 1,
-        maxSlippageTolerance: 0.015,
-        flashLoanAssetAddress: WBTC_ADDRESS,
-        outputAssetAddress: DAI_ADDRESS,
+      //     portfolioPercentage: 1,
+      //     maxSlippageTolerance: 0.015,
+      //     flashLoanAssetAddress: WBTC_ADDRESS,
+      //     outputAssetAddress: DAI_ADDRESS,
 
-        initialPositions: [
-          {
-            assetAddress: USDT_ADDRESS,
-            supplyAmount: parseUnits("10000", 6),
-            borrowAmount: parseUnits("500", 6),
-          },
-          {
-            assetAddress: USDC_ADDRESS,
-            supplyAmount: parseUnits("1000", 6),
-            borrowAmount: parseUnits("500", 6),
-          },
-          {
-            assetAddress: WETH_ADDRESS,
-            supplyAmount: parseEther("1"),
-            borrowAmount: 0n,
-          },
-          {
-            assetAddress: DAI_ADDRESS,
-            supplyAmount: 0n,
-            borrowAmount: parseUnits("100", 18),
-          },
-        ],
-        minOutputAssets: parseUnits("3180", 18), // Need to update if taking a new snapshot to reflect ETH price
-      });
-    });
+      //     initialPositions: [
+      //       {
+      //         assetAddress: USDT_ADDRESS,
+      //         supplyAmount: parseUnits("10000", 6),
+      //         borrowAmount: parseUnits("500", 6),
+      //       },
+      //       {
+      //         assetAddress: USDC_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: parseUnits("500", 6),
+      //       },
+      //       {
+      //         assetAddress: WETH_ADDRESS,
+      //         supplyAmount: parseEther("1"),
+      //         borrowAmount: 0n,
+      //       },
+      //       {
+      //         assetAddress: DAI_ADDRESS,
+      //         supplyAmount: 0n,
+      //         borrowAmount: parseUnits("100", 18),
+      //       },
+      //     ],
+      //     minOutputAssets: parseUnits("3180", 18), // Need to update if taking a new snapshot to reflect ETH price
+      //   });
+      // });
 
-    paraswapSnapshotTest("full wind down - output != FLA, WBTC FLA", async ({ client }) => {
-      await runAaveV3PortfolioWindDownSubbundleTest({
-        client,
+      // paraswapSnapshotTest("full wind down - output != FLA, WBTC FLA", async ({ client }) => {
+      //   await runAaveV3PortfolioWindDownSubbundleTest({
+      //     client,
 
-        portfolioPercentage: 1,
-        maxSlippageTolerance: 0.015,
-        flashLoanAssetAddress: WBTC_ADDRESS,
-        outputAssetAddress: DAI_ADDRESS,
+      //     portfolioPercentage: 1,
+      //     maxSlippageTolerance: 0.015,
+      //     flashLoanAssetAddress: WBTC_ADDRESS,
+      //     outputAssetAddress: DAI_ADDRESS,
 
-        initialPositions: [
-          {
-            assetAddress: USDT_ADDRESS,
-            supplyAmount: parseUnits("10000", 6),
-            borrowAmount: parseUnits("500", 6),
-          },
-          {
-            assetAddress: USDC_ADDRESS,
-            supplyAmount: parseUnits("1000", 6),
-            borrowAmount: parseUnits("500", 6),
-          },
-          {
-            assetAddress: WETH_ADDRESS,
-            supplyAmount: parseEther("1"),
-            borrowAmount: 0n,
-          },
-          {
-            assetAddress: DAI_ADDRESS,
-            supplyAmount: 0n,
-            borrowAmount: parseUnits("100", 18),
-          },
-          {
-            assetAddress: WBTC_ADDRESS,
-            supplyAmount: parseUnits("0.1", 8),
-            borrowAmount: parseUnits("0.01", 8),
-          },
-        ],
-        minOutputAssets: parseUnits("21150", 18), // Need to update if taking a new snapshot to reflect ETH price
-      });
+      //     initialPositions: [
+      //       {
+      //         assetAddress: USDT_ADDRESS,
+      //         supplyAmount: parseUnits("10000", 6),
+      //         borrowAmount: parseUnits("500", 6),
+      //       },
+      //       {
+      //         assetAddress: USDC_ADDRESS,
+      //         supplyAmount: parseUnits("1000", 6),
+      //         borrowAmount: parseUnits("500", 6),
+      //       },
+      //       {
+      //         assetAddress: WETH_ADDRESS,
+      //         supplyAmount: parseEther("1"),
+      //         borrowAmount: 0n,
+      //       },
+      //       {
+      //         assetAddress: DAI_ADDRESS,
+      //         supplyAmount: 0n,
+      //         borrowAmount: parseUnits("100", 18),
+      //       },
+      //       {
+      //         assetAddress: WBTC_ADDRESS,
+      //         supplyAmount: parseUnits("0.1", 8),
+      //         borrowAmount: parseUnits("0.01", 8),
+      //       },
+      //     ],
+      //     minOutputAssets: parseUnits("21150", 18), // Need to update if taking a new snapshot to reflect ETH price
+      //   });
     });
   });
 

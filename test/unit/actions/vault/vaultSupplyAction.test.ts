@@ -103,9 +103,9 @@ const successTestCases: ({ name: string } & Omit<VaultSupplyTestParameters, "cli
     dealAmount: parseUnits("200000", 6),
   },
   {
-    name: "should supply entire account balance when supply amount is max uint256",
+    name: "should supply entire account balance when supply amount is exactly balance",
     vaultAddress: USDC_VAULT_ADDRESS,
-    supplyAmount: maxUint256,
+    supplyAmount: parseUnits("100000", 6),
     dealAmount: parseUnits("100000", 6),
     beforeExecutionCb: async (client) => {
       // Even if we wait some time for extra interest accural
@@ -127,23 +127,9 @@ const successTestCases: ({ name: string } & Omit<VaultSupplyTestParameters, "cli
     allowWrappingNativeAssets: true,
   },
   {
-    name: "should supply entire account erc20 and native balance with maxuint256",
-    vaultAddress: WPOL_VAULT_ADDRESS,
-    supplyAmount: maxUint256,
-    dealAmount: parseUnits("100000", 6),
-    allowWrappingNativeAssets: true,
-  },
-  {
-    name: "should wrap native assets only partial supply",
+    name: "should wrap native assets only",
     vaultAddress: WPOL_VAULT_ADDRESS,
     supplyAmount: parseUnits("150000", 6),
-    dealAmount: parseUnits("0", 6),
-    allowWrappingNativeAssets: true,
-  },
-  {
-    name: "should wrap native assets only full supply",
-    vaultAddress: WPOL_VAULT_ADDRESS,
-    supplyAmount: maxUint256,
     dealAmount: parseUnits("0", 6),
     allowWrappingNativeAssets: true,
   },
@@ -235,6 +221,38 @@ describe("vaultSupplyAction", () => {
           },
         })
       ).rejects.toThrow("action-tx-reverted");
+    });
+
+    test("throws when amount equals max uint256", async ({ client }) => {
+      const vaultAddress = USDC_VAULT_ADDRESS;
+      const action = await vaultSupplyBundle({
+        publicClient: client,
+        accountAddress: client.account.address,
+        vaultAddress,
+        supplyAmount: maxUint256,
+        allowWrappingNativeAssets: false,
+      });
+      expect(action.status).toBe("error");
+
+      if (action.status === "error") {
+        expect(action.message).toBe("Supply amount cannot be greater than or equal to max uint256");
+      }
+    });
+
+    test("throws when amount greater than max uint256", async ({ client }) => {
+      const vaultAddress = USDC_VAULT_ADDRESS;
+      const action = await vaultSupplyBundle({
+        publicClient: client,
+        accountAddress: client.account.address,
+        vaultAddress,
+        supplyAmount: maxUint256 + 1n,
+        allowWrappingNativeAssets: false,
+      });
+      expect(action.status).toBe("error");
+
+      if (action.status === "error") {
+        expect(action.message).toBe("Supply amount cannot be greater than or equal to max uint256");
+      }
     });
   });
 });
