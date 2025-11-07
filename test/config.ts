@@ -7,7 +7,6 @@ export const test = createViemTest(polygon, {
   forkUrl: process.env.NEXT_PUBLIC_RPC_URL_1!,
   forkBlockNumber: 71095170,
   // forkBlockNumber: 71054290,
-  // hardfork: "Latest",
 });
 
 export const polygonClient = createPublicClient({
@@ -19,7 +18,6 @@ export const currentBlock = await polygonClient.getBlock();
 export const currentBlockTest = createViemTest(polygon, {
   forkUrl: process.env.NEXT_PUBLIC_RPC_URL_1!,
   forkBlockNumber: currentBlock.number,
-  hardfork: "Latest",
 });
 
 // Used for tests that need a specific block number besides default from test (ex when have quotes)

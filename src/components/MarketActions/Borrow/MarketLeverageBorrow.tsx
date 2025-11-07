@@ -5,7 +5,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ArrowRight, Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { getAddress, maxUint256, parseUnits } from "viem";
+import { getAddress, parseUnits } from "viem";
 import { useAccount } from "wagmi";
 import { usePublicClient } from "wagmi";
 import { z } from "zod";
@@ -79,7 +79,6 @@ export default function MarketLeverageBorrow({
             const rawVal = parseUnits(val, market.collateralAsset.decimals);
             return rawVal <= BigInt(rawCollateralTokenBalance.balance);
           }, "Amount exceeds wallet balance."),
-        isMaxCollateral: z.boolean(),
         multiplier: z.coerce.number().min(MIN_MULTIPLIER),
         maxSlippageTolerance: z.coerce.number().min(0.2).max(MAX_SLIPPAGE_TOLERANCE_PCT),
       })
@@ -103,19 +102,13 @@ export default function MarketLeverageBorrow({
     resolver: zodResolver(formSchema),
     defaultValues: {
       initialCollateralAmount: "",
-      isMaxCollateral: false,
       multiplier: 2,
       maxSlippageTolerance: 0.5,
     },
   });
 
   const onSubmit = useCallback(
-    async ({
-      initialCollateralAmount,
-      isMaxCollateral,
-      multiplier,
-      maxSlippageTolerance,
-    }: z.infer<typeof formSchema>) => {
+    async ({ initialCollateralAmount, multiplier, maxSlippageTolerance }: z.infer<typeof formSchema>) => {
       if (!address) {
         openConnectModal?.();
         return;
@@ -128,10 +121,7 @@ export default function MarketLeverageBorrow({
 
       setSimulatingBundle(true);
 
-      const rawInitialCollateralAmount = isMaxCollateral
-        ? maxUint256
-        : parseUnits(initialCollateralAmount, market.collateralAsset.decimals);
-
+      const rawInitialCollateralAmount = parseUnits(initialCollateralAmount, market.collateralAsset.decimals);
       const leverageFactor = multiplier / (1 + maxSlippageTolerance / 100) + 1;
 
       const action = await marketLeveragedBorrowAction({
@@ -194,9 +184,6 @@ export default function MarketLeverageBorrow({
                 actionName="Add"
                 asset={market.collateralAsset}
                 rawAvailableBalance={rawCollateralTokenBalance ? BigInt(rawCollateralTokenBalance.balance) : undefined}
-                setIsMax={(isMax) => {
-                  form.setValue("isMaxCollateral", isMax);
-                }}
               />
               <div className="h-[1px] w-full bg-border-primary" />
 

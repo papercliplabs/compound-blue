@@ -4,7 +4,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Info } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { getAddress, isAddressEqual, maxUint256, parseUnits } from "viem";
+import { getAddress, isAddressEqual, parseUnits } from "viem";
 import { useAccount, useBalance, usePublicClient } from "wagmi";
 import { z } from "zod";
 
@@ -74,7 +74,6 @@ export default function VaultSupply({
           .nonempty("Amount is required.")
           .refine((val) => !isNaN(parseFloat(val)), "Amount must be a valid number.")
           .refine((val) => parseUnits(val, vault.asset.decimals) > 0n, "Amount must be greater than zero."), // This also catches the case where val is lower than token precision, but we prevent this in ActionFlowSummaryAssetItem
-        isMaxSupply: z.boolean(),
         allowWrappingNativeAssets: z.boolean(),
       })
       .superRefine((data, ctx) => {
@@ -96,7 +95,6 @@ export default function VaultSupply({
     resolver: zodResolver(formSchema),
     defaultValues: {
       supplyAmount: "",
-      isMaxSupply: false,
       allowWrappingNativeAssets: isWrappedNative,
     },
   });
@@ -115,9 +113,8 @@ export default function VaultSupply({
 
       setSimulatingBundle(true);
 
-      // Uint256 max if the user wants to supply their entire balance
-      const { supplyAmount, isMaxSupply, allowWrappingNativeAssets } = values;
-      const rawSupplyAmount = isMaxSupply ? maxUint256 : parseUnits(supplyAmount, vault.asset.decimals);
+      const { supplyAmount, allowWrappingNativeAssets } = values;
+      const rawSupplyAmount = parseUnits(supplyAmount, vault.asset.decimals);
 
       const preparedAction = await vaultSupplyBundle({
         publicClient,
@@ -192,9 +189,6 @@ export default function VaultSupply({
                 actionName="Supply"
                 asset={vault.asset}
                 rawAvailableBalance={computeRawAvailableBalance(allowWrappingNativeAssets)}
-                setIsMax={(isMax) => {
-                  form.setValue("isMaxSupply", isMax);
-                }}
               />
               {isWrappedNative && (
                 <div className="flex rounded-[8px] bg-background-inverse p-3">

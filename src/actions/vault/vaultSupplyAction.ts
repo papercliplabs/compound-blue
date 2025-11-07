@@ -16,7 +16,7 @@ interface VaultSupplyActionParameters {
   publicClient: Client;
   vaultAddress: Address;
   accountAddress: Address;
-  supplyAmount: bigint; // Max uint256 for entire account balanace
+  supplyAmount: bigint;
   allowWrappingNativeAssets: boolean; // Ignored if the vault asset is not wrapped native
 }
 
@@ -38,6 +38,14 @@ export async function vaultSupplyBundle({
     };
   }
 
+  // Disallow maxUint256 - require exact supply amount
+  if (supplyAmount >= maxUint256) {
+    return {
+      status: "error",
+      message: "Supply amount cannot be greater than or equal to max uint256",
+    };
+  }
+
   const [intitialSimulationState, accountIsContract] = await Promise.all([
     getSimulationState({
       actionType: "vault",
@@ -50,8 +58,6 @@ export async function vaultSupplyBundle({
 
   const vault = intitialSimulationState.getVault(vaultAddress);
 
-  const isMaxSupply = supplyAmount === maxUint256;
-
   try {
     const intermediateSimulationState = produceImmutable(intitialSimulationState, () => {});
 
@@ -59,7 +65,7 @@ export async function vaultSupplyBundle({
     const inputSubbundle = inputTransferSubbundle({
       accountAddress,
       tokenAddress: vault.underlying,
-      amount: supplyAmount, // Handles maxUint256
+      amount: supplyAmount,
       recipientAddress: GENERAL_ADAPTER_1_ADDRESS,
       config: {
         accountSupportsSignatures: !accountIsContract,
@@ -76,7 +82,7 @@ export async function vaultSupplyBundle({
           sender: accountAddress,
           address: vaultAddress,
           args: {
-            assets: isMaxSupply ? maxUint256 : supplyAmount,
+            assets: supplyAmount,
             owner: accountAddress,
             slippage: DEFAULT_SLIPPAGE_TOLERANCE,
           },
