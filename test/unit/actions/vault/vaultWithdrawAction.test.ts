@@ -1,6 +1,6 @@
 import { fetchVaultConfig } from "@morpho-org/blue-sdk-viem";
 import { AnvilTestClient } from "@morpho-org/test";
-import { Address, maxUint256, parseUnits, zeroAddress } from "viem";
+import { Address, erc20Abi, maxUint256, parseUnits, zeroAddress } from "viem";
 import { describe, expect } from "vitest";
 
 import { vaultWithdrawAction } from "@/actions/vault/vaultWithdrawAction";
@@ -11,7 +11,11 @@ import { USDC_ADDRESS, USDC_VAULT_ADDRESS } from "../../../helpers/constants";
 import { expectZeroErc20Balances, getErc20BalanceOf } from "../../../helpers/erc20";
 import { executeAction } from "../../../helpers/executeAction";
 import { expectOnlyAllowedApprovals } from "../../../helpers/logs";
-import { dealAndSupplyToMorphoVault, getMorphoVaultPosition } from "../../../helpers/morpho";
+import {
+  dealAndSupplyToMorphoVault,
+  getMorphoVaultPosition,
+  getMorphoVaultSharesToAssets,
+} from "../../../helpers/morpho";
 
 interface VaultWithdrawTestParameters {
   client: AnvilTestClient;
@@ -40,6 +44,8 @@ async function runVaultWithdrawTest({
     await client.setCode({ address: client.account.address, bytecode: "0x60006000fd" });
   }
 
+  const positionBalanceBeforeBuild = await getMorphoVaultPosition(client, vaultAddress);
+
   // Act
   const action = await vaultWithdrawAction({
     publicClient: client,
@@ -47,25 +53,37 @@ async function runVaultWithdrawTest({
     vaultAddress,
     withdrawAmount,
   });
+
   await beforeExecutionCb?.(client);
+
+  const erc20BalanceBeforeExecution = await getErc20BalanceOf(client, assetAddress, client.account.address);
+  const positionBalanceBeforeExecution = await getMorphoVaultPosition(client, vaultAddress);
+
   const logs = await executeAction(client, action);
 
   // Assert
   await expectOnlyAllowedApprovals(client, logs, client.account.address); // Make sure doesn't approve or permit anything unexpected
   await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS], assetAddress); // Make sure no funds left in bundler or used adapters
 
-  const positionBalance = await getMorphoVaultPosition(client, vaultAddress);
-  const walletBalance = await getErc20BalanceOf(client, USDC_ADDRESS, client.account.address);
+  const positionBalanceAfterExecution = await getMorphoVaultPosition(client, vaultAddress);
+  const walletBalanceAfterExecution = await getErc20BalanceOf(client, USDC_ADDRESS, client.account.address);
 
-  // Vault always rounds against the user, hence the 1 margin
-  if (withdrawAmount === maxUint256) {
-    // Withdraw max when uint256
-    expect(positionBalance).toEqual(BigInt(0));
-    expect(walletBalance).toBeGreaterThanOrEqual(initialSupplyAmount);
-  } else {
-    expect(positionBalance).toBeGreaterThanOrEqual(initialSupplyAmount - withdrawAmount - BigInt(1));
-    expect(walletBalance).toEqual(withdrawAmount);
-  }
+  // When we requested a max withdraw, the withdraw amount is expected to be for the asset value of the shares the user had upon building action
+  const expectedWithdrawAmount =
+    withdrawAmount === maxUint256
+      ? await getMorphoVaultSharesToAssets(
+          client,
+          vaultAddress,
+          client.account.address,
+          positionBalanceBeforeBuild.userShareBalance
+        )
+      : withdrawAmount;
+
+  const expectedPositionBalance = positionBalanceBeforeExecution.userAssetBalance - expectedWithdrawAmount;
+  expect(positionBalanceAfterExecution.userAssetBalance).toBeGreaterThanOrEqual(expectedPositionBalance - 1n);
+
+  const expectedWalletBalance = erc20BalanceBeforeExecution + expectedWithdrawAmount;
+  expect(walletBalanceAfterExecution).toBeGreaterThanOrEqual(expectedWalletBalance - 1n);
 }
 
 const successTestCases: ({ name: string } & Omit<VaultWithdrawTestParameters, "client" | "callerType">)[] = [
@@ -83,6 +101,36 @@ const successTestCases: ({ name: string } & Omit<VaultWithdrawTestParameters, "c
     beforeExecutionCb: async (client) => {
       // Even if we wait some time for extra interest accural
       await client.mine({ blocks: 1000 });
+    },
+  },
+  {
+    name: "should decrease position by withdraw amount even if increase in approval + share balance before execution",
+    vaultAddress: USDC_VAULT_ADDRESS,
+    initialSupplyAmount: parseUnits("10000000", 6),
+    withdrawAmount: parseUnits("100000", 6),
+    beforeExecutionCb: async (client) => {
+      await dealAndSupplyToMorphoVault(client, USDC_VAULT_ADDRESS, parseUnits("10000000000", 6));
+      await client.writeContract({
+        abi: erc20Abi,
+        address: USDC_VAULT_ADDRESS,
+        functionName: "approve",
+        args: [GENERAL_ADAPTER_1_ADDRESS, maxUint256],
+      });
+    },
+  },
+  {
+    name: "should withdraw entire initial position for max uint256 withdraw amount even if increase in approval + share balance before execution",
+    vaultAddress: USDC_VAULT_ADDRESS,
+    initialSupplyAmount: parseUnits("123456", 6),
+    withdrawAmount: maxUint256,
+    beforeExecutionCb: async (client) => {
+      await dealAndSupplyToMorphoVault(client, USDC_VAULT_ADDRESS, parseUnits("10000000000", 6));
+      await client.writeContract({
+        abi: erc20Abi,
+        address: USDC_VAULT_ADDRESS,
+        functionName: "approve",
+        args: [GENERAL_ADAPTER_1_ADDRESS, maxUint256],
+      });
     },
   },
 ];

@@ -135,7 +135,7 @@ export async function marketRepayWithCollateralAction({
           id: marketId,
           onBehalf: accountAddress,
           receiver: PARASWAP_ADAPTER_ADDRESS,
-          assets: closingPosition ? accountPosition.collateral : maxCollateralSwapAmount, // Full collateral withdraw if closing position - bundler SDK has issues with maxUint256, but this works the same
+          assets: closingPosition ? accountPosition.collateral : maxCollateralSwapAmount,
         },
       },
       simulationState
