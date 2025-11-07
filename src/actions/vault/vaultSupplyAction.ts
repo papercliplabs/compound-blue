@@ -69,8 +69,6 @@ export async function vaultSupplyBundle({
       simulationState: intermediateSimulationState,
     });
 
-    const ga1AssetBalance = intermediateSimulationState.getHolding(GENERAL_ADAPTER_1_ADDRESS, vault.asset).balance;
-
     const vaultSupplySubbundle = subbundleFromInputOps({
       inputOps: [
         {
@@ -78,7 +76,7 @@ export async function vaultSupplyBundle({
           sender: accountAddress,
           address: vaultAddress,
           args: {
-            assets: isMaxSupply ? ga1AssetBalance : supplyAmount,
+            assets: isMaxSupply ? maxUint256 : supplyAmount,
             owner: accountAddress,
             slippage: DEFAULT_SLIPPAGE_TOLERANCE,
           },
