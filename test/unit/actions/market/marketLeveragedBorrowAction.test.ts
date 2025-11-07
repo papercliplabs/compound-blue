@@ -1,14 +1,18 @@
 import { MarketId, MathLib } from "@morpho-org/blue-sdk";
 import { fetchMarket } from "@morpho-org/blue-sdk-viem";
 import { AnvilTestClient } from "@morpho-org/test";
-import { Address, maxUint256, parseEther } from "viem";
+import { Address, erc20Abi, maxUint256, parseEther } from "viem";
 import { describe, expect, vi } from "vitest";
 
 import { marketLeveragedBorrowAction } from "@/actions/market/marketLeverageBorrowAction";
-import { BUNDLER3_ADDRESS, SUPPORTED_ADDAPTERS } from "@/utils/constants";
+import { BUNDLER3_ADDRESS, GENERAL_ADAPTER_1_ADDRESS, SUPPORTED_ADDAPTERS } from "@/utils/constants";
 
 import { test } from "../../../config";
-import { WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS, WETH_USDC_MARKET_ID } from "../../../helpers/constants";
+import {
+  WETH_ADDRESS,
+  WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS,
+  WETH_USDC_MARKET_ID,
+} from "../../../helpers/constants";
 import { expectZeroErc20Balances, getErc20BalanceOf } from "../../../helpers/erc20";
 import { executeAction } from "../../../helpers/executeAction";
 import { expectOnlyAllowedApprovals } from "../../../helpers/logs";
@@ -25,6 +29,8 @@ interface MarketLeveragedBorrowTestParameters {
   initialCollateralAmount: bigint;
   leverageFactor: number;
   maxSlippageTolerance: number;
+
+  beforeExecutionCb?: (client: AnvilTestClient) => Promise<void>;
 
   collateralDealAmount: bigint;
   callerType?: "eoa" | "contract";
@@ -111,13 +117,59 @@ const successTestCases: ({ name: string } & Omit<MarketLeveragedBorrowTestParame
     collateralDealAmount: parseEther("2"),
   },
   {
-    name: "leverage with full wallet balance collateral",
+    name: "leverage with exact wallet balance collateral",
     marketId: WETH_USDC_MARKET_ID,
     allocatingVaultAddresses: WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS,
 
-    initialCollateralAmount: maxUint256,
+    initialCollateralAmount: parseEther("2"),
     leverageFactor: 4.1,
     maxSlippageTolerance: 0.05,
+
+    collateralDealAmount: parseEther("2"),
+  },
+  {
+    name: "leverage with partial wallet balance collateral and increase in approval + balance before execution",
+    marketId: WETH_USDC_MARKET_ID,
+    allocatingVaultAddresses: WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS,
+
+    initialCollateralAmount: parseEther("1"),
+    leverageFactor: 2.1,
+    maxSlippageTolerance: 0.05,
+
+    beforeExecutionCb: async (client) => {
+      await client.deal({ erc20: WETH_ADDRESS, amount: parseEther("10") });
+
+      // Approval should get overwritten
+      await client.writeContract({
+        abi: erc20Abi,
+        address: WETH_ADDRESS,
+        functionName: "approve",
+        args: [GENERAL_ADAPTER_1_ADDRESS, maxUint256],
+      });
+    },
+
+    collateralDealAmount: parseEther("2"),
+  },
+  {
+    name: "leverage with exact wallet balance collateral and increase in approval + balance before execution",
+    marketId: WETH_USDC_MARKET_ID,
+    allocatingVaultAddresses: WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS,
+
+    initialCollateralAmount: parseEther("2"),
+    leverageFactor: 4.1,
+    maxSlippageTolerance: 0.05,
+
+    beforeExecutionCb: async (client) => {
+      await client.deal({ erc20: WETH_ADDRESS, amount: parseEther("10") });
+
+      // Approval should get overwritten
+      await client.writeContract({
+        abi: erc20Abi,
+        address: WETH_ADDRESS,
+        functionName: "approve",
+        args: [GENERAL_ADAPTER_1_ADDRESS, maxUint256],
+      });
+    },
 
     collateralDealAmount: parseEther("2"),
   },
@@ -188,6 +240,23 @@ describe("marketLeveragedBorrowAction", () => {
         maxSlippageTolerance: 0.05,
       });
       expect(action.status).toEqual("error");
+    });
+    test("prepare error when initial collateral amount is maxUint256", async ({ client }) => {
+      const action = await marketLeveragedBorrowAction({
+        publicClient: client,
+        marketId: WETH_USDC_MARKET_ID,
+        allocatingVaultAddresses: WETH_USDC_MARKET_ALLOCATING_VAULT_ADDRESS,
+
+        accountAddress: client.account.address,
+
+        initialCollateralAmount: maxUint256,
+        leverageFactor: 20,
+        maxSlippageTolerance: 0.05,
+      });
+      expect(action.status).toEqual("error");
+      if (action.status === "error") {
+        expect(action.message).toBe("Initial collateral amount cannot be greater than or equal to max uint256");
+      }
     });
   });
 });

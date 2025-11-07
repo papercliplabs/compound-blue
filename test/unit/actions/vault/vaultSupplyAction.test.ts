@@ -1,14 +1,18 @@
 import { MathLib } from "@morpho-org/blue-sdk";
 import { fetchVaultConfig, metaMorphoAbi } from "@morpho-org/blue-sdk-viem";
 import { AnvilTestClient } from "@morpho-org/test";
-import { Address, isAddressEqual, maxUint256, parseEther, parseUnits, zeroAddress } from "viem";
+import { Address, erc20Abi, isAddressEqual, maxUint256, parseEther, parseUnits, zeroAddress } from "viem";
 import { getBalance, readContract } from "viem/actions";
 import { describe, expect } from "vitest";
 
 import { vaultSupplyBundle } from "@/actions/vault/vaultSupplyAction";
-import { MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING } from "@/config";
 import { bigIntMax } from "@/utils/bigint";
-import { BUNDLER3_ADDRESS, SUPPORTED_ADDAPTERS, WRAPPED_NATIVE_ADDRESS } from "@/utils/constants";
+import {
+  BUNDLER3_ADDRESS,
+  GENERAL_ADAPTER_1_ADDRESS,
+  SUPPORTED_ADDAPTERS,
+  WRAPPED_NATIVE_ADDRESS,
+} from "@/utils/constants";
 
 import { test } from "../../../config";
 import {
@@ -63,13 +67,17 @@ async function runVaultSupplyTest({
     allowWrappingNativeAssets,
   });
   await beforeExecutionCb?.(client);
+
+  const nativeBalanceBeforeExecution = await getBalance(client, { address: client.account.address });
+  const erc20BalanceBeforeExecution = await getErc20BalanceOf(client, assetAddress, client.account.address);
+
   const logs = await executeAction(client, action);
 
   // Assert
   await expectOnlyAllowedApprovals(client, logs, client.account.address); // Make sure doesn't approve or permit anything unexpected
   await expectZeroErc20Balances(client, [BUNDLER3_ADDRESS, ...SUPPORTED_ADDAPTERS], assetAddress); // Make sure no funds left in bundler or used adapters
 
-  const positionBalance = await getMorphoVaultPosition(client, vaultAddress);
+  const positionAfterExecution = await getMorphoVaultPosition(client, vaultAddress);
   const walletErc20Balance = await getErc20BalanceOf(client, USDC_ADDRESS, client.account.address);
   const walletNativeBalance = await getBalance(client, { address: client.account.address });
 
@@ -77,22 +85,16 @@ async function runVaultSupplyTest({
   const expectWrappingNative = isWrappedNative && allowWrappingNativeAssets;
 
   // Vault always rounds against the user, hence the 1 margin
-  if (supplyAmount === maxUint256) {
-    // Supply max when uint256
-    const expectedPositionBalance = expectWrappingNative
-      ? dealAmount + initialNativeBalance - MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING
-      : dealAmount;
-    expect(expectedPositionBalance).toBeWithinRange(expectedPositionBalance - BigInt(1), expectedPositionBalance);
-    expect(walletErc20Balance).toEqual(BigInt(0));
-    expect(walletNativeBalance).toBe(
-      expectWrappingNative ? MIN_REMAINING_NATIVE_ASSET_BALANCE_AFTER_WRAPPING : initialNativeBalance
-    );
-  } else {
-    const coveredByNative = expectWrappingNative ? bigIntMax(supplyAmount - dealAmount, 0n) : 0n;
-    expect(positionBalance).toBeWithinRange(supplyAmount - BigInt(1), supplyAmount);
-    expect(walletErc20Balance).toEqual(bigIntMax(dealAmount - supplyAmount, 0n));
-    expect(walletNativeBalance).toEqual(initialNativeBalance - coveredByNative);
-  }
+  const coveredByNative = expectWrappingNative ? bigIntMax(supplyAmount - dealAmount, 0n) : 0n;
+
+  const expectedPositionBalance = supplyAmount;
+  expect(positionAfterExecution.userAssetBalance).toBeWithinRange(
+    expectedPositionBalance - BigInt(1),
+    expectedPositionBalance
+  );
+
+  expect(walletErc20Balance).toEqual(bigIntMax(erc20BalanceBeforeExecution - supplyAmount, 0n));
+  expect(walletNativeBalance).toEqual(nativeBalanceBeforeExecution - coveredByNative);
 }
 
 const successTestCases: ({ name: string } & Omit<VaultSupplyTestParameters, "client">)[] = [
@@ -103,9 +105,9 @@ const successTestCases: ({ name: string } & Omit<VaultSupplyTestParameters, "cli
     dealAmount: parseUnits("200000", 6),
   },
   {
-    name: "should supply entire account balance when supply amount is max uint256",
+    name: "should supply entire account balance when supply amount is exactly balance",
     vaultAddress: USDC_VAULT_ADDRESS,
-    supplyAmount: maxUint256,
+    supplyAmount: parseUnits("100000", 6),
     dealAmount: parseUnits("100000", 6),
     beforeExecutionCb: async (client) => {
       // Even if we wait some time for extra interest accural
@@ -127,25 +129,41 @@ const successTestCases: ({ name: string } & Omit<VaultSupplyTestParameters, "cli
     allowWrappingNativeAssets: true,
   },
   {
-    name: "should supply entire account erc20 and native balance with maxuint256",
-    vaultAddress: WPOL_VAULT_ADDRESS,
-    supplyAmount: maxUint256,
-    dealAmount: parseUnits("100000", 6),
-    allowWrappingNativeAssets: true,
-  },
-  {
-    name: "should wrap native assets only partial supply",
+    name: "should wrap native assets only",
     vaultAddress: WPOL_VAULT_ADDRESS,
     supplyAmount: parseUnits("150000", 6),
     dealAmount: parseUnits("0", 6),
     allowWrappingNativeAssets: true,
   },
   {
-    name: "should wrap native assets only full supply",
-    vaultAddress: WPOL_VAULT_ADDRESS,
-    supplyAmount: maxUint256,
-    dealAmount: parseUnits("0", 6),
-    allowWrappingNativeAssets: true,
+    name: "should increase position by supply amount only (partial), and lead to no leftover in bundler/ga1 even if there is an increase in approval + balance before execution",
+    vaultAddress: USDC_VAULT_ADDRESS,
+    supplyAmount: parseUnits("100000", 6),
+    dealAmount: parseUnits("200000", 6),
+    beforeExecutionCb: async (client) => {
+      await client.deal({ erc20: USDC_ADDRESS, amount: parseUnits("10000000", 6) });
+      await client.writeContract({
+        abi: erc20Abi,
+        address: USDC_ADDRESS,
+        functionName: "approve",
+        args: [GENERAL_ADAPTER_1_ADDRESS, maxUint256],
+      });
+    },
+  },
+  {
+    name: "should increase position by supply amount only (full), and lead to no leftover in bundler/ga1 even if there is an increase in approval + balance before execution",
+    vaultAddress: USDC_VAULT_ADDRESS,
+    supplyAmount: parseUnits("200000", 6),
+    dealAmount: parseUnits("200000", 6),
+    beforeExecutionCb: async (client) => {
+      await client.deal({ erc20: USDC_ADDRESS, amount: parseUnits("10000000", 6) });
+      await client.writeContract({
+        abi: erc20Abi,
+        address: USDC_ADDRESS,
+        functionName: "approve",
+        args: [GENERAL_ADAPTER_1_ADDRESS, maxUint256],
+      });
+    },
   },
 ];
 
@@ -235,6 +253,38 @@ describe("vaultSupplyAction", () => {
           },
         })
       ).rejects.toThrow("action-tx-reverted");
+    });
+
+    test("throws when amount equals max uint256", async ({ client }) => {
+      const vaultAddress = USDC_VAULT_ADDRESS;
+      const action = await vaultSupplyBundle({
+        publicClient: client,
+        accountAddress: client.account.address,
+        vaultAddress,
+        supplyAmount: maxUint256,
+        allowWrappingNativeAssets: false,
+      });
+      expect(action.status).toBe("error");
+
+      if (action.status === "error") {
+        expect(action.message).toBe("Supply amount cannot be greater than or equal to max uint256");
+      }
+    });
+
+    test("throws when amount greater than max uint256", async ({ client }) => {
+      const vaultAddress = USDC_VAULT_ADDRESS;
+      const action = await vaultSupplyBundle({
+        publicClient: client,
+        accountAddress: client.account.address,
+        vaultAddress,
+        supplyAmount: maxUint256 + 1n,
+        allowWrappingNativeAssets: false,
+      });
+      expect(action.status).toBe("error");
+
+      if (action.status === "error") {
+        expect(action.message).toBe("Supply amount cannot be greater than or equal to max uint256");
+      }
     });
   });
 });

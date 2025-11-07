@@ -65,6 +65,8 @@ export async function marketRepayWithCollateralAction({
   const market = simulationState.getMarket(marketId);
   const accountPosition = simulationState.getPosition(accountAddress, marketId);
 
+  const accountPositionInitialBorrowShares = accountPosition.borrowShares;
+
   const positionCollateralBefore = accountPosition.collateral;
   const positionLoanBefore = market.toBorrowAssets(accountPosition.borrowShares);
   const positionLtvBefore = market.getLtv(accountPosition) ?? 0n;
@@ -133,7 +135,7 @@ export async function marketRepayWithCollateralAction({
           id: marketId,
           onBehalf: accountAddress,
           receiver: PARASWAP_ADAPTER_ADDRESS,
-          assets: closingPosition ? accountPosition.collateral : maxCollateralSwapAmount, // Full collateral withdraw if closing position - bundler SDK has issues with maxUint256, but this works the same
+          assets: closingPosition ? accountPosition.collateral : maxCollateralSwapAmount,
         },
       },
       simulationState
@@ -152,7 +154,7 @@ export async function marketRepayWithCollateralAction({
           CHAIN_ID,
           market.params,
           closingPosition ? 0n : loanRepayAmount, // Assets
-          closingPosition ? maxUint256 : 0n, // Shares - full repay using shares when closing position
+          closingPosition ? accountPositionInitialBorrowShares : 0n, // Shares - full repay using shares when closing position
           maxSharePriceE27,
           accountAddress,
           // Repay loan callbacks, all actions will happen before Morpho pulls the required loan assets from GA1 (i.e must have required loan assets in GA1 at the end of these callbacks)

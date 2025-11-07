@@ -43,7 +43,24 @@ export async function getMorphoVaultPosition(
 
   const userShareBalance = await getErc20BalanceOf(client, vaultAddress, accountAddress);
   const userAssetBalance = vault.toAssets(userShareBalance);
-  return userAssetBalance;
+  return { userAssetBalance, userShareBalance };
+}
+
+export async function getMorphoVaultSharesToAssets(
+  client: AnvilTestClient,
+  vaultAddress: Address,
+  accountAddress: Address,
+  shares: bigint
+) {
+  const simulationState = await getSimulationState({
+    publicClient: client,
+    actionType: "vault",
+    accountAddress,
+    vaultAddress,
+  });
+
+  const vault = simulationState.getVault(vaultAddress);
+  return vault.toAssets(shares);
 }
 
 // Supply loan assets directly to a market from account for onBehalf
