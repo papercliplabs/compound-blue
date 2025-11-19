@@ -3,7 +3,6 @@ import Image from "next/image";
 import { Suspense } from "react";
 
 import { EarnSummaryMetrics, EarnSummaryMetricsSkeleton } from "@/components/EarnSummaryMetrics";
-import ProtocolMigratorBanner from "@/components/ProtocolMigrator/ProtocolMigratorBanner";
 import EarnTable from "@/components/tables/EarnTable";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +16,6 @@ export default async function EarnPage() {
   return (
     <>
       <div className="flex flex-col gap-8 pt-8">
-        <ProtocolMigratorBanner variant="earn" />
         <section className="flex flex-col justify-between gap-8 md:flex-row md:gap-2">
           <div className="flex h-[60px] items-center gap-4">
             <Image src="/polygon.png" width={56} height={56} alt="Polygon" className="rounded-[12px]" />
