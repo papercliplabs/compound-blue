@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === "development";
+
 const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline'
+    script-src 'self' 
+        ${isDev ? "'unsafe-eval'" : ""}
+        'unsafe-inline'
         https://va.vercel-scripts.com/v1/script.debug.js
         https://*.walletconnect.com
         https://*.walletconnect.org
@@ -47,6 +51,14 @@ const cspHeader = `
 `;
 
 const nextConfig: NextConfig = {
+  webpack: (config) => {
+    // Fix MetaMask SDK React Native dependency warnings in web builds
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      "@react-native-async-storage/async-storage": false,
+    };
+    return config;
+  },
   async headers() {
     return [
       {
@@ -67,6 +79,28 @@ const nextConfig: NextConfig = {
           {
             key: "X-Frame-Options",
             value: "DENY",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains",
+          },
+          {
+            key: "Cross-Origin-Opener-Policy",
+            // Allow wallet connection popups
+            value: "same-origin-allow-popups",
+          },
+          {
+            key: "Cross-Origin-Resource-Policy",
+            value: "same-origin",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "same-origin",
+          },
+          {
+            key: "Permissions-Policy",
+            value:
+              "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=(), magnetometer=(), gyroscope=(), accelerometer=()",
           },
         ],
       },

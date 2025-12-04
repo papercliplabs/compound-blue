@@ -1,0 +1,5 @@
+packages:
+  - .
+
+# Must have been released for at least 3 days
+minimumReleaseAge: 4320
