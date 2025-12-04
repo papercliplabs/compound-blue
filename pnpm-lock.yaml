@@ -9,109 +9,109 @@ importers:
   .:
     dependencies:
       '@graphql-typed-document-node/core':
-        specifier: ^3.2.0
+        specifier: 3.2.0
         version: 3.2.0(graphql@16.11.0)
       '@hookform/resolvers':
-        specifier: ^4.1.2
+        specifier: 4.1.3
         version: 4.1.3(react-hook-form@7.56.4(react@19.1.2))
       '@morpho-org/blue-sdk':
-        specifier: ^3.0.9
+        specifier: 3.0.9
         version: 3.0.9(@morpho-org/morpho-ts@2.3.0)
       '@morpho-org/blue-sdk-viem':
-        specifier: ^3.1.1
+        specifier: 3.1.1
         version: 3.1.1(@morpho-org/blue-sdk@3.0.9(@morpho-org/morpho-ts@2.3.0))(@morpho-org/morpho-ts@2.3.0)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))
       '@morpho-org/bundler-sdk-viem':
-        specifier: ^3.1.3
+        specifier: 3.1.4
         version: 3.1.4(@morpho-org/blue-sdk-viem@3.1.1(@morpho-org/blue-sdk@3.0.9(@morpho-org/morpho-ts@2.3.0))(@morpho-org/morpho-ts@2.3.0)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42)))(@morpho-org/blue-sdk@3.0.9(@morpho-org/morpho-ts@2.3.0))(@morpho-org/morpho-ts@2.3.0)(@morpho-org/simulation-sdk@3.0.1(@morpho-org/blue-sdk@3.0.9(@morpho-org/morpho-ts@2.3.0))(@morpho-org/morpho-ts@2.3.0))(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))
       '@morpho-org/morpho-ts':
-        specifier: ^2.3.0
+        specifier: 2.3.0
         version: 2.3.0
       '@morpho-org/simulation-sdk':
-        specifier: ^3.0.1
+        specifier: 3.0.1
         version: 3.0.1(@morpho-org/blue-sdk@3.0.9(@morpho-org/morpho-ts@2.3.0))(@morpho-org/morpho-ts@2.3.0)
       '@number-flow/react':
-        specifier: ^0.5.5
+        specifier: 0.5.9
         version: 0.5.9(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@paraswap/sdk':
-        specifier: ^7.2.3
+        specifier: 7.3.1
         version: 7.3.1(typescript@5.8.3)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))
       '@radix-ui/react-checkbox':
-        specifier: ^1.1.4
+        specifier: 1.3.2
         version: 1.3.2(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@radix-ui/react-dialog':
-        specifier: ^1.1.6
+        specifier: 1.1.14
         version: 1.1.14(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@radix-ui/react-label':
-        specifier: ^2.1.2
+        specifier: 2.1.7
         version: 2.1.7(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@radix-ui/react-popover':
-        specifier: ^1.1.6
+        specifier: 1.1.14
         version: 1.1.14(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@radix-ui/react-slider':
-        specifier: ^1.2.4
+        specifier: 1.3.5
         version: 1.3.5(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@radix-ui/react-slot':
-        specifier: ^1.1.2
+        specifier: 1.2.3
         version: 1.2.3(@types/react@19.1.6)(react@19.1.2)
       '@radix-ui/react-switch':
-        specifier: ^1.1.4
+        specifier: 1.2.5
         version: 1.2.5(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@radix-ui/react-tabs':
-        specifier: ^1.1.4
+        specifier: 1.1.12
         version: 1.1.12(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@radix-ui/react-tooltip':
-        specifier: ^1.1.8
+        specifier: 1.2.7
         version: 1.2.7(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@radix-ui/react-visually-hidden':
-        specifier: ^1.2.3
+        specifier: 1.2.3
         version: 1.2.3(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@rainbow-me/rainbowkit':
-        specifier: ^2.2.3
+        specifier: 2.2.5
         version: 2.2.5(@tanstack/react-query@5.79.0(react@19.1.2))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))(wagmi@2.15.4(@tanstack/query-core@5.79.0)(@tanstack/react-query@5.79.0(react@19.1.2))(@types/react@19.1.6)(bufferutil@4.0.9)(react@19.1.2)(typescript@5.8.3)(utf-8-validate@5.0.10)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))(zod@3.25.42))
       '@tanstack/react-query':
-        specifier: ^5.66.8
+        specifier: 5.79.0
         version: 5.79.0(react@19.1.2)
       '@tanstack/react-table':
-        specifier: ^8.21.2
+        specifier: 8.21.3
         version: 8.21.3(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       '@vercel/analytics':
-        specifier: ^1.5.0
+        specifier: 1.5.0
         version: 1.5.0(next@15.3.6(@babel/core@7.27.4)(@playwright/test@1.52.0)(react-dom@19.1.2(react@19.1.2))(react@19.1.2))(react@19.1.2)
       '@vercel/functions':
-        specifier: ^2.0.0
+        specifier: 2.1.0
         version: 2.1.0
       class-variance-authority:
-        specifier: ^0.7.1
+        specifier: 0.7.1
         version: 0.7.1
       clsx:
-        specifier: ^2.1.1
+        specifier: 2.1.1
         version: 2.1.1
       decimal.js:
-        specifier: ^10.5.0
+        specifier: 10.5.0
         version: 10.5.0
       dotenv:
-        specifier: ^16.4.7
+        specifier: 16.5.0
         version: 16.5.0
       graphql:
-        specifier: ^16.10.0
+        specifier: 16.11.0
         version: 16.11.0
       graphql-request:
-        specifier: ^7.1.2
+        specifier: 7.2.0
         version: 7.2.0(graphql@16.11.0)
       lucide:
-        specifier: ^0.475.0
+        specifier: 0.475.0
         version: 0.475.0
       lucide-react:
-        specifier: ^0.476.0
+        specifier: 0.476.0
         version: 0.476.0(react@19.1.2)
       motion:
-        specifier: ^12.6.2
+        specifier: 12.15.0
         version: 12.15.0(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       next:
         specifier: 15.3.6
         version: 15.3.6(@babel/core@7.27.4)(@playwright/test@1.52.0)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       next-themes:
-        specifier: ^0.4.4
+        specifier: 0.4.6
         version: 0.4.6(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       react:
         specifier: 19.1.2
@@ -120,40 +120,40 @@ importers:
         specifier: 19.1.2
         version: 19.1.2(react@19.1.2)
       react-hook-form:
-        specifier: ^7.54.2
+        specifier: 7.56.4
         version: 7.56.4(react@19.1.2)
       react-scroll-sync:
-        specifier: ^0.11.2
+        specifier: 0.11.3
         version: 0.11.3(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       recharts:
-        specifier: ^2.15.1
+        specifier: 2.15.3
         version: 2.15.3(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       server-only:
-        specifier: ^0.0.1
+        specifier: 0.0.1
         version: 0.0.1
       tailwind-merge:
-        specifier: ^3.0.1
+        specifier: 3.3.0
         version: 3.3.0
       tailwindcss-animate:
-        specifier: ^1.0.7
+        specifier: 1.0.7
         version: 1.0.7(tailwindcss@3.4.17)
       use-debounce:
-        specifier: ^10.0.4
+        specifier: 10.0.4
         version: 10.0.4(react@19.1.2)
       usehooks-ts:
-        specifier: ^3.1.1
+        specifier: 3.1.1
         version: 3.1.1(react@19.1.2)
       vaul:
-        specifier: ^1.1.2
+        specifier: 1.1.2
         version: 1.1.2(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)
       viem:
-        specifier: ^2.29.0
+        specifier: 2.30.5
         version: 2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42)
       wagmi:
-        specifier: ^2.14.11
+        specifier: 2.15.4
         version: 2.15.4(@tanstack/query-core@5.79.0)(@tanstack/react-query@5.79.0(react@19.1.2))(@types/react@19.1.6)(bufferutil@4.0.9)(react@19.1.2)(typescript@5.8.3)(utf-8-validate@5.0.10)(viem@2.30.5(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.42))(zod@3.25.42)
       zod:
-        specifier: ^3.24.2
+        specifier: 3.25.42
         version: 3.25.42
     devDependencies:
       '@0no-co/graphqlsp':
@@ -1568,6 +1568,7 @@ packages:
   '@paraswap/sdk@7.3.1':
     resolution: {integrity: sha512-Abz5T8xFqEM+t5XZwloMQjmt6DvOrM9tpdT6HFx91rlf02wdmluTXNKIc+N8EkZb2SuHBHiPvxfeqMb9pF5BCA==}
     engines: {node: '>=18'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
     peerDependencies:
       axios: '>=0.25.0 <2.0.0'
       ethers: ^5.5.0 || ^6.0.0
@@ -1667,6 +1668,7 @@ packages:
 
   '@paulmillr/qr@0.2.1':
     resolution: {integrity: sha512-IHnV6A+zxU7XwmKFinmYjUcwlyK9+xkG3/s9KcQhI9BjQKycrJ1JRO+FbNYPwZiPKW3je/DR0k7w8/gLa5eaxQ==}
+    deprecated: 'The package is now available as "qr": npm install qr'
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -2629,6 +2631,7 @@ packages:
 
   '@walletconnect/ethereum-provider@2.20.2':
     resolution: {integrity: sha512-fGNJtytHuBWZcmMXRIG1djlfEiPMvPJ0R3JlfJjAx2VfVN+O+1xdF6QSWcZxFizviIUFJV+f1zWt0V2VVD61Rg==}
+    deprecated: 'Reliability and performance improvements. See: https://github.com/WalletConnect/walletconnect-monorepo/releases'
 
   '@walletconnect/events@1.0.1':
     resolution: {integrity: sha512-NPTqaoi0oPBVNuLv7qPaJazmGHs5JGyO8eEAk5VGKmJzDR7AHzD4k6ilox5kxk1iwiOnFopBOOMLs86Oa76HpQ==}
@@ -2673,9 +2676,11 @@ packages:
 
   '@walletconnect/sign-client@2.19.2':
     resolution: {integrity: sha512-a/K5PRIFPCjfHq5xx3WYKHAAF8Ft2I1LtxloyibqiQOoUtNLfKgFB1r8sdMvXM7/PADNPe4iAw4uSE6PrARrfg==}
+    deprecated: 'Reliability and performance improvements. See: https://github.com/WalletConnect/walletconnect-monorepo/releases'
 
   '@walletconnect/sign-client@2.20.2':
     resolution: {integrity: sha512-KyeDToypZ1OjCbij4Jx0cAg46bMwZ6zCKt0HzCkqENcex3Zchs7xBp9r8GtfEMGw+PUnXwqrhzmLBH0x/43oIQ==}
+    deprecated: 'Reliability and performance improvements. See: https://github.com/WalletConnect/walletconnect-monorepo/releases'
 
   '@walletconnect/time@1.0.2':
     resolution: {integrity: sha512-uzdd9woDcJ1AaBZRhqy5rNC9laqWGErfc4dxA9a87mPdKOgWMD85mcFo9dIYIts/Jwocfwn07EC6EzclKubk/g==}
@@ -2688,9 +2693,11 @@ packages:
 
   '@walletconnect/universal-provider@2.19.2':
     resolution: {integrity: sha512-LkKg+EjcSUpPUhhvRANgkjPL38wJPIWumAYD8OK/g4OFuJ4W3lS/XTCKthABQfFqmiNbNbVllmywiyE44KdpQg==}
+    deprecated: 'Reliability and performance improvements. See: https://github.com/WalletConnect/walletconnect-monorepo/releases'
 
   '@walletconnect/universal-provider@2.20.2':
     resolution: {integrity: sha512-6uVu1E88tioaXEEJCbJKwCIQlOHif1nmfY092BznZEnBn2lli5ICzQh2bxtUDNmNNLKsMDI3FV1fODFeWMVJTQ==}
+    deprecated: 'Reliability and performance improvements. See: https://github.com/WalletConnect/walletconnect-monorepo/releases'
 
   '@walletconnect/utils@2.19.2':
     resolution: {integrity: sha512-VU5CcUF4sZDg8a2/ov29OJzT3KfLuZqJUM0GemW30dlipI5fkpb0VPenZK7TcdLPXc1LN+Q+7eyTqHRoAu/BIA==}
@@ -11752,10 +11759,10 @@ snapshots:
   ox@0.6.7(typescript@5.8.3)(zod@3.25.42):
     dependencies:
       '@adraffy/ens-normalize': 1.11.0
-      '@noble/curves': 1.8.1
-      '@noble/hashes': 1.7.1
-      '@scure/bip32': 1.6.2
-      '@scure/bip39': 1.5.4
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
       abitype: 1.0.8(typescript@5.8.3)(zod@3.25.42)
       eventemitter3: 5.0.1
     optionalDependencies:
