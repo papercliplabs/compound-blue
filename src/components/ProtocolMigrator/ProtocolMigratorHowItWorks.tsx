@@ -31,7 +31,7 @@ export default function ProtocolMigratorHowItWorks() {
           alt="How it works"
         />
         <LinkExternal
-          href="https://github.com/papercliplabs/compound-blue/blob/main/src/actions/docs/aave-wind-down/technical-explination.md"
+          href="https://github.com/Compound-Foundation/compound-blue/blob/main/src/actions/docs/aave-wind-down/technical-explination.md"
           className="flex w-full items-center justify-center text-accent-primary"
         >
           View the technical details

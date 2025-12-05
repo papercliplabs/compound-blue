@@ -22,7 +22,7 @@ export default function Footer() {
               Built by Paperclip Labs
             </LinkExternal>
             <LinkExternal
-              href="https://github.com/papercliplabs/compound-blue"
+              href="https://github.com/Compound-Foundation/compound-blue"
               className="hover:underline hover:brightness-100"
               keepReferrer
               hideArrow
