@@ -1,26 +1,34 @@
-# Compound Blue 
+# Compound Blue
 
 An open source [Next.js](https://nextjs.org/) frontend for [Compound](https://compound.finance/)-managed lending, powered by the [Morpho protocol](https://morpho.xyz/) on [Polygon POS](https://polygon.technology/polygon-pos).
+
+> **This repository is no longer maintained.** The [Compound Foundation](https://www.comp.xyz/t/proposal-to-create-the-compound-foundation/6777) has taken over hosting and maintenance in this [repo](https://github.com/Compound-Foundation/compound-blue).
+>
+> If you are looking to fork or use Compound Blue for other use cases, we recommend checking out [Morpho Blueprint](https://github.com/papercliplabs/morpho-blueprint) which was purpose-built for whitelabeling.
 
 ## Development
 
 Install Dependencies
+
 ```bash
 pnpm i
 ```
 
 Create and populate environment variables
+
 ```bash
 cp .env.example .env
-# Now populate the .env file 
+# Now populate the .env file
 ```
 
 Start the development server
+
 ```bash
 pnpm dev
 ```
 
 Run tests
+
 ```bash
 # Run all tests
 pnpm test
@@ -33,17 +41,18 @@ pnpm test:playwright
 ```
 
 Build
+
 ```bash
 pnpm build
 ```
 
 ## Configuration
 
-All configuration parameters outside of environment variables are set in [`src/config.ts`](./src/config.ts). 
+All configuration parameters outside of environment variables are set in [`src/config.ts`](./src/config.ts).
 
 All read-only data is powered by [Whisk](https://www.whisk.so/), and enters the app via the [data layer](src/data/whisk). You can shim this layer out with your own data source, or [reach out](https://paperclip.xyz/contact) if you want to use Whisk.
 
-## Audits 
+## Audits
 
 Frontend audits are stored in the [audits](/audits/) folder.
 
